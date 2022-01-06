@@ -32,6 +32,7 @@ def main():
     )
     logging.configure_logging(
         environment="dev",
+        release="0.0.1",
         log_level="DEBUG"
     )
 
@@ -103,6 +104,7 @@ def main():
 
     logging.configure_logging(
         environment="dev",
+        release="0.0.1",
         log_level="DEBUG"
     )
 
