@@ -3,8 +3,6 @@ from typing import Dict, Any
 
 import structlog
 
-from .tracing import tracer_injection
-
 
 def get_logger():
     return structlog.get_logger()
@@ -34,7 +32,7 @@ def add_app_info(environment, release):
     return inner
 
 
-def configure_logging(environment, release, log_level, log_format="json") -> None:
+def configure_logging(environment, release, log_level, log_format="json", enable_tracer=True) -> None:
     """
     Configure logging globally fore use in applications.
 
@@ -126,23 +124,30 @@ def configure_logging(environment, release, log_level, log_format="json") -> Non
         }
     })
 
+    processors = [
+        structlog.threadlocal.merge_threadlocal,
+        add_module_and_lineno,
+        timestamper,
+        app_info_adder,
+        structlog.dev.set_exc_info,
+        structlog.contextvars.merge_contextvars,
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+
+    ]
+
+    if enable_tracer:
+        # If we're not enabling the tracer for logging, we'll skip its event processor as well
+        from .tracing import tracer_injection
+        processors.insert(1, tracer_injection)
+
     structlog.configure(
-        processors=[
-            structlog.threadlocal.merge_threadlocal,
-            tracer_injection,
-            add_module_and_lineno,
-            timestamper,
-            app_info_adder,
-            structlog.dev.set_exc_info,
-            structlog.contextvars.merge_contextvars,
-            structlog.stdlib.filter_by_level,
-            structlog.stdlib.add_logger_name,
-            structlog.stdlib.add_log_level,
-            structlog.stdlib.PositionalArgumentsFormatter(),
-            structlog.processors.StackInfoRenderer(),
-            structlog.processors.format_exc_info,
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
+        processors=processors,
         context_class=structlog.threadlocal.wrap_dict(dict),
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True
