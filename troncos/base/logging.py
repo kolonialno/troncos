@@ -34,7 +34,7 @@ def add_app_info(environment, release):
 
 def configure_logging(environment, release, log_level, log_format="json", enable_tracer=True) -> None:
     """
-    Configure logging globally fore use in applications.
+    Configure logging globally for use in applications.
 
     This function configures both structlog and the global stock Python logger in order to make sure everything is sent
     thorough structlog, and formatted there.

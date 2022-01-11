@@ -1,0 +1,31 @@
+
+---
+name: CI
+
+on:
+  push:
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Install environment dependencies
+        run: pip install twine poetry keyrings.google-artifactregistry-auth
+
+      - id: 'auth'
+        uses: 'google-github-actions/auth@v0'
+        with:
+          credentials_json: '${{ secrets.NUBE_ARTIFACTS_KEY }}'
+
+      - name: 'Set up Cloud SDK'
+        uses: 'google-github-actions/setup-gcloud@v0'
+        with:
+          project_id: nube-hub
+
+      - name: Build dist and publish to repo
+        run: ./entrypoint.sh release

@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "troncos"
-version = "0.0.3"
+version = "0.0.4"
 description = "Observability tools and boilerplate for use in Oda python apps"
 authors = ["Karl Fredrik Haugland <karlfredrik.haugland@oda.com>"]
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = ">=3.8,<3.11"
 structlog = "^21.5.0"
 rich = "^11.0.0"
 
