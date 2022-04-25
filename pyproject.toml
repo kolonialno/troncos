@@ -11,7 +11,7 @@ rich = "^11.0.0"
 
 [[tool.poetry.source]]
 name = "nube-python"
-url = "https://europe-python.pkg.dev/nube-hub/python/"
+url = "https://europe-python.pkg.dev/nube-hub/python-public/"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
