@@ -6,7 +6,7 @@ set -o pipefail
 set -o nounset
 
 # This is the repoe where the package will be published. The package name is not part of this URL.
-REPO=https://europe-python.pkg.dev/nube-hub/python/
+REPO=https://europe-python.pkg.dev/nube-hub/python-public/
 
 function release () {
     rm -rf dist
