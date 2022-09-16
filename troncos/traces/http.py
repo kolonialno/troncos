@@ -1,7 +1,8 @@
 import typing
 
 from opentelemetry.trace import Span, SpanKind, Status, StatusCode, Tracer
-from opentelemetry.trace.propagation import tracecontext
+
+from troncos.traces.propagation import get_context_from_dict
 
 SAFE_TRACE_HEADERS = frozenset(
     [
@@ -104,14 +105,11 @@ def create_http_span(
             if traceparent:
                 http_req_headers["traceparent"].append(traceparent)
 
-    propagator = tracecontext.TraceContextTextMapPropagator()
-    context = propagator.extract(carrier=http_req_headers)
-
     return tracer.start_span(
         span_name,
         attributes=attr,  # type: ignore[arg-type]
         kind=SpanKind.SERVER,
-        context=context,
+        context=get_context_from_dict(http_req_headers),
     )
 
 

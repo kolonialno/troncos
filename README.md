@@ -22,6 +22,8 @@ Collection of Python logging and tracing tools.
   - [trace_module](#trace_module)
   - [trace_ignore](#trace_ignore)
   - [Other instrumentors for tracing](#other-instrumentors-for-tracing)
+- [Trace Propagation](#trace-propagation)
+  - [Requests session](#requests-session)
 
 ## Etymology
 
@@ -210,4 +212,22 @@ RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attribut
 HTTPXClientInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "requests",  # Async requests
 }, global_provider=False))
+```
+
+## Trace Propagation
+
+If you want to propagate your trace to the next service, you need to send the `traceparent` header with your requests/message. Here are examples on how to do that.
+
+### Requests session
+
+```python
+# Using a new session
+with traced_session() as s:
+    response = s.get("http://postman-echo.com/get")
+
+
+# Using an old session
+mysession = session requests.session()
+with traced_session(mysession) as s:
+    response = s.get("http://postman-echo.com/get")
 ```
