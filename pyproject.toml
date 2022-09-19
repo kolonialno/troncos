@@ -1,17 +1,51 @@
 [tool.poetry]
 name = "troncos"
-version = "0.0.4"
+version = "0.0.5"
 description = "Observability tools and boilerplate for use in Oda python apps"
-authors = ["Karl Fredrik Haugland <karlfredrik.haugland@oda.com>"]
+authors = [
+    "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
+    "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>"
+]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.11"
-structlog = "^21.5.0"
-rich = "^11.0.0"
+python = ">=3.6.2,<4.0"
+opentelemetry-exporter-otlp-proto-grpc = "^1.12.0"
+
+[tool.poetry.dev-dependencies]
+isort = "^5.10.1"
+black = "^22.8.0"
+flake8 = "^5.0.4"
+mypy = "^0.971"
 
 [[tool.poetry.source]]
 name = "nube-python"
 url = "https://europe-python.pkg.dev/nube-hub/python-public/"
+
+[tool.black]
+target-version = ['py310']
+line-length = 88
+include = '\.pyi?$'
+safe = true
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
+combine_as_imports = true
+
+[tool.mypy]
+python_version = "3.10"
+strict_optional = true
+ignore_missing_imports = true
+follow_imports = "normal"
+files = "./troncos"
+namespace_packages = true
+show_error_codes = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_return_any = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

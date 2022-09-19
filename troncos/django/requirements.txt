@@ -1,2 +1,0 @@
-# Django-specific requirements
-django-structlog
