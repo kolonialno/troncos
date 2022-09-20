@@ -1,3 +1,4 @@
+import opentelemetry.propagators.b3
 from opentelemetry.context import Context
 from opentelemetry.propagators import textmap
 from opentelemetry.trace.propagation import tracecontext
@@ -6,10 +7,15 @@ from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapProp
 
 def get_context_from_dict(carrier: textmap.CarrierT) -> Context:
     """
-    Gets trace context from a dictionary that contains a 'traceparent' entry
+    Gets trace context from a dictionary that contains a 'traceparent' or 'b3' entries
     """
 
-    propagator = tracecontext.TraceContextTextMapPropagator()
+    if carrier.get("traceparent"):
+        # Use default propagator
+        propagator = tracecontext.TraceContextTextMapPropagator()
+    else:
+        # Try using b3 propagator
+        propagator = opentelemetry.propagators.b3.B3MultiFormat()
     return propagator.extract(carrier=carrier)
 
 

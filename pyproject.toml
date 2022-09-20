@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "troncos"
-version = "0.0.7"
+version = "0.0.8"
 description = "Observability tools and boilerplate for use in Oda python apps"
 authors = [
     "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
@@ -10,6 +10,7 @@ authors = [
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.12.0"
+opentelemetry-propagator-b3 = "^1.12.0"
 backoff = ">=1.0,<2.0"
 
 # Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
