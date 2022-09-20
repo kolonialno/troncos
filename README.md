@@ -41,7 +41,6 @@ Setting up logging and tracing requires some code that lives as close to the inv
 ```python
 from os import environ
 
-from troncos.frameworks.starlette.uvicorn import init_uvicorn
 from troncos.logs import init_logging_basic
 from troncos.traces import init_tracing_basic
 
@@ -65,6 +64,7 @@ init_tracing_basic(
 from os import environ
 
 from troncos.frameworks.starlette.uvicorn import init_uvicorn
+from troncos.logs import init_logging_basic
 from troncos.traces import init_tracing_basic
 
 init_logging_basic(
