@@ -63,7 +63,7 @@ init_tracing_basic(
 ```python
 from os import environ
 
-from troncos.frameworks.starlette.uvicorn import init_uvicorn
+from troncos.frameworks.starlette.uvicorn import init_uvicorn_observability
 from troncos.logs import init_logging_basic
 from troncos.traces import init_tracing_basic
 
@@ -80,9 +80,9 @@ init_tracing_basic(
     }
 )
 
-app = ... # Setup your app
+app = ...  # Setup your app
 
-init_uvicorn(
+init_uvicorn_observability(
     app=app,
     log_access_ignored_paths=["/health", "/metrics"],  # Do not log these requests
 )

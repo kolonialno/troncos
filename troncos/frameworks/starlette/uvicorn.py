@@ -108,7 +108,7 @@ def _init_uvicorn_logging(
     )
 
 
-def init_uvicorn(
+def init_uvicorn_observability(
     *,
     app: Starlette,
     log_access_ignored_paths: Optional[list[str]] = None,
