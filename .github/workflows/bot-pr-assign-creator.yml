@@ -1,0 +1,20 @@
+# Assigning creator to PR will hopefully help
+# people to follow up on their PRs, are reduce old
+# lingering ones that lay around forever.
+# View https://github.com/pulls for your PRs
+name: '[bot] Assign PR to creator'
+
+on:
+  pull_request:
+    types:
+    - opened
+
+jobs:
+  automation:
+    runs-on: ubuntu-latest
+    name: Automation
+    steps:
+    - name: Assign PR to creator
+      uses: thomaseizinger/assign-pr-creator-action@v1.0.0
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
