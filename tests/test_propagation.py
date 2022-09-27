@@ -5,7 +5,8 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from troncos.traces.propagation import add_context_to_dict, get_context_from_dict
+from troncos.traces.propagation import add_context_to_dict, get_context_from_dict, \
+    get_propagation_value
 
 
 def setup_tracing():
@@ -155,3 +156,27 @@ def test_propagation_list_b3():
         ctx2 = get_context_test_id()
 
     assert ctx1 == ctx2
+
+
+def test_get_propagation_value():
+    setup_tracing()
+    tracer = trace.get_tracer(__name__)
+
+    assert get_propagation_value() is None
+
+    with tracer.start_as_current_span("test", context=Context()):
+        w3c = get_propagation_value()
+        w3c_2 = get_propagation_value(fmt="w3c")
+        jaeger = get_propagation_value(fmt="jaeger")
+        b3 = get_propagation_value(fmt="b3")
+
+        assert w3c is not None
+        assert w3c == w3c_2
+
+        assert jaeger is not None
+        assert jaeger != w3c
+        assert jaeger != b3
+
+        assert b3 is not None
+        assert b3 != w3c
+        assert b3 != jaeger
