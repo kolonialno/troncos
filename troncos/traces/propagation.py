@@ -1,27 +1,49 @@
-import opentelemetry.propagators.b3
+from typing import Literal
+
 from opentelemetry.context import Context
-from opentelemetry.propagators import textmap
+from opentelemetry.propagators import b3, jaeger
+from opentelemetry.propagators.textmap import (
+    CarrierT,
+    DefaultGetter,
+    Getter,
+    TextMapPropagator,
+)
 from opentelemetry.trace.propagation import tracecontext
-from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
 
 
-def get_context_from_dict(carrier: textmap.CarrierT) -> Context:
+def get_context_from_dict(carrier: CarrierT) -> Context:
     """
-    Gets trace context from a dictionary that contains a 'traceparent' or 'b3' entries
+    Gets trace context from a dictionary that contains a 'traceparent', 'uber-trace-id'
+    or 'b3' entries.
     """
 
-    if carrier.get("traceparent"):
-        # Use default propagator
+    getter: Getter[CarrierT] = DefaultGetter()  # type: ignore[assignment]
+    propagator: TextMapPropagator
+
+    if getter.get(carrier, "traceparent"):  # w3c
         propagator = tracecontext.TraceContextTextMapPropagator()
-    else:
-        # Try using b3 propagator
-        propagator = opentelemetry.propagators.b3.B3MultiFormat()
+    elif getter.get(carrier, "uber-trace-id"):  # jaeger
+        propagator = jaeger.JaegerPropagator()
+    else:  # b3
+        propagator = b3.B3MultiFormat()
+
     return propagator.extract(carrier=carrier)
 
 
-def add_context_to_dict(carrier: textmap.CarrierT) -> None:
+def add_context_to_dict(
+    carrier: CarrierT, fmt: Literal["w3c", "jaeger", "b3"] = "w3c"
+) -> None:
     """
-    Adds a trace parent entry to a dictionary
+    Adds a trace "parent" entry to a dictionary. This can be in jaeger, b3 or the
+    default w3c format.
     """
 
-    TraceContextTextMapPropagator().inject(carrier)
+    propagator: TextMapPropagator
+    if fmt == "jaeger":
+        propagator = jaeger.JaegerPropagator()
+    elif fmt == "b3":
+        propagator = b3.B3SingleFormat()
+    else:
+        propagator = tracecontext.TraceContextTextMapPropagator()
+
+    propagator.inject(carrier)

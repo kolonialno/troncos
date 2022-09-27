@@ -11,15 +11,17 @@ authors = [
 python = ">=3.10,<4.0"
 opentelemetry-exporter-otlp-proto-grpc = "^1.12.0"
 opentelemetry-propagator-b3 = "^1.12.0"
+opentelemetry-propagator-jaeger = "^1.12.0"
 backoff = ">=1.0,<2.0"
 
 # Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 isort = "^5.10.1"
 black = "^22.8.0"
 flake8 = "^5.0.4"
 mypy = "^0.971"
+pytest = "^7.1.3"
 
 [[tool.poetry.source]]
 name = "nube-python"

@@ -28,26 +28,6 @@ SAFE_TRACE_HEADERS = frozenset(
 )
 
 
-def _convert_uber_trace_id_to_w3c(uber_trace_id: str) -> typing.Optional[str]:
-    # uber-trace-id: https://www.jaegertracing.io/docs/1.29/client-libraries/
-    # traceparent: https://www.w3.org/TR/trace-context/
-
-    components = uber_trace_id.split(":")
-    if len(components) != 4:
-        return None
-
-    trace_id, span_id, _, _ = components
-
-    w3c_version = "00"
-    # W3C format 00 supports only a single flag: 1 = "sampled"
-    w3c_flags = "01"
-
-    w3c_trace_id = trace_id.lower().zfill(32)
-    w3c_span_id = span_id.lower().zfill(16)
-
-    return "-".join([w3c_version, w3c_trace_id, w3c_span_id, w3c_flags])
-
-
 def create_http_span(
     *,
     tracer: Tracer,
@@ -92,18 +72,6 @@ def create_http_span(
     remote_addr = http_req_headers.get("x-forwarded-for", ())
     if remote_addr:
         attr["http.client_ip"] = remote_addr[0]
-
-    # Shim to support the old Jaeger client format from nginx, rather
-    # than the W3C standard header.
-    if "traceparent" not in http_req_headers:
-        try:
-            uber_trace_id = http_req_headers["uber-trace-id"][0]
-        except (KeyError, IndexError):
-            pass
-        else:
-            traceparent = _convert_uber_trace_id_to_w3c(uber_trace_id)
-            if traceparent:
-                http_req_headers["traceparent"].append(traceparent)
 
     return tracer.start_span(
         span_name,
