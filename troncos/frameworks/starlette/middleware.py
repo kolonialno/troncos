@@ -3,6 +3,7 @@ import logging
 
 from opentelemetry.trace import TracerProvider, use_span
 
+from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 from troncos.traces.http import create_http_span, end_http_span
 
 try:
@@ -27,7 +28,9 @@ class TracingMiddleWare(BaseHTTPMiddleware):
     ) -> None:
         super().__init__(app)
         self._span_name = span_name
-        self._tracer = tracer_provider.get_tracer(__name__)
+        self._tracer = tracer_provider.get_tracer(
+            OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
+        )
 
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint

@@ -9,6 +9,8 @@ from typing import Any, Callable, Type, TypeVar, cast
 import opentelemetry.trace
 from opentelemetry.sdk.resources import Attributes
 
+from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
+
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 TFun = TypeVar("TFun", bound=Callable[..., Any])
 TClass = TypeVar("TClass")
@@ -22,9 +24,8 @@ def _trace_function(
         @wraps(f)
         async def traced_func_async(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-            with tp.get_tracer(f.__module__).start_as_current_span(
-                f"{f.__module__}.{f.__qualname__}"
-            ):
+            tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+            with tr.start_as_current_span(f"{f.__module__}.{f.__qualname__}"):
                 resolved_future = await f(*args, **kwargs)
                 return resolved_future
 
@@ -37,9 +38,8 @@ def _trace_function(
         @wraps(f)
         def traced_func(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-            with tp.get_tracer(f.__module__).start_as_current_span(
-                f"{f.__module__}.{f.__qualname__}"
-            ):
+            tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+            with tr.start_as_current_span(f"{f.__module__}.{f.__qualname__}"):
                 return f(*args, **kwargs)
 
         if hasattr(f, _TRACE_IGNORE_ATTR):
@@ -89,11 +89,9 @@ def trace_block(
         time.sleep(1)
     """
 
-    frame = inspect.stack()[1].frame
-    scope = frame.f_locals
-    module_name = scope.get("__name__", "unknown")
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-    return tp.get_tracer(module_name).start_as_current_span(name, attributes=attributes)
+    tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+    return tr.start_as_current_span(name, attributes=attributes)
 
 
 def trace_class(
