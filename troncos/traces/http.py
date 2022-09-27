@@ -31,7 +31,6 @@ SAFE_TRACE_HEADERS = frozenset(
 def create_http_span(
     *,
     tracer: Tracer,
-    span_name: str,
     http_req_method: str,
     http_req_url: str,
     http_req_scheme: str,
@@ -39,6 +38,7 @@ def create_http_span(
     http_req_client_ip: str,
     http_req_client_port: int,
     http_req_headers: typing.Dict[str, list[str]],
+    span_name: str | None,
 ) -> Span:
     """
     Create a new span based on an incoming request. Note that http_req_headers
@@ -74,7 +74,7 @@ def create_http_span(
         attr["http.client_ip"] = remote_addr[0]
 
     return tracer.start_span(
-        span_name,
+        span_name or f"HTTP {http_req_method}",
         attributes=attr,  # type: ignore[arg-type]
         kind=SpanKind.SERVER,
         context=get_context_from_dict(http_req_headers),

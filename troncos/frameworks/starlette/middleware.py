@@ -43,7 +43,6 @@ class TracingMiddleWare(BaseHTTPMiddleware):
 
         span = create_http_span(
             tracer=self._tracer,
-            span_name=self._span_name or f"{request.method}",
             http_req_method=request.method,
             http_req_url=str(request.url),
             http_req_scheme=request.url.scheme,
@@ -53,6 +52,7 @@ class TracingMiddleWare(BaseHTTPMiddleware):
             http_req_client_ip=client_ip,
             http_req_client_port=client_port,
             http_req_headers=request_headers,
+            span_name=self._span_name,
         )
         with use_span(span, end_on_exit=True):
             response: Response = await call_next(request)
