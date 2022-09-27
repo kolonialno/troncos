@@ -36,3 +36,7 @@ fix-isort: .venv ; $(info $(M) running isort…) @ ## Run isort fixer
 .PHONY: fix-black
 fix-black: .venv ; $(info $(M) running black…) @ ## Run black fixer
 	$Q $(POETRY) run black $(PACKAGE)
+
+.PHONY: test
+test:
+	$Q $(POETRY) run pytest tests -v -c pytest.ini
