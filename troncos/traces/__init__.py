@@ -18,7 +18,7 @@ _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 _DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
 
 
-def _set_span_processor(span_processors: list[SpanProcessor]) -> None:
+def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
     def set_sp() -> None:
         global _GLOBAL_SPAN_PROCESSORS
         _GLOBAL_SPAN_PROCESSORS = span_processors
@@ -34,7 +34,7 @@ def init_tracing_endpoint(endpoint: str) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
     """
-    return init_tracing_endpoint([endpoint])
+    return init_tracing_endpoints([endpoint])
 
 
 def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
@@ -51,7 +51,7 @@ def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
             endpoint,
         )
         exporters.append(BatchSpanProcessor(exporter))
-    _set_span_processor(exporters)
+    _set_span_processors(exporters)
     return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
 
 
