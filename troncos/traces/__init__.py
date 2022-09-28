@@ -12,38 +12,47 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.util._once import Once
 
-_GLOBAL_SPAN_PROCESSOR: SpanProcessor | None = None
-_GLOBAL_SPAN_PROCESSOR_SET_ONCE = Once()
+_GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
+_GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 
 _DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
 
 
-def _set_span_processor(span_processor: SpanProcessor) -> None:
+def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
     def set_sp() -> None:
-        global _GLOBAL_SPAN_PROCESSOR
-        _GLOBAL_SPAN_PROCESSOR = span_processor
+        global _GLOBAL_SPAN_PROCESSORS
+        _GLOBAL_SPAN_PROCESSORS = span_processors
 
-    did_set = _GLOBAL_SPAN_PROCESSOR_SET_ONCE.do_once(set_sp)
+    did_set = _GLOBAL_SPAN_PROCESSORS_SET_ONCE.do_once(set_sp)
     if not did_set:
         logging.getLogger(__name__).warning(
-            "Global span processor already set, not doing that again!"
+            "Global span processors already set, not doing that again!"
         )
 
 
-def init_tracing_endpoint(endpoint: str) -> SpanProcessor:
+def init_tracing_endpoint(endpoint: str) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
     """
+    return init_tracing_endpoints([endpoint])
 
+
+def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
+    """
+    Initialize the global span processor.
+    """
     exporter_class = trace_exporter.OTLPSpanExporter
-    exporter = exporter_class(endpoint=endpoint)
-    logging.getLogger(__name__).info(
-        "Reporting traces with %s(endpoint=%s)",
-        exporter_class.__name__,
-        endpoint,
-    )
-    _set_span_processor(BatchSpanProcessor(exporter))
-    return _GLOBAL_SPAN_PROCESSOR  # type: ignore[return-value]
+    exporters = []
+    for endpoint in endpoints:
+        exporter = exporter_class(endpoint=endpoint)
+        logging.getLogger(__name__).info(
+            "Reporting traces with %s(endpoint=%s)",
+            exporter_class.__name__,
+            endpoint,
+        )
+        exporters.append(BatchSpanProcessor(exporter))
+    _set_span_processors(exporters)
+    return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
 
 
 def init_tracing_provider(
@@ -54,7 +63,7 @@ def init_tracing_provider(
     provider the global one. If that is not desired, pass in global_provider=False.
     """
 
-    if not _GLOBAL_SPAN_PROCESSOR:
+    if not _GLOBAL_SPAN_PROCESSORS:
         raise RuntimeError("Call 'init_tracing_endpoint' before calling this function")
 
     if not attributes.get("service.name"):
@@ -65,7 +74,8 @@ def init_tracing_provider(
 
     resource = Resource.create(attributes)
     provider = TracerProvider(resource=resource)
-    provider.add_span_processor(_GLOBAL_SPAN_PROCESSOR)
+    for span_processor in _GLOBAL_SPAN_PROCESSORS:
+        provider.add_span_processor(span_processor)
 
     if global_provider:
         opentelemetry.trace.set_tracer_provider(provider)
