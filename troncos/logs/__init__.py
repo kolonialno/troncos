@@ -2,7 +2,7 @@ import logging
 from typing import Literal, Tuple
 
 from troncos.logs.filters import TraceIdFilter
-from troncos.logs.formatters import LogfmtFormatter, PrettyFormatter
+from troncos.logs.formatters import JsonFormatter, LogfmtFormatter, PrettyFormatter
 
 
 def print_loggers(verbose: bool = True) -> None:
@@ -102,7 +102,7 @@ def print_loggers(verbose: bool = True) -> None:
 def init_logging_basic(
     *,
     level: str | int,
-    formatter: Literal["cli", "logfmt"] | logging.Formatter,
+    formatter: Literal["cli", "logfmt", "json"] | logging.Formatter,
 ) -> None:
     """
     Setup root logger to handle trace_id in records.
@@ -125,6 +125,8 @@ def init_logging_basic(
         root_handler.setFormatter(PrettyFormatter())
     elif formatter == "logfmt":
         root_handler.setFormatter(LogfmtFormatter())
+    elif formatter == "json":
+        root_handler.setFormatter(JsonFormatter())
     else:
         root_handler.setFormatter(formatter)
 

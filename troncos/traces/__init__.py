@@ -51,7 +51,7 @@ def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
             endpoint,
         )
         exporters.append(BatchSpanProcessor(exporter))
-    _set_span_processors(exporters)
+    _set_span_processors(exporters)  # type: ignore[arg-type]
     return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
 
 

@@ -88,7 +88,7 @@ init_uvicorn_observability(
 )
 ```
 
-### Django
+### Django (with gunicorn)
 
 TODO
 
