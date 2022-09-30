@@ -138,7 +138,12 @@ def trace_class(
             setattr(
                 cls,
                 key,
-                _trace_function(value, None, None, tracer_provider=tracer_provider),
+                _trace_function(
+                    value, 
+                    name=None,
+                    attributes=None,
+                    tracer_provider=tracer_provider
+                )
             )
         return cls
 
