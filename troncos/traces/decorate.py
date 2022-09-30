@@ -190,7 +190,12 @@ def trace_module(
             continue
 
         logging.getLogger(__name__).debug(f"Tracing function {module_name}.{key}")
-        scope[key] = _trace_function(value, None, None, tracer_provider=tracer_provider)
+        scope[key] = _trace_function(
+            value,
+            name=None,
+            attributes=None,
+            tracer_provider=tracer_provider
+        )
 
 
 def trace_ignore(f: TFun) -> TFun:
