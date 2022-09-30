@@ -41,7 +41,7 @@ def _trace_function(
         def traced_func(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(name or f"{f.__module__}.{f.__qualname__}", attributes=attributes or {}):
+            with tr.start_as_current_span(name or f"{f.__module__}.{f.__qualname__}", attributes=attributes):
                 return f(*args, **kwargs)
 
         if hasattr(f, _TRACE_IGNORE_ATTR):
