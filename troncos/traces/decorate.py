@@ -27,7 +27,7 @@ def _trace_function(
         async def traced_func_async(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(name or f"{f.__module__}.{f.__qualname__}", attributes=attributes or {}):
+            with tr.start_as_current_span(name or f"{f.__module__}.{f.__qualname__}", attributes=attributes):
                 resolved_future = await f(*args, **kwargs)
                 return resolved_future
 
