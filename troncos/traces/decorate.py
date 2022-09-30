@@ -17,7 +17,10 @@ TClass = TypeVar("TClass")
 
 
 def _trace_function(
-    f: TFun, tracer_provider: opentelemetry.trace.TracerProvider | None
+    f: TFun,
+    name: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> TFun:
     if asyncio.iscoroutinefunction(f):
 
@@ -25,7 +28,9 @@ def _trace_function(
         async def traced_func_async(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(f"{f.__module__}.{f.__qualname__}"):
+            with tr.start_as_current_span(
+                name or f"{f.__module__}.{f.__qualname__}", attributes=attributes
+            ):
                 resolved_future = await f(*args, **kwargs)
                 return resolved_future
 
@@ -39,7 +44,9 @@ def _trace_function(
         def traced_func(*args: tuple, **kwargs: dict[str, Any]) -> Any:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(f"{f.__module__}.{f.__qualname__}"):
+            with tr.start_as_current_span(
+                name or f"{f.__module__}.{f.__qualname__}", attributes=attributes
+            ):
                 return f(*args, **kwargs)
 
         if hasattr(f, _TRACE_IGNORE_ATTR):
@@ -49,7 +56,10 @@ def _trace_function(
 
 
 def trace_function(
-    *args: Any, tracer_provider: opentelemetry.trace.TracerProvider | None = None
+    *args: Any,
+    name: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Any:
     """
     This decorator adds tracing to a function. You can supply a tracer provider, if none
@@ -67,18 +77,18 @@ def trace_function(
     if len(args) > 1:
         raise RuntimeError("Invalid usage of decorator")
     if len(args) == 1 and (callable(args[0]) or asyncio.iscoroutinefunction(args[0])):
-        return _trace_function(args[0], tracer_provider)
+        return _trace_function(args[0], name, attributes, tracer_provider)
     else:
         # No args
         def _inner(f: TFun) -> Any:
-            return _trace_function(f, tracer_provider)
+            return _trace_function(f, name, attributes, tracer_provider)
 
         return _inner
 
 
 def trace_block(
     name: str,
-    attributes: Attributes = {},
+    attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> _GeneratorContextManager[opentelemetry.trace.Span]:
     """
@@ -88,14 +98,15 @@ def trace_block(
     with trace_block(name="my block", attributes={"some": "attribute"}):
         time.sleep(1)
     """
-
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
     tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
     return tr.start_as_current_span(name, attributes=attributes)
 
 
 def trace_class(
-    *args: Any, tracer_provider: opentelemetry.trace.TracerProvider | None = None
+    *args: Any,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Type[TClass] | Callable[[Type[TClass]], Type[TClass]]:
     """
     This decorator adds a tracing decorator to every method of the decorated class. If
@@ -134,7 +145,12 @@ def trace_class(
             setattr(
                 cls,
                 key,
-                _trace_function(value, tracer_provider=tracer_provider),
+                _trace_function(
+                    value,
+                    name=None,
+                    attributes=attributes,
+                    tracer_provider=tracer_provider,
+                ),
             )
         return cls
 
@@ -147,6 +163,7 @@ def trace_class(
 
 
 def trace_module(
+    attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> None:
     """
@@ -181,13 +198,15 @@ def trace_module(
             continue
 
         logging.getLogger(__name__).debug(f"Tracing function {module_name}.{key}")
-        scope[key] = _trace_function(value, tracer_provider=tracer_provider)
+        scope[key] = _trace_function(
+            value, name=None, attributes=attributes, tracer_provider=tracer_provider
+        )
 
 
 def trace_ignore(f: TFun) -> TFun:
     """
     Decorator to disable automatic tracing of functions.
-    See 'trace_module' and'trace_class'.
+    See 'trace_module' and 'trace_class'.
     """
 
     setattr(f, _TRACE_IGNORE_ATTR, ())
