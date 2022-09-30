@@ -95,7 +95,7 @@ def trace_block(
     """
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
     tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-    return tr.start_as_current_span(name, attributes=attributes or {})
+    return tr.start_as_current_span(name, attributes=attributes)
 
 
 def trace_class(
