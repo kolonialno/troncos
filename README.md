@@ -23,7 +23,8 @@ Collection of Python logging and tracing tools.
   - [trace_ignore](#trace_ignore)
   - [Other instrumentors for tracing](#other-instrumentors-for-tracing)
 - [Trace Propagation](#trace-propagation)
-  - [Requests session](#requests-session)
+  - [Requests](#requests)
+  - [Manually](#manually)
 
 ## Etymology
 
@@ -46,16 +47,21 @@ from troncos.traces import init_tracing_basic
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
-    formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" in k8s
+    formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"), # Can be a list
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
     }
 )
+
+# Add other instrumentors here, like:
+# RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+#     "service.name": "requests",
+# }))
 ```
 
 ### Starlette (with uvicorn)
@@ -69,16 +75,21 @@ from troncos.traces import init_tracing_basic
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
-    formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" in k8s
+    formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),  # Can be a list
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
     }
 )
+
+# Add other instrumentors here, like:
+# RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+#     "service.name": "requests",
+# }))
 
 app = ...  # Setup your app
 
@@ -88,10 +99,88 @@ init_uvicorn_observability(
 )
 ```
 
-### Django
+### Django (with gunicorn)
 
-TODO
+To setup tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
 
+```python
+from os import environ
+
+from troncos.frameworks.gunicorn import post_request_trace, pre_request_trace
+from troncos.traces import init_tracing_basic 
+
+
+def post_fork(server, worker):
+    init_tracing_basic(
+      endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),  # Can be a list
+      attributes={
+        "pid": worker.pid,
+        "environment": environ.get("ENVIRONMENT", "localdev"),
+        "service.name": "myservice",
+      }
+    )
+
+    # Add other instrumentors here, like:
+    # DjangoInstrumentor().instrument()
+    #
+    # Psycopg2Instrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+    #     "service.name": "psycopg2",
+    # }))
+
+def pre_request(worker, req):
+    pre_request_trace(worker, req)
+
+
+def post_request(worker, req, environ, resp):
+    post_request_trace(worker, req, environ, resp)
+```
+
+Then when running gunicorn specify the config file used:
+
+```console
+gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
+```
+
+You have to manually configure logging in your `settings.py`, in general you should adhere to the principle described in [the logging section](#logging).
+
+Make sure that you add the `TraceIdFilter` to all handlers. Your logging configuration should look roughly like this:
+
+```python
+from os import environ
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": True,
+    "filters": {
+        "trace_id": {"()": "troncos.logs.filters.TraceIdFilter"},
+    },
+    "formatters": {
+        "cli": {"()": "troncos.logs.formatters.PrettyFormatter"},
+        "json": {"()": "troncos.logs.formatters.JsonFormatter"},
+        "logfmt": {"()": "troncos.logs.formatters.LogfmtFormatter"},
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": environ.get("LOG_FORMATTER", "logfmt"),
+            "filters": ["trace_id"],
+        }
+    },
+    "loggers": {
+        "interno": {"handlers": ["console"], "level": environ.get("LOG_LEVEL", "INFO")},
+        "django": {"handlers": ["console"], "level": environ.get("LOG_LEVEL", "INFO")},
+        "django.server": {
+            "handlers": ["console"],
+            "level": environ.get("LOG_LEVEL", "INFO"),
+            "propagate": False,
+        },
+        "gunicorn.error": {
+            "handlers": ["console"], 
+            "level": environ.get("LOG_LEVEL", "INFO")
+        },
+    },
+}
+```
 ## Logging
 
 In general you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
@@ -193,32 +282,36 @@ A decorator that will make [trace_class](#trace_class) and [trace_module](#trace
 You can add extra instrumentors to you app for even more tracing. You have to install relevant packages yourself.
 
 ```python
+DjangoInstrumentor().instrument()
+
 Psycopg2Instrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "psycopg2",
-}, global_provider=False))
+}))
 
 RedisInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "redis",
-}, global_provider=False))
+}))
 
 CeleryInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "celery",
-}, global_provider=False))
+}))
 
 RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "requests",
-}, global_provider=False))
+}))
 
 HTTPXClientInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "requests",  # Async requests
-}, global_provider=False))
+}))
 ```
 
 ## Trace Propagation
 
 If you want to propagate your trace to the next service, you need to send the `traceparent` header with your requests/message. Here are examples on how to do that.
 
-### Requests session
+### Requests
+
+In general, if you have the `RequestsInstrumentor` setup you do not have to think about this. If you are not using that for some reason, you can propagate with this method:
 
 ```python
 # Using a new session
@@ -230,4 +323,21 @@ with traced_session() as s:
 mysession = session requests.session()
 with traced_session(mysession) as s:
     response = s.get("http://postman-echo.com/get")
+```
+
+### Manually
+
+```python
+# Get traceparent
+traceparent = get_propagation_value()
+# Send it somewhere
+```
+
+or
+
+```python
+some_dict = {}
+# Add traceparent to dict
+add_context_to_dict(some_dict)
+# Send it somewhere
 ```

@@ -51,12 +51,12 @@ def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
             endpoint,
         )
         exporters.append(BatchSpanProcessor(exporter))
-    _set_span_processors(exporters)
+    _set_span_processors(exporters)  # type: ignore[arg-type]
     return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
 
 
 def init_tracing_provider(
-    attributes: Attributes, global_provider: bool = True
+    attributes: Attributes, global_provider: bool = False
 ) -> TracerProvider:
     """
     Initialize a tracing provider. By default, this function will make the new tracer
@@ -98,14 +98,14 @@ def init_tracing_debug(
 
 
 def init_tracing_basic(
-    *, endpoint: str, attributes: Attributes, debug: bool = False
+    *, endpoint: str | list[str], attributes: Attributes, debug: bool = False
 ) -> TracerProvider:
     """
     Setup rudimentary tracing.
     """
 
-    init_tracing_endpoint(endpoint)
-    global_tracer = init_tracing_provider(attributes, True)
+    init_tracing_endpoints(endpoint if isinstance(endpoint, list) else [endpoint])
+    global_tracer = init_tracing_provider(attributes, global_provider=True)
     if debug:
         init_tracing_debug(global_tracer)
     return global_tracer
