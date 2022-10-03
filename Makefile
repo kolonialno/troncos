@@ -10,6 +10,7 @@ $(POETRY): ; $(info $(M) checking POETRY…)
 .venv: pyproject.toml poetry.lock ; $(info $(M) retrieving dependencies…) @ ## Install python dependencies
 	$Q $(POETRY) run pip install -U pip
 	$Q $(POETRY) install --no-interaction
+	$Q $(POETRY) run mypy --install-types
 	@touch $@
 
 .PHONY: lint
