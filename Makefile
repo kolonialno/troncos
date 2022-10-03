@@ -49,6 +49,10 @@ fix-black: .venv ; $(info $(M) running black…) @ ## Run black fixer
 test: .venv ; $(info $(M) running tests…) @ ## Run tests
 	$Q $(POETRY) run pytest tests -v -c pytest.ini
 
+.PHONY: release
+release: lint test ; $(info $(M) running tests…) @ ## Release to PYPI
+	$Q echo $(POETRY) publish --username=__token__ --password=$(PYPI_TOKEN)
+
 .PHONY: help
 help: ## Show this help
 	$(eval HELP_COL_WIDTH:=13)
