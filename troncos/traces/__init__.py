@@ -30,6 +30,13 @@ def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
         )
 
 
+def init_tracing_processors(
+    span_processors: list[SpanProcessor],
+) -> list[SpanProcessor]:
+    _set_span_processors(span_processors)
+    return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
+
+
 def init_tracing_endpoint(endpoint: str) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
