@@ -15,7 +15,7 @@ except ImportError:
     raise Exception("This feature is only available if 'starlette' is installed")
 
 
-class TracingMiddleWare(BaseHTTPMiddleware):
+class TracingMiddleware(BaseHTTPMiddleware):
     """
     Tracing middleware for starlette
     """
@@ -70,7 +70,7 @@ class TracingMiddleWare(BaseHTTPMiddleware):
             return response
 
 
-class LoggingMiddleWare(BaseHTTPMiddleware):
+class LoggingMiddleware(BaseHTTPMiddleware):
     """
     This is our custom logs middleware for starlette. We need this so trace_id is
     added to our log records.
