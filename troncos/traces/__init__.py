@@ -44,7 +44,7 @@ def init_tracing_endpoints(
         otel_exp = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
             "Reporting OTEL traces with %s(endpoint=%s)",
-            otel_exp.__name__,  # type: ignore[attr-defined]
+            type(otel_exp).__name__,
             endpoint,
         )
         exporters.append(BatchSpanProcessor(otel_exp))
@@ -53,7 +53,7 @@ def init_tracing_endpoints(
         dd_exp = OTLPSpanExporterDD(endpoint=endpoint_dd)
         logging.getLogger(__name__).info(
             "Reporting DD traces with %s(endpoint=%s)",
-            dd_exp.__name__,  # type: ignore[attr-defined]
+            type(dd_exp).__name__,
             endpoint_dd,
         )
         exporters.append(BatchSpanProcessor(dd_exp))
