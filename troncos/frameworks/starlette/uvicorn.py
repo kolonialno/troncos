@@ -4,7 +4,7 @@ from typing import Optional
 import opentelemetry.trace
 from opentelemetry.trace import TracerProvider
 
-from troncos.frameworks.starlette.middleware import LoggingMiddleWare, TracingMiddleWare
+from troncos.frameworks.starlette.middleware import LoggingMiddleware, TracingMiddleware
 from troncos.logs.filters import HttpPathFilter
 
 try:
@@ -102,7 +102,7 @@ def _init_uvicorn_logging(
 
     # Add our middleware to starlette
     app.add_middleware(
-        LoggingMiddleWare,
+        LoggingMiddleware,
         access_logger=app_logger_access,
         error_logger=app_logger_error,
     )
@@ -125,4 +125,4 @@ def init_uvicorn_observability(
     )
 
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-    app.add_middleware(TracingMiddleWare, tracer_provider=tp)
+    app.add_middleware(TracingMiddleware, tracer_provider=tp)

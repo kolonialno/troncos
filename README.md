@@ -1,39 +1,63 @@
 <h1 align="center" style="border-bottom: 0">
-  🚨 Work in progress 🚨 <br />
-  <br />
   🪵<br>
   Troncos <br/>
 </h1>
 
-<h2>Welcome to Troncos</h2>
+<p align="center">
+    <em>
+        Collection of Python logging and tracing tools.
+    </em>
+    <br>
+    <a href="https://github.com/kolonialno/troncos/actions?workflow=CI">
+        <img src="https://github.com/kolonialno/troncos/actions/workflows/ci.yml/badge.svg" alt="CI status">
+    </a>
+    <a href="https://pypi.python.org/pypi/troncos">
+        <img src="https://img.shields.io/pypi/v/troncos.svg">
+    </a>
+    <img src="https://img.shields.io/pypi/pyversions/troncos">
+    <a href="https://github.com/kolonialno/troncos/blob/master/LICENSE">
+        <img src="https://img.shields.io/github/license/kolonialno/troncos.svg">
+    </a>
+</p>
 
-Collection of Python logging and tracing tools.
+<!-- TOC -->
+  * [Installation](#installation)
+  * [Etymology](#etymology)
+  * [Setup](#setup)
+    * [Plain](#plain)
+    * [Starlette (with uvicorn)](#starlette--with-uvicorn-)
+    * [Django (with gunicorn)](#django--with-gunicorn-)
+  * [Logging](#logging)
+    * [Structlog](#structlog)
+  * [Tracing](#tracing)
+    * [trace_function](#trace_function)
+    * [trace_block](#trace_block)
+    * [trace_class](#trace_class)
+    * [trace_module](#trace_module)
+    * [trace_ignore](#trace_ignore)
+    * [Other instrumentors for tracing](#other-instrumentors-for-tracing)
+  * [Trace Propagation](#trace-propagation)
+    * [Send context](#send-context)
+      * [Requests](#requests)
+      * [Manually](#manually)
+    * [Receive context](#receive-context)
+      * [Using troncos middleware](#using-troncos-middleware)
+      * [Manually](#manually)
+<!-- TOC -->
 
-- [Etymology](#etymology)
-- [Setup](#setup)
-  - [Plain](#plain)
-  - [Starlette (with uvicorn)](#starlette-with-uvicorn)
-  - [Django](#django)
-- [Logging](#logging)
-- [Tracing](#tracing)
-  - [trace_function](#trace_function)
-  - [trace_block](#trace_block)
-  - [trace_class](#trace_class)
-  - [trace_module](#trace_module)
-  - [trace_ignore](#trace_ignore)
-  - [Other instrumentors for tracing](#other-instrumentors-for-tracing)
-- [Trace Propagation](#trace-propagation)
-  - [Requests](#requests)
-  - [Manually](#manually)
+## Installation
+
+```console
+pip install troncos
+```
 
 ## Etymology
 
-"Troncos" is the plural of the spanish "Tronco", which translates to "trunk" or "log".
+"Troncos" is the plural of the spanish word "Tronco", which translates to "trunk" or "log".
 
 ## Setup
 
-> Tip: It's a good idea to use a `settings.py`-file (or similar) as an authorative source of variables (service name,
-> environment, whether tracing is enabled or not, log level etc.)
+> **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level etc.)
 
 ### Plain
 
@@ -101,7 +125,7 @@ init_uvicorn_observability(
 
 ### Django (with gunicorn)
 
-To setup tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
+To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
 
 ```python
 from os import environ
@@ -135,13 +159,13 @@ def post_request(worker, req, environ, resp):
     post_request_trace(worker, req, environ, resp)
 ```
 
-Then when running gunicorn specify the config file used:
+Then when running gunicorn, specify what config file to use:
 
 ```console
 gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
 ```
 
-You have to manually configure logging in your `settings.py`, in general you should adhere to the principle described in [the logging section](#logging).
+You have to manually configure logging in your `settings.py`. You should adhere to the principle described in [the logging section](#logging).
 
 Make sure that you add the `TraceIdFilter` to all handlers. Your logging configuration should look roughly like this:
 
@@ -181,9 +205,10 @@ LOGGING = {
     },
 }
 ```
+
 ## Logging
 
-In general you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
+More often then not, you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
 
 There is a nice helper function that will print all loggers in troncos called `print_loggers`:
 
@@ -210,9 +235,27 @@ import logging
 logging.getLogger("my.random.logger").info("Root will handle this record")
 ```
 
+### Structlog
+
+To include traces in your structlog logs, add this processor to your configuration.
+
+> **NOTE**: This only adds trace information to your logs if you have set up tracing in your project.
+
+```python
+import structlog
+
+from troncos.frameworks.structlog.processors import trace_injection_processor
+
+structlog.configure(
+    processors=[
+       trace_injection_processor,
+    ],
+)
+```
+
 ## Tracing
 
-After you have called `init_tracing_basic` you can use different methods to trace your code.
+After initializing tracing in your project you can use different methods to trace your code.
 
 ### trace_function
 
@@ -295,11 +338,11 @@ trace_module()
 
 ### trace_ignore
 
-A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function.
+A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function/method.
 
 ### Other instrumentors for tracing
 
-You can add extra instrumentors to you app for even more tracing. You have to install relevant packages yourself.
+You can add extra instrumentors to you app for even more tracing. You have to install the relevant packages yourself.
 
 ```python
 from troncos.traces import init_tracing_provider
@@ -318,6 +361,14 @@ CeleryInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes
     "service.name": "celery",
 }))
 
+ElasticsearchInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+    "service.name": "elasticsearch",
+}))
+
+GrpcInstrumentorClient().instrument(tracer_provider=init_tracing_provider(attributes={
+    "service.name": "grpc",
+}))
+
 RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "requests",
 }))
@@ -329,9 +380,11 @@ HTTPXClientInstrumentor().instrument(tracer_provider=init_tracing_provider(attri
 
 ## Trace Propagation
 
-If you want to propagate your trace to the next service, you need to send the `traceparent` header with your requests/message. Here are examples on how to do that.
+If you want to propagate your trace to the next service, you need to send/receive the `traceparent` header with your requests/message. Here are examples on how to do that.
 
-### Requests
+### Send context
+
+#### Requests
 
 In general, if you have the `RequestsInstrumentor` setup you do not have to think about this. If you are not using that for some reason, you can propagate with this method:
 
@@ -350,7 +403,7 @@ with traced_session(my_session) as s:
     response = s.get("http://postman-echo.com/get")
 ```
 
-### Manually
+#### Manually
 
 ```python
 from troncos.traces.propagation import get_propagation_value
@@ -369,4 +422,23 @@ some_dict = {}
 # Add traceparent to dict
 add_context_to_dict(some_dict)
 # Send it somewhere
+```
+
+### Receive context
+
+#### Using troncos middleware
+
+Troncos defines middleware for some frameworks that does this automatically for you. If your framework is missing in troncos, please create an issue or PR.
+
+#### Manually
+
+```python
+context = get_context_from_dict(some_dict)
+
+with tracer.start_as_current_span(
+        "span.name",
+        attributes={"some": "attrs"},
+        context=context,
+):
+    ... do something ...
 ```

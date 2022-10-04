@@ -1,0 +1,36 @@
+name: "Setup project"
+description: "Install dependencies and other project setup"
+runs:
+  using: "composite"
+  steps:
+    # Poetry depends on OS, Python version and Poetry version.
+    - name: Cache Poetry
+      id: cache-poetry
+      uses: actions/cache@v2
+      with:
+        path: "${{ env.POETRY_HOME }}"
+        key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}"
+    # Poetry cache depends on OS, Python version and Poetry version.
+    - name: Cache Poetry cache
+      uses: actions/cache@v2
+      with:
+        path: "~/.cache/pypoetry"
+        key: "poetry-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}"
+    # virtualenv cache should depends on OS, Python version and `poetry.lock`.
+    - name: Cache Packages
+      uses: actions/cache@v2
+      with:
+        path: "${{ github.workspace }}/.venv"
+        key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}"
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v2
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    - name: Install Poetry
+      if: steps.cache-poetry.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python - --version ${{ env.POETRY_VERSION }}
+    - name: "Add Poetry to PATH"
+      shell: bash
+      run: echo "$POETRY_HOME/bin" >> $GITHUB_PATH
