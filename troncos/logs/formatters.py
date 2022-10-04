@@ -196,7 +196,10 @@ class LogfmtFormatter(logging.Formatter):
                 if record_key != "msg":
                     s += f' {expose_key}="{str(field)}"'
                 else:
-                    msg = record.msg % record.args
+                    try:
+                        msg = record.msg % record.args
+                    except:  # noqa: E722
+                        msg = f"{record.msg} % {record.args}"
                     s += f' {expose_key}="{self._escape(msg)}"'
         return s
 
@@ -227,11 +230,11 @@ class LogfmtFormatter(logging.Formatter):
     @staticmethod
     def _escape(s: str) -> str:
         """
-        Use unicode_escape on the string, and also escape quotes.
-        https://docs.python.org/3/library/codecs.html#text-encodings
+        Use json dumps to escape strings
         """
 
-        return s.encode("unicode_escape").decode("utf-8").replace('"', '\\"')
+        escaped = json.dumps(s, ensure_ascii=False)
+        return escaped[1 : len(escaped) - 1]  # noqa: E203
 
 
 class PrettyFormatter(logging.Formatter):
