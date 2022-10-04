@@ -232,6 +232,7 @@ class LogfmtFormatter(logging.Formatter):
         """
         Use json dumps to escape strings
         """
+
         escaped = json.dumps(s, ensure_ascii=False)
         return escaped[1 : len(escaped) - 1]  # noqa: E203
 
