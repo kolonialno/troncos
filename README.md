@@ -3,11 +3,25 @@
   Troncos <br/>
 </h1>
 
-<h2>Welcome to Troncos</h2>
-
-Collection of Python logging and tracing tools.
+<p align="center">
+    <em>
+        Collection of Python logging and tracing tools.
+    </em>
+    <br>
+    <a href="https://github.com/kolonialno/troncos/actions?workflow=CI">
+        <img src="https://github.com/kolonialno/troncos/actions/workflows/ci.yml/badge.svg" alt="CI status">
+    </a>
+    <a href="https://pypi.python.org/pypi/troncos">
+        <img src="https://img.shields.io/pypi/v/troncos.svg">
+    </a>
+    <img src="https://img.shields.io/pypi/pyversions/troncos">
+    <a href="https://github.com/kolonialno/troncos/blob/master/LICENSE">
+        <img src="https://img.shields.io/github/license/kolonialno/troncos.svg">
+    </a>
+</p>
 
 <!-- TOC -->
+  * [Installation](#installation)
   * [Etymology](#etymology)
   * [Setup](#setup)
     * [Plain](#plain)
@@ -30,14 +44,19 @@ Collection of Python logging and tracing tools.
       * [Manually](#manually)
 <!-- TOC -->
 
+## Installation
+
+```console
+pip install troncos
+```
+
 ## Etymology
 
-"Troncos" is the plural of the spanish "Tronco", which translates to "trunk" or "log".
+"Troncos" is the plural of the spanish word "Tronco", which translates to "trunk" or "log".
 
 ## Setup
 
-> Tip: It's a good idea to use a `settings.py`-file (or similar) as an authorative source of variables (service name,
-> environment, whether tracing is enabled or not, log level etc.)
+> Tip: It's a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level etc.)
 
 ### Plain
 
@@ -105,7 +124,7 @@ init_uvicorn_observability(
 
 ### Django (with gunicorn)
 
-To setup tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
+To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
 
 ```python
 from os import environ
@@ -139,13 +158,13 @@ def post_request(worker, req, environ, resp):
     post_request_trace(worker, req, environ, resp)
 ```
 
-Then when running gunicorn specify the config file used:
+Then when running gunicorn, specify what config file to use:
 
 ```console
 gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
 ```
 
-You have to manually configure logging in your `settings.py`, in general you should adhere to the principle described in [the logging section](#logging).
+You have to manually configure logging in your `settings.py`. You should adhere to the principle described in [the logging section](#logging).
 
 Make sure that you add the `TraceIdFilter` to all handlers. Your logging configuration should look roughly like this:
 
@@ -185,9 +204,10 @@ LOGGING = {
     },
 }
 ```
+
 ## Logging
 
-In general you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
+More often then not, you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
 
 There is a nice helper function that will print all loggers in troncos called `print_loggers`:
 
@@ -214,7 +234,7 @@ logging.getLogger("my.random.logger").info("Root will handle this record")
 
 ## Tracing
 
-After you have called `init_tracing_basic` you can use different methods to trace your code.
+After initializing tracing in your project you can use different methods to trace your code.
 
 ### trace_function
 
@@ -279,11 +299,11 @@ trace_module()
 
 ### trace_ignore
 
-A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function.
+A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function/method.
 
 ### Other instrumentors for tracing
 
-You can add extra instrumentors to you app for even more tracing. You have to install relevant packages yourself.
+You can add extra instrumentors to you app for even more tracing. You have to install the relevant packages yourself.
 
 ```python
 DjangoInstrumentor().instrument()
