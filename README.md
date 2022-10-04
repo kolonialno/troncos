@@ -5,7 +5,7 @@
 
 <p align="center">
     <em>
-        Collection of Python logging and tracing tools.
+        Collection of Python logging and tracing tools
     </em>
     <br>
     <a href="https://github.com/kolonialno/troncos/actions?workflow=CI">
@@ -48,7 +48,11 @@
 ## Installation
 
 ```console
-pip install troncos
+# With pip
+$ pip install troncos
+
+# With poetry
+$ poetry add troncos
 ```
 
 ## Etymology
@@ -410,6 +414,7 @@ from troncos.traces.propagation import get_propagation_value
 
 # Get traceparent
 traceparent = get_propagation_value()
+
 # Send it somewhere
 ```
 
@@ -419,8 +424,10 @@ or
 from troncos.traces.propagation import add_context_to_dict
 
 some_dict = {}
+
 # Add traceparent to dict
 add_context_to_dict(some_dict)
+
 # Send it somewhere
 ```
 
@@ -433,12 +440,16 @@ Troncos defines middleware for some frameworks that does this automatically for 
 #### Manually
 
 ```python
+from troncos.traces.propagation import get_context_from_dict
+from opentelemetry.trace import get_tracer
+
+some_dict = ...
 context = get_context_from_dict(some_dict)
 
-with tracer.start_as_current_span(
+with get_tracer(__name__).start_as_current_span(
         "span.name",
         attributes={"some": "attrs"},
         context=context,
 ):
-    ... do something ...
+    print("... do something ...")
 ```
