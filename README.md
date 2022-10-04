@@ -1,6 +1,4 @@
 <h1 align="center" style="border-bottom: 0">
-  🚨 Work in progress 🚨 <br />
-  <br />
   🪵<br>
   Troncos <br/>
 </h1>
@@ -9,22 +7,28 @@
 
 Collection of Python logging and tracing tools.
 
-- [Etymology](#etymology)
-- [Setup](#setup)
-  - [Plain](#plain)
-  - [Starlette (with uvicorn)](#starlette-with-uvicorn)
-  - [Django](#django)
-- [Logging](#logging)
-- [Tracing](#tracing)
-  - [trace_function](#trace_function)
-  - [trace_block](#trace_block)
-  - [trace_class](#trace_class)
-  - [trace_module](#trace_module)
-  - [trace_ignore](#trace_ignore)
-  - [Other instrumentors for tracing](#other-instrumentors-for-tracing)
-- [Trace Propagation](#trace-propagation)
-  - [Requests](#requests)
-  - [Manually](#manually)
+<!-- TOC -->
+  * [Etymology](#etymology)
+  * [Setup](#setup)
+    * [Plain](#plain)
+    * [Starlette (with uvicorn)](#starlette--with-uvicorn-)
+    * [Django (with gunicorn)](#django--with-gunicorn-)
+  * [Logging](#logging)
+  * [Tracing](#tracing)
+    * [trace_function](#trace_function)
+    * [trace_block](#trace_block)
+    * [trace_class](#trace_class)
+    * [trace_module](#trace_module)
+    * [trace_ignore](#trace_ignore)
+    * [Other instrumentors for tracing](#other-instrumentors-for-tracing)
+  * [Trace Propagation](#trace-propagation)
+    * [Send context](#send-context)
+      * [Requests](#requests)
+      * [Manually](#manually)
+    * [Receive context](#receive-context)
+      * [Using troncos middleware](#using-troncos-middleware)
+      * [Manually](#manually)
+<!-- TOC -->
 
 ## Etymology
 
@@ -296,6 +300,14 @@ CeleryInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes
     "service.name": "celery",
 }))
 
+ElasticsearchInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+    "service.name": "elasticsearch",
+}))
+
+GrpcInstrumentorClient().instrument(tracer_provider=init_tracing_provider(attributes={
+    "service.name": "grpc",
+}))
+
 RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "requests",
 }))
@@ -307,9 +319,11 @@ HTTPXClientInstrumentor().instrument(tracer_provider=init_tracing_provider(attri
 
 ## Trace Propagation
 
-If you want to propagate your trace to the next service, you need to send the `traceparent` header with your requests/message. Here are examples on how to do that.
+If you want to propagate your trace to the next service, you need to send/receive the `traceparent` header with your requests/message. Here are examples on how to do that.
 
-### Requests
+### Send context
+
+#### Requests
 
 In general, if you have the `RequestsInstrumentor` setup you do not have to think about this. If you are not using that for some reason, you can propagate with this method:
 
@@ -325,7 +339,7 @@ with traced_session(mysession) as s:
     response = s.get("http://postman-echo.com/get")
 ```
 
-### Manually
+#### Manually
 
 ```python
 # Get traceparent
@@ -340,4 +354,23 @@ some_dict = {}
 # Add traceparent to dict
 add_context_to_dict(some_dict)
 # Send it somewhere
+```
+
+### Receive context
+
+#### Using troncos middleware
+
+Troncos defines middleware for some frameworks that does this automatically for you. If your framework is missing in troncos, please create an issue or PR.
+
+#### Manually
+
+```python
+context = get_context_from_dict(some_dict)
+
+with tracer.start_as_current_span(
+        "span.name",
+        attributes={"some": "attrs"},
+        context=context,
+):
+    ... do something ...
 ```
