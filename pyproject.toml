@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "troncos"
-version = "0.0.15"
+version = "0.0.16"
 description = "Observability tools and boilerplate for use in python apps"
 authors = [
     "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
