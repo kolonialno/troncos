@@ -28,6 +28,7 @@
     * [Starlette (with uvicorn)](#starlette--with-uvicorn-)
     * [Django (with gunicorn)](#django--with-gunicorn-)
   * [Logging](#logging)
+    * [Structlog](#structlog)
   * [Tracing](#tracing)
     * [trace_function](#trace_function)
     * [trace_block](#trace_block)
@@ -56,7 +57,7 @@ pip install troncos
 
 ## Setup
 
-> Tip: It's a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level etc.)
+> **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level etc.)
 
 ### Plain
 
@@ -230,6 +231,24 @@ So in general, after the initial setup you can use any logger and that will prop
 
 ```python
 logging.getLogger("my.random.logger").info("Root will handle this record")
+```
+
+### Structlog
+
+To include traces in your structlog logs, add this processor to your configuration.
+
+> **NOTE**: This only adds trace information to your logs if you have set up tracing in your project.
+
+```python
+import structlog
+
+from troncos.frameworks.structlog.processors import trace_injection_processor
+
+structlog.configure(
+    processors=[
+       trace_injection_processor,
+    ],
+)
 ```
 
 ## Tracing
