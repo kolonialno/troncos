@@ -51,7 +51,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"), # Can be a list
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -79,7 +79,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),  # Can be a list
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -112,7 +112,7 @@ from troncos.traces import init_tracing_basic
 
 def post_fork(server, worker):
     init_tracing_basic(
-      endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),  # Can be a list
+      endpoint=environ.get("TRACING_PATH", "http://localhost:4317"),
       attributes={
         "pid": worker.pid,
         "environment": environ.get("ENVIRONMENT", "localdev"),
@@ -205,6 +205,8 @@ Loggers:
 So in general, after the initial setup you can use any logger and that will propagate the log record to root:
 
 ```python
+import logging
+
 logging.getLogger("my.random.logger").info("Root will handle this record")
 ```
 
@@ -217,12 +219,19 @@ After you have called `init_tracing_basic` you can use different methods to trac
 This decorator adds tracing to a function. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
 ```python
+from troncos.traces.decorate import trace_function
+from troncos.traces import init_tracing_provider
+
+custom_provider = init_tracing_provider(attributes={
+  "service.name": "my_custom_provider",
+})
+
 @trace_function
-def myfunc1()
+def myfunc1():
     return "This will be traced"
 
 @trace_function(tracer_provider=custom_provider)
-def myfunc2()
+def myfunc2():
     return "This will be traced using a custom provider"
 ```
 
@@ -231,8 +240,10 @@ def myfunc2()
 Trace using a with statement. You can supply a tracer provider, if none is supplied, the global tracer provider will be used.
 
 ```python
+from troncos.traces.decorate import trace_block
+
 with trace_block(name="my block", attributes={"some": "attribute"}):
-    # Do something
+    print("... do something ...")
 ```
 
 ### trace_class
@@ -240,6 +251,13 @@ with trace_block(name="my block", attributes={"some": "attribute"}):
 This decorator adds a tracing decorator to every method of the decorated class. If you don't want some methods to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
 ```python
+from troncos.traces.decorate import trace_class, trace_ignore
+from troncos.traces import init_tracing_provider
+
+custom_provider = init_tracing_provider(attributes={
+    "service.name": "my_custom_provider",
+})
+
 @trace_class
 class MyClass1:
 
@@ -263,6 +281,8 @@ class MyClass2:
 This function adds a tracing decorator to every function of the calling module. If you don't want some functions to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
 ```python
+from troncos.traces.decorate import trace_ignore, trace_module
+
 def my_function():
     return "This func will be traced"
 
@@ -282,6 +302,8 @@ A decorator that will make [trace_class](#trace_class) and [trace_module](#trace
 You can add extra instrumentors to you app for even more tracing. You have to install relevant packages yourself.
 
 ```python
+from troncos.traces import init_tracing_provider
+
 DjangoInstrumentor().instrument()
 
 Psycopg2Instrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
@@ -314,20 +336,25 @@ If you want to propagate your trace to the next service, you need to send the `t
 In general, if you have the `RequestsInstrumentor` setup you do not have to think about this. If you are not using that for some reason, you can propagate with this method:
 
 ```python
+import requests
+from troncos.frameworks.requests import traced_session
+
 # Using a new session
 with traced_session() as s:
     response = s.get("http://postman-echo.com/get")
 
 
 # Using an old session
-mysession = session requests.session()
-with traced_session(mysession) as s:
+my_session = requests.session()
+with traced_session(my_session) as s:
     response = s.get("http://postman-echo.com/get")
 ```
 
 ### Manually
 
 ```python
+from troncos.traces.propagation import get_propagation_value
+
 # Get traceparent
 traceparent = get_propagation_value()
 # Send it somewhere
@@ -336,6 +363,8 @@ traceparent = get_propagation_value()
 or
 
 ```python
+from troncos.traces.propagation import add_context_to_dict
+
 some_dict = {}
 # Add traceparent to dict
 add_context_to_dict(some_dict)

@@ -12,6 +12,8 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.util._once import Once
 
+from troncos.traces.dd_exporter import OTLPSpanExporterDD
+
 _GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
 _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 
@@ -30,34 +32,32 @@ def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
         )
 
 
-def init_tracing_processors(
-    span_processors: list[SpanProcessor],
+def init_tracing_endpoints(
+    endpoint: str | None, endpoint_dd: str | None
 ) -> list[SpanProcessor]:
-    _set_span_processors(span_processors)
-    return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
-
-
-def init_tracing_endpoint(endpoint: str) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
     """
-    return init_tracing_endpoints([endpoint])
-
-
-def init_tracing_endpoints(endpoints: list[str]) -> list[SpanProcessor]:
-    """
-    Initialize the global span processor.
-    """
-    exporter_class = trace_exporter.OTLPSpanExporter
     exporters = []
-    for endpoint in endpoints:
-        exporter = exporter_class(endpoint=endpoint)
+
+    if endpoint:
+        otel_exp = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
-            "Reporting traces with %s(endpoint=%s)",
-            exporter_class.__name__,
+            "Reporting OTEL traces with %s(endpoint=%s)",
+            otel_exp.__name__,  # type: ignore[attr-defined]
             endpoint,
         )
-        exporters.append(BatchSpanProcessor(exporter))
+        exporters.append(BatchSpanProcessor(otel_exp))
+
+    if endpoint_dd:
+        dd_exp = OTLPSpanExporterDD(endpoint=endpoint_dd)
+        logging.getLogger(__name__).info(
+            "Reporting DD traces with %s(endpoint=%s)",
+            dd_exp.__name__,  # type: ignore[attr-defined]
+            endpoint_dd,
+        )
+        exporters.append(BatchSpanProcessor(dd_exp))
+
     _set_span_processors(exporters)  # type: ignore[arg-type]
     return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
 
@@ -105,14 +105,17 @@ def init_tracing_debug(
 
 
 def init_tracing_basic(
-    *, endpoint: str | list[str], attributes: Attributes, debug: bool = False
+    endpoint: str | None = None,
+    endpoint_dd: str | None = None,
+    attributes: Attributes | None = None,
+    debug: bool = False,
 ) -> TracerProvider:
     """
     Setup rudimentary tracing.
     """
 
-    init_tracing_endpoints(endpoint if isinstance(endpoint, list) else [endpoint])
-    global_tracer = init_tracing_provider(attributes, global_provider=True)
+    init_tracing_endpoints(endpoint, endpoint_dd)
+    global_tracer = init_tracing_provider(attributes or {}, global_provider=True)
     if debug:
         init_tracing_debug(global_tracer)
     return global_tracer
