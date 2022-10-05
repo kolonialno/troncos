@@ -35,7 +35,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        client_ip, client_port = request.client or ("NOIP", -1)
+        client_ip, client_port = request.client or ("NO_IP", -1)
 
         request_headers = collections.defaultdict(list)
         for k, v in request.headers.items():

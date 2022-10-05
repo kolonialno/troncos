@@ -1,6 +1,7 @@
 import asyncio
 import inspect
 import logging
+# noinspection PyUnresolvedReferences,PyProtectedMember
 from contextlib import _GeneratorContextManager
 from functools import wraps
 from types import FunctionType
@@ -122,7 +123,7 @@ def trace_class(
 
         @trace_ignore
         def m2(self):
-            return "This will not traced"
+            return "This will not be traced"
 
 
     @trace_class(tracer_provider=custom_provider)
