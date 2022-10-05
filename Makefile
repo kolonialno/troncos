@@ -3,6 +3,7 @@
 PACKAGE       = troncos
 TESTS         = tests
 POETRY        = poetry
+TEST_COV_REP  ?= html
 
 M = $(shell printf "\033[34;1m▶\033[0m")
 
@@ -54,7 +55,7 @@ fix-black: .venv ; $(info $(M) running black...) @ ## Run black fixer
 
 .PHONY: test
 test: .venv ; $(info $(M) running tests...) @ ## Run tests
-	$Q $(POETRY) run pytest --codeblocks -v
+	$Q $(POETRY) run pytest --cov-report $(TEST_COV_REP) --cov $(PACKAGE) --codeblocks -v
 
 .PHONY: release
 release: lint test ; $(info $(M) running tests...) @ ## Release to PYPI

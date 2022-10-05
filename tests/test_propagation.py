@@ -1,21 +1,11 @@
 from opentelemetry import trace
 from opentelemetry.context import Context
-from opentelemetry.sdk.resources import SERVICE_NAME, Resource
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from troncos.traces.propagation import (
     add_context_to_dict,
     get_context_from_dict,
     get_propagation_value,
 )
-
-
-def setup_tracing() -> None:
-    tp = TracerProvider(resource=Resource(attributes={SERVICE_NAME: "test"}))
-    tp.add_span_processor(BatchSpanProcessor(InMemorySpanExporter()))
-    trace.set_tracer_provider(tp)
 
 
 def get_context_test_id() -> int:
@@ -29,8 +19,6 @@ def test_propagation_no_context() -> None:
 
 
 def test_propagation_default() -> None:
-    setup_tracing()
-
     d: dict[str, str] = {}
     with trace.get_tracer(__name__).start_as_current_span("test", context=Context()):
         add_context_to_dict(d)
@@ -40,8 +28,6 @@ def test_propagation_default() -> None:
 
 
 def test_propagation_jaeger() -> None:
-    setup_tracing()
-
     d: dict[str, str] = {}
     with trace.get_tracer(__name__).start_as_current_span("test", context=Context()):
         add_context_to_dict(d, fmt="jaeger")
@@ -51,8 +37,6 @@ def test_propagation_jaeger() -> None:
 
 
 def test_propagation_b3() -> None:
-    setup_tracing()
-
     d: dict[str, str] = {}
     with trace.get_tracer(__name__).start_as_current_span("test", context=Context()):
         add_context_to_dict(d, fmt="b3")
@@ -62,7 +46,6 @@ def test_propagation_b3() -> None:
 
 
 def test_propagation_all() -> None:
-    setup_tracing()
     tracer = trace.get_tracer(__name__)
 
     d_org: dict[str, str] = {}
@@ -93,7 +76,6 @@ def test_propagation_all() -> None:
 
 
 def test_propagation_list_wc3() -> None:
-    setup_tracing()
     tracer = trace.get_tracer(__name__)
 
     d_org: dict[str, str] = {}
@@ -113,7 +95,6 @@ def test_propagation_list_wc3() -> None:
 
 
 def test_propagation_list_jaeger() -> None:
-    setup_tracing()
     tracer = trace.get_tracer(__name__)
 
     d_org: dict[str, str] = {}
@@ -133,7 +114,6 @@ def test_propagation_list_jaeger() -> None:
 
 
 def test_propagation_list_b3() -> None:
-    setup_tracing()
     tracer = trace.get_tracer(__name__)
 
     d_org: dict[str, str] = {}
@@ -153,7 +133,6 @@ def test_propagation_list_b3() -> None:
 
 
 def test_get_propagation_value() -> None:
-    setup_tracing()
     tracer = trace.get_tracer(__name__)
 
     assert get_propagation_value() is None

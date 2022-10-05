@@ -37,3 +37,5 @@ jobs:
         uses: ./.github/actions/setup-project
       - name: Run pytest
         run: make test
+        env:
+          TEST_COV_REP: term
