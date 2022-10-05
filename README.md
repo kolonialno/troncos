@@ -71,7 +71,7 @@ Setting up logging and tracing requires some code that lives as close to the inv
 from os import environ
 
 from troncos.logs import init_logging_basic
-from troncos.traces import init_tracing_basic
+from troncos.traces import init_tracing_basic, endpoint_from_env
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
@@ -79,7 +79,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
+    endpoint=endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -101,7 +101,7 @@ from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 from troncos.frameworks.starlette.uvicorn import init_uvicorn_observability
 from troncos.logs import init_logging_basic
-from troncos.traces import init_tracing_basic, init_tracing_provider
+from troncos.traces import init_tracing_basic, init_tracing_provider, endpoint_from_env
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
@@ -109,7 +109,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
+    endpoint=endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -137,12 +137,12 @@ To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/con
 from os import environ
 
 from troncos.frameworks.gunicorn import post_request_trace, pre_request_trace
-from troncos.traces import init_tracing_basic 
+from troncos.traces import init_tracing_basic, endpoint_from_env 
 
 
 def post_fork(server, worker):
     init_tracing_basic(
-      endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
+      endpoint=endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
       attributes={
         "pid": worker.pid,
         "environment": environ.get("ENVIRONMENT", "localdev"),

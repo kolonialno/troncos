@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import Iterable, List
 
 import opentelemetry.trace
@@ -20,6 +21,16 @@ _GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
 _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 
 _DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
+
+
+def endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
+    host = os.environ.get(host_var)
+    if not host:
+        return None
+    port = os.environ.get(port_var)
+    if not port:
+        return None
+    return f"http://{host}:{port}{path}"
 
 
 def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
