@@ -1,15 +1,16 @@
+from typing import Sequence
+
 from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.sdk.trace import ReadableSpan
+from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.sdk.util.instrumentation import (
     InstrumentationInfo,
     InstrumentationScope,
 )
 
-from opentelemetry.sdk.trace.export import SpanExportResult
-
 
 class OTLPSpanExporterDD(trace_exporter.OTLPSpanExporter):
-    def export(self, spans: list[ReadableSpan]) -> SpanExportResult:
+    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
         for sdk_span in spans:
             if "dd_operation_name" in sdk_span.attributes:  # type: ignore[operator]
                 # I did not find a good way to get rid of the span kind so these
