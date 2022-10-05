@@ -79,7 +79,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH"),
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -109,7 +109,7 @@ init_logging_basic(
 )
 
 init_tracing_basic(
-    endpoint=environ.get("TRACING_PATH"),
+    endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -142,7 +142,7 @@ from troncos.traces import init_tracing_basic
 
 def post_fork(server, worker):
     init_tracing_basic(
-      endpoint=environ.get("TRACING_PATH"),
+      endpoint=environ.get("TRACING_PATH", "http://localhost:4318/v1/traces"),
       attributes={
         "pid": worker.pid,
         "environment": environ.get("ENVIRONMENT", "localdev"),
@@ -372,10 +372,6 @@ CeleryInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes
 
 ElasticsearchInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
     "service.name": "elasticsearch",
-}))
-
-GrpcInstrumentorClient().instrument(tracer_provider=init_tracing_provider(attributes={
-    "service.name": "grpc",
 }))
 
 RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={

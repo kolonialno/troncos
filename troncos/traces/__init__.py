@@ -2,7 +2,7 @@ import logging
 from typing import Iterable, List
 
 import opentelemetry.trace
-from opentelemetry.exporter.otlp.proto.grpc import trace_exporter
+from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
