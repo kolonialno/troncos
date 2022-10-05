@@ -34,21 +34,21 @@ def print_loggers(verbose: bool = True) -> None:
         curr: Tuple[str, logging.Logger],
         rest: list[Tuple[str, logging.Logger]],
     ) -> None:
-        name, logger = curr
+        i_name, i_log = curr
 
         print(
-            f"[ {name.ljust(20)[:20]} ]"
-            f" {str(logger.__class__)[8:-2]}"
-            f" LEVEL: {logger.level if hasattr(logger, 'level') else '?'}"
-            f" PROPAGATE: {logger.propagate if hasattr(logger, 'propagate') else '?'}"
+            f"[ {i_name.ljust(20)[:20]} ]"
+            f" {str(i_log.__class__)[8:-2]}"
+            f" LEVEL: {i_log.level if hasattr(i_log, 'level') else '?'}"
+            f" PROPAGATE: {i_log.propagate if hasattr(i_log, 'propagate') else '?'}"
         )
 
-        if hasattr(logger, "filters"):
-            for f in logger.filters:
+        if hasattr(i_log, "filters"):
+            for f in i_log.filters:
                 print("  └ FILTER", str(f.__class__)[8:-2])
 
-        if hasattr(logger, "handlers"):
-            for h in logger.handlers:
+        if hasattr(i_log, "handlers"):
+            for h in i_log.handlers:
                 print(
                     "  └ HANDLER",
                     str(h.__class__)[8:-2],

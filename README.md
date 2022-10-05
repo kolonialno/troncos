@@ -25,8 +25,8 @@
   * [Etymology](#etymology)
   * [Setup](#setup)
     * [Plain](#plain)
-    * [Starlette (with uvicorn)](#starlette--with-uvicorn-)
-    * [Django (with gunicorn)](#django--with-gunicorn-)
+    * [Starlette with uvicorn](#starlette-with-uvicorn)
+    * [Django with gunicorn](#django-with-gunicorn)
   * [Logging](#logging)
     * [Structlog](#structlog)
   * [Tracing](#tracing)
@@ -39,10 +39,10 @@
   * [Trace Propagation](#trace-propagation)
     * [Send context](#send-context)
       * [Requests](#requests)
-      * [Manually](#manually)
+      * [Send manually](#send-manually)
     * [Receive context](#receive-context)
       * [Using troncos middleware](#using-troncos-middleware)
-      * [Manually](#manually)
+      * [Receive manually](#receive-manually)
 <!-- TOC -->
 
 ## Installation
@@ -92,14 +92,16 @@ init_tracing_basic(
 # }))
 ```
 
-### Starlette (with uvicorn)
+### Starlette with uvicorn
 
 ```python
 from os import environ
+from fastapi import FastAPI
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
 
 from troncos.frameworks.starlette.uvicorn import init_uvicorn_observability
 from troncos.logs import init_logging_basic
-from troncos.traces import init_tracing_basic
+from troncos.traces import init_tracing_basic, init_tracing_provider
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
@@ -115,11 +117,11 @@ init_tracing_basic(
 )
 
 # Add other instrumentors here, like:
-# RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
-#     "service.name": "requests",
-# }))
+RequestsInstrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
+     "service.name": "requests",
+}))
 
-app = ...  # Setup your app
+app = FastAPI(title="myapp")
 
 init_uvicorn_observability(
     app=app,
@@ -127,7 +129,7 @@ init_uvicorn_observability(
 )
 ```
 
-### Django (with gunicorn)
+### Django with gunicorn
 
 To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
 
@@ -218,6 +220,7 @@ There is a nice helper function that will print all loggers in troncos called `p
 
 ```python
 from troncos.logs import print_loggers
+
 print_loggers(verbose=False)  # To visualize loggers
 ```
 
@@ -270,7 +273,7 @@ from troncos.traces.decorate import trace_function
 from troncos.traces import init_tracing_provider
 
 custom_provider = init_tracing_provider(attributes={
-  "service.name": "my_custom_provider",
+    "service.name": "my_custom_provider",
 })
 
 @trace_function
@@ -348,6 +351,8 @@ A decorator that will make [trace_class](#trace_class) and [trace_module](#trace
 
 You can add extra instrumentors to you app for even more tracing. You have to install the relevant packages yourself.
 
+<!--pytest.mark.skip-->
+
 ```python
 from troncos.traces import init_tracing_provider
 
@@ -403,7 +408,7 @@ with traced_session(my_session) as s:
     response = s.get("http://postman-echo.com/get")
 ```
 
-#### Manually
+#### Send manually
 
 ```python
 from troncos.traces.propagation import get_propagation_value
@@ -433,13 +438,13 @@ add_context_to_dict(some_dict)
 
 Troncos defines middleware for some frameworks that does this automatically for you. If your framework is missing in troncos, please create an issue or PR.
 
-#### Manually
+#### Receive manually
 
 ```python
 from troncos.traces.propagation import get_context_from_dict
 from opentelemetry.trace import get_tracer
 
-some_dict = ...
+some_dict = {} 
 context = get_context_from_dict(some_dict)
 
 with get_tracer(__name__).start_as_current_span(

@@ -22,4 +22,4 @@ def traced_session(sess: Session | None = None) -> Generator:
     s = sess or session()
     add_context_to_dict(s.headers)
     yield s
-    del s.headers["traceparent"]
+    s.headers.pop("traceparent", None)

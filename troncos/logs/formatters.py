@@ -74,12 +74,12 @@ class JsonFormatter(logging.Formatter):
     ):
         """
         Builds the formatter.
-        :param fmt: list or tuple containing default fields to include in every entry
-        :param datefmt: date format as a string to be passed to formatTime().
+        param fmt: list or tuple containing default fields to include in every entry
+        param datefmt: date format as a string to be passed to formatTime().
             Defaults to ISO8601 format.
-        :param rename: dictionary with {old_key: new_key} to be renamed in the log
+        param rename: dictionary with {old_key: new_key} to be renamed in the log
             entries. Defaults to {'asctime':'@timestamp'}.
-        :param version: version as for @version field in logging, always included.
+        param version: version as for @version field in logging, always included.
             Defaults to "1".
         """
         super().__init__(*args, **kwargs)
@@ -103,6 +103,7 @@ class JsonFormatter(logging.Formatter):
         ct = self.converter(record.created)  # type: ignore[has-type]
         _format = datefmt or self.default_time_format
 
+        # noinspection PyUnresolvedReferences
         s = ct.strftime(_format)
 
         return s
@@ -196,9 +197,10 @@ class LogfmtFormatter(logging.Formatter):
                 if record_key != "msg":
                     s += f' {expose_key}="{str(field)}"'
                 else:
+                    # noinspection PyBroadException
                     try:
                         msg = record.msg % record.args
-                    except:  # noqa: E722
+                    except Exception:
                         msg = f"{record.msg} % {record.args}"
                     s += f' {expose_key}="{self._escape(msg)}"'
         return s

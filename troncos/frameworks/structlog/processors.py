@@ -7,7 +7,7 @@ except ImportError:
 
 
 def trace_injection_processor(
-    logger: WrappedLogger, log_method: str, event_dict: EventDict
+    _logger: WrappedLogger, _log_method: str, event_dict: EventDict
 ) -> EventDict:
     span = trace.get_current_span()
     if not isinstance(span, trace.NonRecordingSpan):

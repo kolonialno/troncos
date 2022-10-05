@@ -20,4 +20,5 @@ def trace_django_middleware(
         if klass:
             tp = tracer_provider or trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+            # noinspection PyCallingNonCallable
             klass.__call__ = tr.start_as_current_span(m)(klass.__call__)
