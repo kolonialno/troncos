@@ -10,6 +10,8 @@ from opentelemetry.sdk.trace.export import (
     ConsoleSpanExporter,
     SimpleSpanProcessor,
 )
+
+# noinspection PyProtectedMember
 from opentelemetry.util._once import Once
 
 from troncos.traces.dd_exporter import OTLPSpanExporterDD

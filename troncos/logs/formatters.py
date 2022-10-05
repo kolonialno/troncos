@@ -197,9 +197,10 @@ class LogfmtFormatter(logging.Formatter):
                 if record_key != "msg":
                     s += f' {expose_key}="{str(field)}"'
                 else:
+                    # noinspection PyBroadException
                     try:
                         msg = record.msg % record.args
-                    except:  # noqa: E722
+                    except Exception:
                         msg = f"{record.msg} % {record.args}"
                     s += f' {expose_key}="{self._escape(msg)}"'
         return s

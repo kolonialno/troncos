@@ -25,6 +25,7 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
     Gunicorn pre request hook function for tracing
     """
 
+    # noinspection PyBroadException
     try:
         tp = tracer_provider or trace.get_tracer_provider()
         tracer = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
@@ -88,11 +89,12 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
         return None
 
 
-def post_request_trace(worker, req, environ, res):  # type: ignore[no-untyped-def]
+def post_request_trace(worker, _req, _environ, res):  # type: ignore[no-untyped-def]
     """
     Gunicorn post request hook function for tracing
     """
 
+    # noinspection PyBroadException
     try:
         span = getattr(worker, SPAN_ATTR_NAME, None)
         activation = getattr(worker, ACTIVATION_ATTR_NAME, None)
