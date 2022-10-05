@@ -89,7 +89,7 @@ class LoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(
         self, request: Request, call_next: RequestResponseEndpoint
     ) -> Response:
-        req_cli_ip, req_cli_port = request.scope.get("client")
+        req_cli_ip, req_cli_port = request.scope.get("client")  # type: ignore[misc]
         try:
             response: Response = await call_next(request)
 

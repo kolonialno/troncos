@@ -70,7 +70,7 @@ def init_tracing_provider(
     provider the global one. If that is not desired, pass in global_provider=False.
     """
 
-    if not _GLOBAL_SPAN_PROCESSORS:
+    if _GLOBAL_SPAN_PROCESSORS is None:
         raise RuntimeError("Call 'init_tracing_endpoint' before calling this function")
 
     if not attributes.get("service.name"):
