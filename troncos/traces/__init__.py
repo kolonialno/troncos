@@ -23,7 +23,7 @@ _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 _DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
 
 
-def endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
+def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
     host = os.environ.get(host_var)
     if not host:
         return None
