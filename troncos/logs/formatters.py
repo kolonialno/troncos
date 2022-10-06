@@ -64,14 +64,14 @@ class JsonFormatter(logging.Formatter):
     converter = datetime.fromtimestamp  # type: ignore
     default_time_format = "%Y-%m-%dT%H:%M:%S.%f"
 
-    def __init__(  # type: ignore[no-untyped-def]
+    def __init__(
         self,
-        *args,
-        rename=None,
-        version="1",
-        fields=None,
-        **kwargs,
-    ):
+        *args: Any,
+        rename: dict[str, str] | None = None,
+        version: str = "1",
+        fields: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Builds the formatter.
         param fmt: list or tuple containing default fields to include in every entry
@@ -255,7 +255,7 @@ class PrettyFormatter(logging.Formatter):
     }
     _color_reset = "\x1b[0m"
 
-    def __init__(self, fmt: str | None = None, **kwargs: dict) -> None:
+    def __init__(self, fmt: str | None = None, **kwargs: dict[str, Any]) -> None:
         super().__init__(
             fmt or "%(levelname)s %(message)s", **kwargs  # type: ignore[arg-type]
         )

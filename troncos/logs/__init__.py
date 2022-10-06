@@ -4,6 +4,8 @@ from typing import Literal, Tuple
 from troncos.logs.filters import TraceIdFilter
 from troncos.logs.formatters import JsonFormatter, LogfmtFormatter, PrettyFormatter
 
+__all__ = ["JsonFormatter", "LogfmtFormatter", "PrettyFormatter"]
+
 
 def print_loggers(verbose: bool = True) -> None:
     """

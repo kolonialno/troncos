@@ -10,7 +10,7 @@ from troncos.traces.propagation import add_context_to_dict
 
 
 @contextmanager
-def traced_session(sess: Session | None = None) -> Generator:
+def traced_session(sess: Session | None = None) -> Generator[Session, None, None]:
     """
     Creates a requests session that propagates the traceparent forward to the next
     service. Example:

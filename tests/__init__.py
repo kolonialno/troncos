@@ -4,5 +4,9 @@ from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanE
 
 from troncos.traces import _set_span_processors, init_tracing_provider
 
-_set_span_processors([BatchSpanProcessor(InMemorySpanExporter())])
+_set_span_processors(
+    [
+        BatchSpanProcessor(InMemorySpanExporter()),  # type: ignore[no-untyped-call]
+    ]
+)
 init_tracing_provider(attributes={SERVICE_NAME: "test"})
