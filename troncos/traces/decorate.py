@@ -24,6 +24,7 @@ R = TypeVar("R")
 def _trace_function(
     f: Callable[P, R],
     name: str | None = None,
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Callable[P, R]:
@@ -65,6 +66,7 @@ def _trace_function(
 def trace_function(
     *args: Callable[P, R],
     name: str | None = None,
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Callable[P, R]:
@@ -75,6 +77,7 @@ def trace_function(
 def trace_function(
     *args: None,
     name: str | None = None,
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
@@ -84,6 +87,7 @@ def trace_function(
 def trace_function(
     *args: Callable[P, R] | None,
     name: str | None = None,
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
@@ -99,6 +103,8 @@ def trace_function(
     def myfunc2()
         return "This will be traced using a custom provider"
     """
+    if resource:
+        attributes["resource"] = resource
 
     if len(args) > 1:
         raise RuntimeError("Invalid usage of decorator")
@@ -115,7 +121,9 @@ def trace_function(
 
 
 def trace_block(
-    name: str,
+    name: str | None = None,
+    resource: str | None = None,
+    *,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> _GeneratorContextManager[opentelemetry.trace.Span]:
@@ -126,6 +134,9 @@ def trace_block(
     with trace_block(name="my block", attributes={"some": "attribute"}):
         time.sleep(1)
     """
+    if resource:
+        attributes["resource"] = resource
+
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
     tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
     return tr.start_as_current_span(name, attributes=attributes)
@@ -133,6 +144,7 @@ def trace_block(
 
 def trace_class(
     *args: Any,
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Type[TClass] | Callable[[Type[TClass]], Type[TClass]]:
@@ -161,6 +173,9 @@ def trace_class(
     """
 
     def _dec(cls: Type[TClass]) -> Type[TClass]:
+        if resource:
+            attributes["resource"] = resource
+
         for key, value in cls.__dict__.items():
             if key.startswith("_"):
                 continue
@@ -191,6 +206,7 @@ def trace_class(
 
 
 def trace_module(
+    resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> None:
@@ -213,6 +229,8 @@ def trace_module(
 
     # End of module
     """
+    if resource:
+        attributes["resource"] = resource
 
     frame = inspect.stack()[1].frame
     scope = frame.f_locals
