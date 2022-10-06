@@ -85,7 +85,7 @@ def end_http_span(
     *,
     span: Span,
     http_res_status_code: int,
-    http_res_headers: typing.Dict[str, list],
+    http_res_headers: dict[str, list[str]],
 ) -> None:
     """
     Add the response information to the traces span. Note that http_res_headers

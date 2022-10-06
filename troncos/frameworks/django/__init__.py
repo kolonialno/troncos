@@ -3,7 +3,7 @@ from opentelemetry import trace
 from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 try:
-    from django.utils.module_loading import import_string
+    from django.utils.module_loading import import_string  # type: ignore[import]
 except ImportError:
     raise Exception("This feature is only available if 'django' is installed")
 

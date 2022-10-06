@@ -6,7 +6,7 @@ import logging
 from contextlib import _GeneratorContextManager
 from functools import wraps
 from types import FunctionType
-from typing import Any, Callable, Type, TypeVar, cast
+from typing import Any, Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
 
 import opentelemetry.trace
 from opentelemetry.sdk.resources import Attributes
@@ -14,36 +14,40 @@ from opentelemetry.sdk.resources import Attributes
 from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
-TFun = TypeVar("TFun", bound=Callable[..., Any])
+
 TClass = TypeVar("TClass")
+
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 def _trace_function(
-    f: TFun,
+    f: Callable[P, R],
     name: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
-) -> TFun:
-    if asyncio.iscoroutinefunction(f):
+) -> Callable[P, R]:
+    if inspect.iscoroutinefunction(f):
 
         @wraps(f)
-        async def traced_func_async(*args: tuple, **kwargs: dict[str, Any]) -> Any:
+        async def traced_func_async(*args: P.args, **kwargs: P.kwargs) -> R:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
             with tr.start_as_current_span(
                 name or f"{f.__module__}.{f.__qualname__}", attributes=attributes
             ):
-                resolved_future = await f(*args, **kwargs)
-                return resolved_future
+                awaitable_func = cast(Callable[P, Awaitable[R]], f)
+                return await awaitable_func(*args, **kwargs)
 
         if hasattr(f, _TRACE_IGNORE_ATTR):
             return f
 
-        return cast(TFun, traced_func_async)
+        return cast(Callable[P, R], traced_func_async)
+
     else:
 
         @wraps(f)
-        def traced_func(*args: tuple, **kwargs: dict[str, Any]) -> Any:
+        def traced_func(*args: P.args, **kwargs: P.kwargs) -> R:
             tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
             tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
             with tr.start_as_current_span(
@@ -54,15 +58,35 @@ def _trace_function(
         if hasattr(f, _TRACE_IGNORE_ATTR):
             return f
 
-        return cast(TFun, traced_func)
+        return traced_func
 
 
+@overload
 def trace_function(
-    *args: Any,
+    *args: Callable[P, R],
     name: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
-) -> Any:
+) -> Callable[P, R]:
+    ...
+
+
+@overload
+def trace_function(
+    *args: None,
+    name: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+) -> Callable[[Callable[P, R]], Callable[P, R]]:
+    ...
+
+
+def trace_function(
+    *args: Callable[P, R] | None,
+    name: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
     """
     This decorator adds tracing to a function. You can supply a tracer provider, if none
     is supplied, the global tracer provider will be used. Example:
@@ -79,10 +103,12 @@ def trace_function(
     if len(args) > 1:
         raise RuntimeError("Invalid usage of decorator")
     if len(args) == 1 and (callable(args[0]) or asyncio.iscoroutinefunction(args[0])):
-        return _trace_function(args[0], name, attributes, tracer_provider)
+        func = args[0]
+        assert func
+        return _trace_function(func, name, attributes, tracer_provider)
     else:
         # No args
-        def _inner(f: TFun) -> Any:
+        def _inner(f: Callable[P, R]) -> Callable[P, R]:
             return _trace_function(f, name, attributes, tracer_provider)
 
         return _inner
@@ -205,7 +231,7 @@ def trace_module(
         )
 
 
-def trace_ignore(f: TFun) -> TFun:
+def trace_ignore(f: Callable[P, R]) -> Callable[P, R]:
     """
     Decorator to disable automatic tracing of functions.
     See 'trace_module' and 'trace_class'.
