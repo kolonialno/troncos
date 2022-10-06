@@ -28,6 +28,10 @@ def _trace_function(
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Callable[P, R]:
+    attributes = attributes or {}
+    if resource:
+        attributes["resource"] = resource
+
     if inspect.iscoroutinefunction(f):
 
         @wraps(f)
@@ -103,25 +107,22 @@ def trace_function(
     def myfunc2()
         return "This will be traced using a custom provider"
     """
-    if resource:
-        attributes["resource"] = resource
-
     if len(args) > 1:
         raise RuntimeError("Invalid usage of decorator")
     if len(args) == 1 and (callable(args[0]) or asyncio.iscoroutinefunction(args[0])):
         func = args[0]
         assert func
-        return _trace_function(func, name, attributes, tracer_provider)
+        return _trace_function(func, name, resource, attributes, tracer_provider)
     else:
         # No args
         def _inner(f: Callable[P, R]) -> Callable[P, R]:
-            return _trace_function(f, name, attributes, tracer_provider)
+            return _trace_function(f, name, resource, attributes, tracer_provider)
 
         return _inner
 
 
 def trace_block(
-    name: str | None = None,
+    name: str,
     resource: str | None = None,
     *,
     attributes: Attributes | None = None,
@@ -131,9 +132,10 @@ def trace_block(
     Trace using a with statement. You can supply a tracer provider, if none is supplied,
     the global tracer provider will be used. Example:
 
-    with trace_block(name="my block", attributes={"some": "attribute"}):
+    with trace_block("cool.block", "data!", attributes={"some": "attribute"}):
         time.sleep(1)
     """
+    attributes = attributes or {}
     if resource:
         attributes["resource"] = resource
 
@@ -173,9 +175,6 @@ def trace_class(
     """
 
     def _dec(cls: Type[TClass]) -> Type[TClass]:
-        if resource:
-            attributes["resource"] = resource
-
         for key, value in cls.__dict__.items():
             if key.startswith("_"):
                 continue
@@ -191,6 +190,7 @@ def trace_class(
                 _trace_function(
                     value,
                     name=None,
+                    resource=resource,
                     attributes=attributes,
                     tracer_provider=tracer_provider,
                 ),
@@ -229,9 +229,6 @@ def trace_module(
 
     # End of module
     """
-    if resource:
-        attributes["resource"] = resource
-
     frame = inspect.stack()[1].frame
     scope = frame.f_locals
     module_name = scope.get("__name__", "unknown")
@@ -245,7 +242,11 @@ def trace_module(
 
         logging.getLogger(__name__).debug(f"Tracing function {module_name}.{key}")
         scope[key] = _trace_function(
-            value, name=None, attributes=attributes, tracer_provider=tracer_provider
+            value,
+            name=None,
+            resource=resource,
+            attributes=attributes,
+            tracer_provider=tracer_provider,
         )
 
 
