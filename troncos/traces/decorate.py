@@ -25,6 +25,7 @@ def _trace_function(
     f: Callable[P, R],
     name: str | None = None,
     resource: str | None = None,
+    *,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> Callable[P, R]:
@@ -207,6 +208,7 @@ def trace_class(
 
 def trace_module(
     resource: str | None = None,
+    *,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> None:
