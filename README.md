@@ -293,8 +293,8 @@ Trace using a with statement. You can supply a tracer provider, if none is suppl
 ```python
 from troncos.traces.decorate import trace_block
 
-with trace_block(name="my block", attributes={"some": "attribute"}):
-    print("... do something ...")
+with trace_block(name="my.action", resource="some thing", attributes={"some": "attribute"}):
+    print("... do an action to a thing...")
 ```
 
 ### trace_class
