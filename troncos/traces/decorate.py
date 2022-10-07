@@ -124,7 +124,6 @@ def trace_function(
 def trace_block(
     name: str,
     resource: str | None = None,
-    *,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> _GeneratorContextManager[opentelemetry.trace.Span]:
@@ -207,7 +206,6 @@ def trace_class(
 
 def trace_module(
     resource: str | None = None,
-    *,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
 ) -> None:
