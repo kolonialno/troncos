@@ -68,7 +68,8 @@ def _trace_function(
 
 @overload
 def trace_function(
-    *args: Callable[P, R],
+    fn: Callable[P, R],
+    *,
     name: str | None = None,
     resource: str | None = None,
     attributes: Attributes | None = None,
@@ -79,7 +80,8 @@ def trace_function(
 
 @overload
 def trace_function(
-    *args: None,
+    fn: None = None,
+    *,
     name: str | None = None,
     resource: str | None = None,
     attributes: Attributes | None = None,
@@ -89,7 +91,8 @@ def trace_function(
 
 
 def trace_function(
-    *args: Callable[P, R] | None,
+    fn: Callable[P, R] | None = None,
+    *,
     name: str | None = None,
     resource: str | None = None,
     attributes: Attributes | None = None,
@@ -107,12 +110,9 @@ def trace_function(
     def myfunc2()
         return "This will be traced using a custom provider"
     """
-    if len(args) > 1:
-        raise RuntimeError("Invalid usage of decorator")
-    if len(args) == 1 and (callable(args[0]) or asyncio.iscoroutinefunction(args[0])):
-        func = args[0]
-        assert func
-        return _trace_function(func, name, resource, attributes, tracer_provider)
+    if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
+        assert fn
+        return _trace_function(fn, name, resource, attributes, tracer_provider)
     else:
         # No args
         def _inner(f: Callable[P, R]) -> Callable[P, R]:
