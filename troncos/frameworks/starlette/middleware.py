@@ -44,7 +44,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
         span = create_http_span(
             tracer=self._tracer,
             http_req_method=request.method,
-            http_req_url=str(request.url),
+            http_req_url=request.url.path,
             http_req_scheme=request.url.scheme,
             http_req_flavor="".join(
                 str(v) for v in request.scope.get("http_version", [])
