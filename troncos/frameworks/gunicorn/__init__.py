@@ -45,7 +45,7 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
             http_req_client_ip=peer_ip,
             http_req_client_port=peer_port,
             http_req_headers=request_headers,
-            span_name=None,
+            span_name="gunicorn.request",
         )
 
         # This is usually used as a context manager, but we can't do that here

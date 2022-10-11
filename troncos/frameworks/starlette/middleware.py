@@ -27,7 +27,7 @@ class TracingMiddleware(BaseHTTPMiddleware):
         span_name: str | None = None,
     ) -> None:
         super().__init__(app)
-        self._span_name = span_name
+        self._span_name = span_name or "starlette.request"
         self._tracer = tracer_provider.get_tracer(
             OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
         )

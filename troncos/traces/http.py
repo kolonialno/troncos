@@ -46,6 +46,7 @@ def create_http_span(
     """
 
     attr = {
+        "resource": f"{http_req_method} {http_req_url}",
         "http.method": http_req_method,
         "http.url": http_req_url,
         "http.scheme": http_req_scheme,
