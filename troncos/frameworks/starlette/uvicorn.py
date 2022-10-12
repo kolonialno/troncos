@@ -4,7 +4,11 @@ from typing import Optional
 import opentelemetry.trace
 from opentelemetry.trace import TracerProvider
 
-from troncos.frameworks.starlette.middleware import LoggingMiddleware, TracingMiddleware
+from troncos.frameworks.asgi.middleware import (
+    AsgiLoggingMiddleware,
+    AsgiTracingMiddleware,
+)
+from troncos.frameworks.starlette import init_starlette
 from troncos.logs.filters import HttpPathFilter
 
 try:
@@ -29,6 +33,7 @@ class _UvicornErrorFilter(logging.Filter):
 def _init_uvicorn_logging(
     *,
     app: Starlette,
+    logger_name: str,
     log_access_ignored_paths: Optional[list[str]] = None,
 ) -> None:
     """
@@ -73,8 +78,6 @@ def _init_uvicorn_logging(
     [ velodrome.error      ] logging.Logger LEVEL: 40 PROPAGATE:True
     """
 
-    name = getattr(app, "title") if hasattr(app, "title") else "starlette"
-
     # Setup uvicorn by just propagating to root logger
     uvicorn = logging.getLogger("uvicorn")
     uvicorn.propagate = True
@@ -92,19 +95,18 @@ def _init_uvicorn_logging(
     uvicorn_error.addFilter(_UvicornErrorFilter())
 
     # Set up our custom access and error logger
-    app_logger_access = logging.getLogger(f"{name}.access")
+    app_logger_access = logging.getLogger(f"{logger_name}.access")
     app_logger_access.propagate = True
     app_logger_access.addFilter(HttpPathFilter(log_access_ignored_paths))
     app_logger_access.setLevel(logging.INFO)
 
-    app_logger_error = logging.getLogger(f"{name}.error")
+    app_logger_error = logging.getLogger(f"{logger_name}.error")
     app_logger_error.setLevel(logging.ERROR)
 
     # Add our middleware to starlette
     app.add_middleware(
-        LoggingMiddleware,
-        access_logger=app_logger_access,
-        error_logger=app_logger_error,
+        AsgiLoggingMiddleware,
+        logger_name=logger_name,
     )
 
 
@@ -118,11 +120,18 @@ def init_uvicorn_observability(
     Sets up logging and tracing for a starlette app that is run by unicorn.
     """
 
+    init_starlette()
+
+    name = getattr(app, "title") if hasattr(app, "title") else "starlette"
+
     # Setup logging
     _init_uvicorn_logging(
         app=app,
+        logger_name=name,
         log_access_ignored_paths=log_access_ignored_paths,
     )
 
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-    app.add_middleware(TracingMiddleware, tracer_provider=tp)
+    app.add_middleware(
+        AsgiTracingMiddleware, tracer_provider=tp, span_name=f"{name}.request"
+    )
