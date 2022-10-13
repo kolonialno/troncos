@@ -39,6 +39,9 @@ class AsgiTracingMiddleware:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
 
+        # if scope["path"] in self._ignored_paths:
+        #     return await self._app(scope, receive, send)
+
         client_ip, client_port = scope.get("client", ("NO_IP", -1))
 
         request_headers = collections.defaultdict(list)
