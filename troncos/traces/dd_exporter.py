@@ -2,18 +2,18 @@ from typing import Sequence
 
 from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_trace_exporter
 from opentelemetry.exporter.otlp.proto.http import trace_exporter
+from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
+    ExportTraceServiceRequest,
+)
 from opentelemetry.sdk.trace import ReadableSpan
 from opentelemetry.sdk.trace.export import SpanExportResult
 from opentelemetry.sdk.util.instrumentation import (
     InstrumentationInfo,
     InstrumentationScope,
 )
-from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
-    ExportTraceServiceRequest,
-)
 
 
-def fix_span(sdk_span: ReadableSpan):
+def fix_span(sdk_span: ReadableSpan) -> None:
     sdk_span._instrumentation_scope = InstrumentationScope(
         name=sdk_span.name,
         version="0.0.0",
@@ -27,7 +27,9 @@ def fix_span(sdk_span: ReadableSpan):
 
 
 class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter):
-    def _translate_data(self, data: Sequence[ReadableSpan]) -> ExportTraceServiceRequest:
+    def _translate_data(
+        self, data: Sequence[ReadableSpan]
+    ) -> ExportTraceServiceRequest:
         for sdk_span in data:
             fix_span(sdk_span)
         return super()._translate_data(data)

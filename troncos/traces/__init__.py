@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import Iterable, List
+from typing import IO, Iterable, List
 
 import opentelemetry.trace
 from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_trace_exporter
@@ -12,21 +12,24 @@ from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
     SimpleSpanProcessor,
+    SpanExporter,
 )
 
 # noinspection PyProtectedMember
 from opentelemetry.util._once import Once
 
-from troncos.traces.dd_exporter import OTLPHttpSpanExporterDD, OTLPGrpcSpanExporterDD
+from troncos.traces.dd_exporter import OTLPGrpcSpanExporterDD, OTLPHttpSpanExporterDD
 
 _GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
 _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 
 if out_file := os.environ.get("TRACING_DEBUGGING_FILE", None):
-    traces_out = open("traces.json", "w")
+    traces_out: IO[str] = open("traces.json", "w")
 else:
     traces_out = sys.stdout
-_DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter(out=traces_out))
+_DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(
+    ConsoleSpanExporter(out=traces_out)
+)
 
 
 def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
@@ -62,7 +65,7 @@ def init_tracing_endpoints(
 
     if endpoint:
         if exporter_type == "http":
-            otel_exp = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
+            otel_exp: SpanExporter = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         elif exporter_type == "grpc":
             otel_exp = grpc_trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
@@ -74,7 +77,7 @@ def init_tracing_endpoints(
 
     if endpoint_dd:
         if exporter_type == "http":
-            dd_exp = OTLPHttpSpanExporterDD(endpoint=endpoint_dd)
+            dd_exp: SpanExporter = OTLPHttpSpanExporterDD(endpoint=endpoint_dd)
         elif exporter_type == "grpc":
             dd_exp = OTLPGrpcSpanExporterDD(endpoint=endpoint_dd)
         logging.getLogger(__name__).info(
