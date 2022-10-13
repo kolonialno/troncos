@@ -1,6 +1,15 @@
 import typing
 
-from opentelemetry.trace import Span, SpanKind, Status, StatusCode, Tracer
+from opentelemetry.sdk.trace import RandomIdGenerator
+from opentelemetry.trace import (
+    NonRecordingSpan,
+    Span,
+    SpanContext,
+    SpanKind,
+    Status,
+    StatusCode,
+    Tracer,
+)
 
 from troncos.traces.propagation import get_context_from_dict
 
@@ -27,6 +36,8 @@ SAFE_TRACE_HEADERS = frozenset(
     ]
 )
 
+_id_gen = RandomIdGenerator()
+
 
 def create_http_span(
     *,
@@ -39,11 +50,24 @@ def create_http_span(
     http_req_client_port: int,
     http_req_headers: typing.Dict[str, list[str]],
     span_name: str | None,
+    ignored_urls: list[str] | None,
 ) -> Span:
     """
     Create a new span based on an incoming request. Note that http_req_headers
     key have to be lowercase!
     """
+
+    # If we want to ignore this url, create a non-recording span
+    if http_req_url in (ignored_urls or []):
+        return NonRecordingSpan(
+            SpanContext(
+                trace_id=_id_gen.generate_trace_id(),
+                span_id=_id_gen.generate_span_id(),
+                is_remote=False,
+                trace_flags=None,
+                trace_state=None,
+            )
+        )
 
     attr = {
         "resource": f"{http_req_method} {http_req_url}",
@@ -74,11 +98,12 @@ def create_http_span(
     if remote_addr:
         attr["http.client_ip"] = remote_addr[0]
 
+    ctx = get_context_from_dict(http_req_headers)
     return tracer.start_span(
         span_name or f"HTTP {http_req_method}",
         attributes=attr,  # type: ignore[arg-type]
         kind=SpanKind.SERVER,
-        context=get_context_from_dict(http_req_headers),
+        context=ctx,
     )
 
 

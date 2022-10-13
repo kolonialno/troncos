@@ -22,11 +22,13 @@ class AsgiTracingMiddleware:
         app: Any,
         tracer_provider: TracerProvider | None = None,
         span_name: str | None = None,
+        tracing_ignored_urls: list[str] | None = None,
     ) -> None:
         self._app = guarantee_single_callable(app)
         tp = tracer_provider or trace.get_tracer_provider()
         self._tracer = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
         self._span_name = span_name or "asgi.request"
+        self._ignored_urls = tracing_ignored_urls or []
 
     async def __call__(
         self,
@@ -36,6 +38,9 @@ class AsgiTracingMiddleware:
     ) -> Any:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
+
+        # if scope["path"] in self._ignored_paths:
+        #     return await self._app(scope, receive, send)
 
         client_ip, client_port = scope.get("client", ("NO_IP", -1))
 
@@ -53,6 +58,7 @@ class AsgiTracingMiddleware:
             http_req_client_port=client_port,
             http_req_headers=request_headers,
             span_name=self._span_name or scope["method"],
+            ignored_urls=self._ignored_urls,
         )
         scope[TRONCOS_SPAN_ATTR] = span
 
