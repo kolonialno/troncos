@@ -1,8 +1,10 @@
 import logging
 import os
+import sys
 from typing import Iterable, List
 
 import opentelemetry.trace
+from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_trace_exporter
 from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
@@ -15,12 +17,16 @@ from opentelemetry.sdk.trace.export import (
 # noinspection PyProtectedMember
 from opentelemetry.util._once import Once
 
-from troncos.traces.dd_exporter import OTLPSpanExporterDD
+from troncos.traces.dd_exporter import OTLPHttpSpanExporterDD, OTLPGrpcSpanExporterDD
 
 _GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
 _GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
 
-_DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter())
+if out_file := os.environ.get("TRACING_DEBUGGING_FILE", None):
+    traces_out = open("traces.json", "w")
+else:
+    traces_out = sys.stdout
+_DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(ConsoleSpanExporter(out=traces_out))
 
 
 def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
@@ -46,15 +52,19 @@ def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
 
 
 def init_tracing_endpoints(
-    endpoint: str | None, endpoint_dd: str | None = None
+    endpoint: str | None, endpoint_dd: str | None = None, exporter_type: str = "http"
 ) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
     """
+    assert exporter_type in ["http", "grpc"]
     exporters = []
 
     if endpoint:
-        otel_exp = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
+        if exporter_type == "http":
+            otel_exp = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
+        elif exporter_type == "grpc":
+            otel_exp = grpc_trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
             "Reporting OTEL traces with %s(endpoint=%s)",
             type(otel_exp).__name__,
@@ -63,7 +73,10 @@ def init_tracing_endpoints(
         exporters.append(BatchSpanProcessor(otel_exp))
 
     if endpoint_dd:
-        dd_exp = OTLPSpanExporterDD(endpoint=endpoint_dd)
+        if exporter_type == "http":
+            dd_exp = OTLPHttpSpanExporterDD(endpoint=endpoint_dd)
+        elif exporter_type == "grpc":
+            dd_exp = OTLPGrpcSpanExporterDD(endpoint=endpoint_dd)
         logging.getLogger(__name__).info(
             "Reporting DD traces with %s(endpoint=%s)",
             type(dd_exp).__name__,
