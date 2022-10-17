@@ -43,6 +43,7 @@
     * [Receive context](#receive-context)
       * [Using troncos middleware](#using-troncos-middleware)
       * [Receive manually](#receive-manually)
+  * [Trace sampling](#trace-sampling)
 <!-- TOC -->
 
 ## Installation
@@ -454,4 +455,13 @@ with get_tracer(__name__).start_as_current_span(
         context=context,
 ):
     print("... do something ...")
+```
+
+## Trace sampling
+
+You can turn on [trace sampling](https://opentelemetry-python.readthedocs.io/en/latest/sdk/trace.sampling.html) by setting the following environmental variables:
+
+```console
+OTEL_TRACES_SAMPLER=parentbased_traceidratio
+OTEL_TRACES_SAMPLER_ARG=0.05
 ```
