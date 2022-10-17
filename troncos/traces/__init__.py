@@ -4,7 +4,14 @@ import sys
 from typing import IO, Iterable, List
 
 import opentelemetry.trace
-from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_trace_exporter
+
+try:
+    from opentelemetry.exporter.otlp.proto.grpc import (  # type: ignore
+        trace_exporter as grpc_trace_exporter,
+    )
+except ImportError:  # pragma: no cover
+    grpc_trace_exporter = None
+
 from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
@@ -29,6 +36,11 @@ else:
     traces_out = sys.stdout
 _DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(
     ConsoleSpanExporter(out=traces_out)
+)
+
+GRPC_ERROR_MESSAGE = (
+    "Cannot use 'exporter_type==grpc' without "
+    "installing 'opentelemetry-exporter-otlp-proto-grpc'"
 )
 
 
@@ -67,6 +79,8 @@ def init_tracing_endpoints(
         if exporter_type == "http":
             otel_exp: SpanExporter = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         elif exporter_type == "grpc":
+            if not grpc_trace_exporter:
+                raise ValueError(GRPC_ERROR_MESSAGE)
             otel_exp = grpc_trace_exporter.OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
             "Reporting OTEL traces with %s(endpoint=%s)",
@@ -79,6 +93,8 @@ def init_tracing_endpoints(
         if exporter_type == "http":
             dd_exp: SpanExporter = OTLPHttpSpanExporterDD(endpoint=endpoint_dd)
         elif exporter_type == "grpc":
+            if not grpc_trace_exporter:
+                raise ValueError(GRPC_ERROR_MESSAGE)
             dd_exp = OTLPGrpcSpanExporterDD(endpoint=endpoint_dd)
         logging.getLogger(__name__).info(
             "Reporting DD traces with %s(endpoint=%s)",

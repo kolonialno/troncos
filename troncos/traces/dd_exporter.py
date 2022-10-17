@@ -1,6 +1,12 @@
 from typing import Sequence
 
-from opentelemetry.exporter.otlp.proto.grpc import trace_exporter as grpc_trace_exporter
+try:
+    from opentelemetry.exporter.otlp.proto.grpc import (  # type: ignore
+        trace_exporter as grpc_trace_exporter,
+    )
+except ImportError:  # pragma: no cover
+    grpc_trace_exporter = None
+
 from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceRequest,
@@ -26,7 +32,7 @@ def fix_span(sdk_span: ReadableSpan) -> None:
         sdk_span._name = sdk_span.attributes["resource"]  # type: ignore # noqa: E501
 
 
-class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter):
+class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter if grpc_trace_exporter else object):  # type: ignore  # noqa: E501
     def _translate_data(
         self, data: Sequence[ReadableSpan]
     ) -> ExportTraceServiceRequest:
