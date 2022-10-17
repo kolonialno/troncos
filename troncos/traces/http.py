@@ -1,5 +1,3 @@
-import typing
-
 from opentelemetry.sdk.trace import RandomIdGenerator
 from opentelemetry.trace import (
     NonRecordingSpan,
@@ -39,6 +37,12 @@ SAFE_TRACE_HEADERS = frozenset(
 _id_gen = RandomIdGenerator()
 
 
+def header_to_str(header: list[str]) -> str | list[str]:
+    if len(header) == 1:
+        return header[0]
+    return header
+
+
 def create_http_span(
     *,
     tracer: Tracer,
@@ -46,9 +50,11 @@ def create_http_span(
     http_req_url: str,
     http_req_scheme: str,
     http_req_flavor: str,
+    http_req_server_ip: str | None,
+    http_req_server_port: int | None,
     http_req_client_ip: str,
     http_req_client_port: int,
-    http_req_headers: typing.Dict[str, list[str]],
+    http_req_headers: dict[str, list[str]],
     span_name: str | None,
     ignored_urls: list[str] | None,
 ) -> Span:
@@ -69,39 +75,47 @@ def create_http_span(
             )
         )
 
-    attr = {
-        "resource": f"{http_req_method} {http_req_url}",
+    attr: dict[str, None | str | int | list[str]] = {
         "http.method": http_req_method,
-        "http.url": http_req_url,
+        "http.target": http_req_url,
         "http.scheme": http_req_scheme,
         "http.flavor": http_req_flavor,
+        "http.client_ip": http_req_client_ip,
+        "net.host.name": http_req_server_ip,
+        "net.host.port": http_req_server_port,
         "net.peer.ip": http_req_client_ip,
         "net.peer.port": http_req_client_port,
     }
 
     for k, vs in http_req_headers.items():
+        if k == "user-agent":
+            attr["http.user_agent"] = header_to_str(vs)
+            continue
+
+        if k == "content-length":
+            try:
+                c_len = int(header_to_str(vs))  # type: ignore
+                attr["http.request_content_length"] = c_len
+            except Exception:
+                attr["http.request_content_length"] = header_to_str(vs)
+            continue
+
+        if k == "x-forwarded-for":
+            attr["http.client_ip"] = header_to_str(vs)
+            continue
+
+        if k == "host":
+            attr["net.host.name"] = header_to_str(vs)
+            continue
+
         if k in SAFE_TRACE_HEADERS:
             normalized_key = k.replace("-", "_")
-            attr[f"http.request.header.{normalized_key}"] = (
-                vs[0] if len(vs) == 1 else str(vs)
-            )
-
-    host_headers = http_req_headers.get("host", ())
-    if host_headers:
-        attr["http.host"] = host_headers[0]
-
-    user_agent = http_req_headers.get("user-agent", ())
-    if user_agent:
-        attr["http.user_agent"] = user_agent[0]
-
-    remote_addr = http_req_headers.get("x-forwarded-for", ())
-    if remote_addr:
-        attr["http.client_ip"] = remote_addr[0]
+            attr[f"http.request.header.{normalized_key}"] = header_to_str(vs)
 
     ctx = get_context_from_dict(http_req_headers)
     return tracer.start_span(
         span_name or f"HTTP {http_req_method}",
-        attributes=attr,  # type: ignore[arg-type]
+        attributes=attr,  # type: ignore
         kind=SpanKind.SERVER,
         context=ctx,
     )
@@ -118,18 +132,24 @@ def end_http_span(
     key have to be lowercase!
     """
 
-    if res_length := http_res_headers.get("content-length"):
-        span.set_attribute("http.response_content_length", res_length[0])
+    attr: dict[str, str | int | list[str]] = {}
 
     for k, vs in http_res_headers.items():
+        if k == "content-length":
+            try:
+                c_len = int(header_to_str(vs))  # type: ignore
+                attr["http.response_content_length"] = c_len
+            except Exception:
+                attr["http.response_content_length"] = header_to_str(vs)
+            continue
+
         if k in SAFE_TRACE_HEADERS:
             normalized_key = k.replace("-", "_")
-            span.set_attribute(
-                f"http.response.header.{normalized_key}",
-                vs[0] if len(vs) == 1 else str(vs),
-            )
+            attr[f"http.response.header.{normalized_key}"] = header_to_str(vs)
 
-    span.set_attribute("http.status_code", http_res_status_code)
+    attr["http.status_code"] = http_res_status_code
+
+    span.set_attributes(attr)  # type: ignore
 
     if 200 <= http_res_status_code <= 399:
         span.set_status(

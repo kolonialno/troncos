@@ -42,6 +42,8 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
             http_req_url=req.uri,
             http_req_scheme=req.scheme,
             http_req_flavor=".".join(str(v) for v in req.version),
+            http_req_server_ip=None,
+            http_req_server_port=None,
             http_req_client_ip=peer_ip,
             http_req_client_port=peer_port,
             http_req_headers=request_headers,
