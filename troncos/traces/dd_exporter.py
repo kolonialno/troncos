@@ -38,7 +38,7 @@ class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter if grpc_trace_
     ) -> ExportTraceServiceRequest:
         for sdk_span in data:
             fix_span(sdk_span)
-        return super()._translate_data(data)
+        return super()._translate_data(data)  # type: ignore
 
 
 class OTLPHttpSpanExporterDD(trace_exporter.OTLPSpanExporter):
