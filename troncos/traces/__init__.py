@@ -67,7 +67,7 @@ def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
 
 
 def init_tracing_endpoints(
-    endpoint: str | None, endpoint_dd: str | None = None, exporter_type: str = "http"
+    endpoint: str | None, endpoint_dd: str | None = None, exporter_type: Literal["http", "grpc"] = "http"
 ) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
