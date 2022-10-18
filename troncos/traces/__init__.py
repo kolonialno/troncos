@@ -1,7 +1,7 @@
 import logging
 import os
 import sys
-from typing import IO, Iterable, List
+from typing import IO, Iterable, List, Literal
 
 import opentelemetry.trace
 
@@ -67,7 +67,9 @@ def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
 
 
 def init_tracing_endpoints(
-    endpoint: str | None, endpoint_dd: str | None = None, exporter_type: Literal["http", "grpc"] = "http"
+    endpoint: str | None,
+    endpoint_dd: str | None = None,
+    exporter_type: Literal["http", "grpc"] = "http",
 ) -> list[SpanProcessor]:
     """
     Initialize the global span processor.
@@ -131,7 +133,6 @@ def init_tracing_provider(
 
     if global_provider:
         opentelemetry.trace.set_tracer_provider(provider)
-
 
     return provider
 
