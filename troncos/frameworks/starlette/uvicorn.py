@@ -114,6 +114,7 @@ def init_uvicorn_observability(
     *,
     app: Starlette,
     log_access_ignored_paths: Optional[list[str]] = None,
+    tracing_ignored_paths: Optional[list[str]] = None,
     tracer_provider: TracerProvider | None = None,
 ) -> None:
     """
@@ -133,5 +134,8 @@ def init_uvicorn_observability(
 
     tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
     app.add_middleware(
-        AsgiTracingMiddleware, tracer_provider=tp, span_name=f"{name}.request"
+        AsgiTracingMiddleware,
+        tracer_provider=tp,
+        span_name=f"{name}.request",
+        tracing_ignored_urls=tracing_ignored_paths,
     )

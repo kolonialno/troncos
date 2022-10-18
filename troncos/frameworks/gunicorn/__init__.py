@@ -19,7 +19,7 @@ def _get_span_trace_id(span: Span) -> str | None:
 
 
 def pre_request_trace(  # type: ignore[no-untyped-def]
-    worker, req, tracer_provider=None
+    worker, req, tracer_provider=None, ignored_uris=None
 ):
     """
     Gunicorn pre request hook function for tracing
@@ -46,6 +46,7 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
             http_req_client_port=peer_port,
             http_req_headers=request_headers,
             span_name="gunicorn.request",
+            ignored_urls=ignored_uris,
         )
 
         # This is usually used as a context manager, but we can't do that here
