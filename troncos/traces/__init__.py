@@ -132,8 +132,6 @@ def init_tracing_provider(
     if global_provider:
         opentelemetry.trace.set_tracer_provider(provider)
 
-    if os.environ.get("TRACING_DEBUGGING_FILE"):
-        init_tracing_debug(provider)
 
     return provider
 
