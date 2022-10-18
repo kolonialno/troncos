@@ -1,8 +1,12 @@
 import logging
-from typing import Literal, Tuple
+import sys
+from typing import Literal, Tuple, Any
+
+import structlog
 
 from troncos.logs.filters import TraceIdFilter
 from troncos.logs.formatters import JsonFormatter, LogfmtFormatter, PrettyFormatter
+from troncos.logs.processors import StaticValue
 
 __all__ = ["JsonFormatter", "LogfmtFormatter", "PrettyFormatter"]
 
@@ -104,7 +108,10 @@ def print_loggers(verbose: bool = True) -> None:
 def init_logging_basic(
     *,
     level: str | int,
-    formatter: Literal["cli", "logfmt", "json"] | logging.Formatter,
+    formatter: Literal["cli", "logfmt", "json", "structlog-cli"] | logging.Formatter,
+    app_release: str | None = None,
+    environment: str | None = None,
+    app_name: str | None = None,
 ) -> None:
     """
     Setup root logger to handle trace_id in records.
@@ -116,11 +123,37 @@ def init_logging_basic(
         └ FORMATTER troncos.logs.formatters.PrettyFormatter
 
     """
+    _structlog = False
 
     # Create handler
     root_handler = logging.StreamHandler()
     root_handler.setLevel(level)
     root_handler.addFilter(TraceIdFilter())
+
+    if formatter in ["structlog-cli", "structlog-logfmt"]:
+        if formatter == "structlog-cli":
+            renderer = structlog.dev.ConsoleRenderer()
+        elif formatter == "structlog-logfmt":
+            renderer = structlog.processors.LogfmtRenderer()
+        else:
+            raise Exception("Invalid renderer configured")
+
+        configure_structlog(
+            renderer=renderer,
+            release=app_release,
+            environment=environment,
+            app_name=app_name,
+            handler=root_handler,
+        )
+        _structlog = True
+    else:
+        configure_structlog(
+            renderer=structlog.stdlib.render_to_log_kwargs,
+            release=app_release,
+            environment=environment,
+            app_name=app_name,
+            handler=root_handler,
+        )
 
     # Set formatter
     if formatter == "cli":
@@ -129,6 +162,9 @@ def init_logging_basic(
         root_handler.setFormatter(LogfmtFormatter())
     elif formatter == "json":
         root_handler.setFormatter(JsonFormatter())
+    elif _structlog:
+        # Formatter handled by structlog
+        pass
     else:
         root_handler.setFormatter(formatter)
 
@@ -136,3 +172,81 @@ def init_logging_basic(
     root = logging.getLogger()
     root.setLevel(level)
     root.handlers = [root_handler]
+
+
+def configure_structlog(
+    renderer,
+    release: str | None = None,
+    environment: str | None = None,
+    app_name: str | None = None,
+    handler=None,
+):
+
+    # Use ISO-format for all timestamps output by structlog
+    timestamper = structlog.processors.TimeStamper(fmt="ISO")
+
+    # The shared processors are used both for entries originating from the builtin Python logger,
+    # and entries that are created through structlog (`structlog.get_logger()`)
+    shared_processors = [
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        timestamper,
+        structlog.processors.CallsiteParameterAdder(
+            {
+                structlog.processors.CallsiteParameter.FILENAME,
+                structlog.processors.CallsiteParameter.FUNC_NAME,
+                structlog.processors.CallsiteParameter.LINENO,
+            }
+        ),
+    ]
+
+    # Append release string if that has been supplied in instantiation
+    if release:
+        shared_processors.append(StaticValue("release", release))
+
+    # Append environment string if that has been supplied in instantiation
+    if environment:
+        shared_processors.append(StaticValue("environment", environment))
+
+    # Append app name string if that has been supplied in instantiation
+    if app_name:
+        shared_processors.append(StaticValue("app_name", app_name))
+
+    # Processing chain for log entries originating from outside structlog
+    pre_chain = shared_processors + [
+        structlog.stdlib.ExtraAdder(),
+    ]
+
+    # Processing chain for entries originating from structlog (from `structlog.get_logger()`)
+    _processors = shared_processors + [
+        structlog.processors.StackInfoRenderer(),
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        structlog.processors.format_exc_info,
+    ]
+
+    # All entries pass through structlog processors before going to the formatter
+    structlog_processors = _processors + [
+        structlog.stdlib.ProcessorFormatter.wrap_for_formatter
+    ]
+
+    # The formatter needs its own set of processors, ending with the renderer
+    formatter_processors = [
+        structlog.stdlib.ProcessorFormatter.remove_processors_meta,
+        renderer,
+    ]
+
+    # The global configuration for structlog
+    structlog.configure(
+        processors=structlog_processors,
+        logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=structlog.stdlib.BoundLogger,
+        # Caching makes this config immutable
+        cache_logger_on_first_use=True,
+    )
+
+    # Setting the structlog formatter on our handler
+    handler.setFormatter(
+        structlog.stdlib.ProcessorFormatter(
+            foreign_pre_chain=pre_chain, processors=formatter_processors
+        )
+    )
