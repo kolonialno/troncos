@@ -39,11 +39,13 @@ class AsgiTracingMiddleware:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
 
+        server_ip, server_port = scope.get("server", ("NO_IP", -1))
         client_ip, client_port = scope.get("client", ("NO_IP", -1))
 
+        scope_headers: list[tuple[bytes, bytes]] = scope.get("headers", [])
         request_headers = collections.defaultdict(list)
-        for req_k, req_v in scope.get("headers", []):
-            request_headers[req_k.lower()].append(req_v)
+        for req_k, req_v in scope_headers:
+            request_headers[req_k.decode("utf-8")].append(req_v.decode("utf-8"))
 
         span = create_http_span(
             tracer=self._tracer,
@@ -51,6 +53,8 @@ class AsgiTracingMiddleware:
             http_req_url=scope["path"],
             http_req_scheme=scope["type"],
             http_req_flavor=scope["http_version"],
+            http_req_server_ip=server_ip,
+            http_req_server_port=server_port,
             http_req_client_ip=client_ip,
             http_req_client_port=client_port,
             http_req_headers=request_headers,
@@ -65,8 +69,11 @@ class AsgiTracingMiddleware:
             if "status" in message:
                 response[0] = message.get("status")
             if "headers" in message:
-                for res_k, res_v in message.get("headers", []):
-                    response[1][res_k.lower()].append(res_v)  # type: ignore
+                message_headers: list[tuple[bytes, bytes]] = message.get("headers", [])
+                for res_k, res_v in message_headers:
+                    response[1][res_k.decode("utf-8")].append(  # type: ignore
+                        res_v.decode("utf-8")
+                    )
 
             try:
                 await send(message)

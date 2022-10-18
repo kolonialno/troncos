@@ -17,8 +17,8 @@ def _wrap_handle(
     ) -> Coroutine[Any, Any, None]:
         span = scope.get(TRONCOS_SPAN_ATTR)
         if span and hasattr(instance, "path") and "method" in scope:
-            scope[TRONCOS_SPAN_ATTR].set_attribute(
-                "resource", f"{scope.get('method')} {getattr(instance, 'path')}"
+            scope[TRONCOS_SPAN_ATTR].set_attributes(
+                {"http.route": getattr(instance, "path")}
             )
         return fn(instance, scope, receive, send)
 

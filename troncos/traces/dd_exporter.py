@@ -28,8 +28,21 @@ def fix_span(sdk_span: ReadableSpan) -> None:
         name=sdk_span.name,
         version="0.0.0",
     )
-    if "resource" in sdk_span.attributes:  # type: ignore[operator]
-        sdk_span._name = sdk_span.attributes["resource"]  # type: ignore # noqa: E501
+
+    attr: dict[str, str] = sdk_span._attributes  # type: ignore
+
+    # This is a server request span, set resource to something useful
+    if "http.method" in attr:
+        if "http.route" in attr:
+            attr["resource"] = f"{attr['http.method']} {attr['http.route']}"
+        elif "http.target" in attr:
+            attr["resource"] = f"{attr['http.method']} {attr['http.target']}"
+        else:
+            attr["resource"] = f"{attr['http.method']}"
+
+    # Set span name to resource if available
+    if "resource" in attr:
+        sdk_span._name = attr["resource"]
 
 
 class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter if grpc_trace_exporter else object):  # type: ignore  # noqa: E501
