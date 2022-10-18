@@ -19,11 +19,15 @@ tracer = PrintServiceTracer()
 def configure_async_tracer(*args, **kwargs):
     # Patch the asyncio loop
     ddtrace_asyncio_patch()  # type: ignore
-    return base_configure_tracer(*args, context_provider=asyncio_context_provider, **kwargs)
+    return base_configure_tracer(
+        *args, context_provider=asyncio_context_provider, **kwargs
+    )
 
 
 def configure_tracer(*args, **kwargs):
-    return base_configure_tracer(*args, context_provider=DefaultContextProvider(), **kwargs)
+    return base_configure_tracer(
+        *args, context_provider=DefaultContextProvider(), **kwargs
+    )
 
 
 def base_configure_tracer(

@@ -16,7 +16,9 @@ def get_logging_config():
             },
             "key_value": {
                 "()": structlog.stdlib.ProcessorFormatter,
-                "processor": structlog.processors.KeyValueRenderer(key_order=['timestamp', 'level', 'event', 'logger']),
+                "processor": structlog.processors.KeyValueRenderer(
+                    key_order=["timestamp", "level", "event", "logger"]
+                ),
             },
         },
         "handlers": {
@@ -45,6 +47,6 @@ def get_logging_config():
                 "handlers": ["console", "flat_line_file", "json_file"],
                 "level": "INFO",
             },
-        }
+        },
     }
     return LOGGING

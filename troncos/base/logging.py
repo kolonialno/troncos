@@ -13,11 +13,15 @@ def rename_event_key(_, __, event):
     return event
 
 
-def add_module_and_lineno(logger: structlog.BoundLogger, name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
-    frame, module_str = structlog._frames._find_first_app_frame_and_name(additional_ignores=[__name__])
+def add_module_and_lineno(
+    logger: structlog.BoundLogger, name: str, event_dict: Dict[str, Any]
+) -> Dict[str, Any]:
+    frame, module_str = structlog._frames._find_first_app_frame_and_name(
+        additional_ignores=[__name__]
+    )
     # frame has filename, caller and line number
-    event_dict['module'] = module_str
-    event_dict['lineno'] = frame.f_lineno
+    event_dict["module"] = module_str
+    event_dict["lineno"] = frame.f_lineno
     return event_dict
 
 
@@ -25,14 +29,20 @@ def add_app_info(environment, release):
     """
     Bind current environment and release info to logger
     """
-    def inner(logger: structlog.BoundLogger, name: str, event_dict: Dict[str, Any]) -> Dict[str, Any]:
-        event_dict['environment'] = environment
-        event_dict['release'] = release
+
+    def inner(
+        logger: structlog.BoundLogger, name: str, event_dict: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        event_dict["environment"] = environment
+        event_dict["release"] = release
         return event_dict
+
     return inner
 
 
-def configure_logging(environment, release, log_level, log_format="json", enable_tracer=True) -> None:
+def configure_logging(
+    environment, release, log_level, log_format="json", enable_tracer=True
+) -> None:
     """
     Configure logging globally for use in applications.
 
@@ -62,67 +72,73 @@ def configure_logging(environment, release, log_level, log_format="json", enable
         # through to log output.
         structlog.stdlib.ExtraAdder(),
         timestamper,
-        app_info_adder
+        app_info_adder,
     ]
 
     common_root_processors = [
         structlog.stdlib.ProcessorFormatter.remove_processors_meta,
     ]
 
-    dictConfig({
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "plaintext": {
-                "()": structlog.stdlib.ProcessorFormatter,
-                "processors": [
-                    *common_root_processors,
-                    structlog.dev.ConsoleRenderer(colors=False),
-                ],
-                "foreign_pre_chain": pre_chain,
+    dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "plaintext": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processors": [
+                        *common_root_processors,
+                        structlog.dev.ConsoleRenderer(colors=False),
+                    ],
+                    "foreign_pre_chain": pre_chain,
+                },
+                "text": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processors": [
+                        *common_root_processors,
+                        structlog.dev.ConsoleRenderer(
+                            colors=True,
+                            exception_formatter=structlog.dev.rich_traceback,
+                        ),
+                    ],
+                    "foreign_pre_chain": pre_chain,
+                },
+                "logfmt": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processors": [
+                        *common_root_processors,
+                        structlog.processors.LogfmtRenderer(),
+                    ],
+                    "foreign_pre_chain": pre_chain,
+                },
+                "json": {
+                    "()": structlog.stdlib.ProcessorFormatter,
+                    "processors": common_root_processors
+                    + [
+                        # JSON-logs ingested by logging tools need to use another key for the message, so we reformat that
+                        # here
+                        rename_event_key,
+                        structlog.processors.JSONRenderer(),
+                    ],
+                    "foreign_pre_chain": pre_chain,
+                },
             },
-            "text": {
-                "()": structlog.stdlib.ProcessorFormatter,
-                "processors": [
-                    *common_root_processors,
-                    structlog.dev.ConsoleRenderer(colors=True, exception_formatter=structlog.dev.rich_traceback),
-                ],
-                "foreign_pre_chain": pre_chain,
+            "handlers": {
+                "default": {
+                    "level": log_level,
+                    "class": "logging.StreamHandler",
+                    "formatter": log_format,
+                },
             },
-            "logfmt": {
-                "()": structlog.stdlib.ProcessorFormatter,
-                "processors": [
-                    *common_root_processors,
-                    structlog.processors.LogfmtRenderer(),
-                ],
-                "foreign_pre_chain": pre_chain,
-            },
-            "json": {
-                "()": structlog.stdlib.ProcessorFormatter,
-                "processors": common_root_processors + [
-                    # JSON-logs ingested by logging tools need to use another key for the message, so we reformat that
-                    # here
-                    rename_event_key,
-                    structlog.processors.JSONRenderer()
-                ],
-                "foreign_pre_chain": pre_chain,
-            },
-        },
-        "handlers": {
-            "default": {
-                "level": log_level,
-                "class": "logging.StreamHandler",
-                "formatter": log_format,
-            },
-        },
-        "loggers": {
-            "": {
-                "handlers": ["default"],
-                "level": log_level,
-                "propagate": True,
+            "loggers": {
+                "": {
+                    "handlers": ["default"],
+                    "level": log_level,
+                    "propagate": True,
+                },
             },
         }
-    })
+    )
 
     processors = [
         structlog.threadlocal.merge_threadlocal,
@@ -138,17 +154,17 @@ def configure_logging(environment, release, log_level, log_format="json", enable
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-
     ]
 
     if enable_tracer:
         # If we're not enabling the tracer for logging, we'll skip its event processor as well
         from .tracing import tracer_injection
+
         processors.insert(1, tracer_injection)
 
     structlog.configure(
         processors=processors,
         context_class=structlog.threadlocal.wrap_dict(dict),
         logger_factory=structlog.stdlib.LoggerFactory(),
-        cache_logger_on_first_use=True
+        cache_logger_on_first_use=True,
     )
