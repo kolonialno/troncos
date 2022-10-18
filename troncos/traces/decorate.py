@@ -6,7 +6,7 @@ import logging
 from contextlib import _GeneratorContextManager
 from functools import wraps
 from types import FunctionType
-from typing import Any, Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
+from typing import Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
 
 import opentelemetry.trace
 from opentelemetry.sdk.resources import Attributes
@@ -123,6 +123,7 @@ def trace_function(
 
 def trace_block(
     name: str,
+    *,
     resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
@@ -143,8 +144,31 @@ def trace_block(
     return tr.start_as_current_span(name, attributes=attributes)
 
 
+@overload
 def trace_class(
-    *args: Any,
+    klass: None = None,
+    *,
+    resource: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+) -> Callable[[Type[TClass]], Type[TClass]]:
+    ...
+
+
+@overload
+def trace_class(
+    klass: Type[TClass],
+    *,
+    resource: str | None = None,
+    attributes: Attributes | None = None,
+    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+) -> Type[TClass]:
+    ...
+
+
+def trace_class(
+    klass: Type[TClass] | None = None,
+    *,
     resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
@@ -196,15 +220,14 @@ def trace_class(
             )
         return cls
 
-    if len(args) > 1:
-        raise RuntimeError("Invalid usage of decorator")
-    if len(args) == 1:
-        return _dec(args[0])
+    if klass:
+        return _dec(klass)
     else:
         return _dec
 
 
 def trace_module(
+    *,
     resource: str | None = None,
     attributes: Attributes | None = None,
     tracer_provider: opentelemetry.trace.TracerProvider | None = None,
