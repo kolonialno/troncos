@@ -27,6 +27,7 @@
     * [Plain](#plain)
     * [Starlette with uvicorn](#starlette-with-uvicorn)
     * [Django with gunicorn](#django-with-gunicorn)
+    * [Using the grpc exporter](#using-the-grpc-exporter)
   * [Logging](#logging)
     * [Structlog](#structlog)
   * [Tracing](#tracing)
@@ -81,6 +82,7 @@ init_logging_basic(
 
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+    exporter_type="http",  # Can also be grpc
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -111,6 +113,7 @@ init_logging_basic(
 
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+    exporter_type="http",  # Can also be grpc
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
@@ -144,6 +147,7 @@ from troncos.traces import init_tracing_basic, http_endpoint_from_env
 def post_fork(server, worker):
     init_tracing_basic(
         endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+        exporter_type="http",  # Can also be grpc
         attributes={
             "pid": worker.pid,
             "environment": environ.get("ENVIRONMENT", "localdev"),
@@ -160,7 +164,7 @@ def post_fork(server, worker):
 
 
 def pre_request(worker, req):
-    pre_request_trace(worker, req)
+    pre_request_trace(worker, req, ignored_uris=["/health/"])
 
 
 def post_request(worker, req, environ, resp):
@@ -212,6 +216,32 @@ LOGGING = {
         },
     },
 }
+```
+
+### Using the grpc exporter
+
+Using `grpc` instead of `http` gives you significant performance gains. To use `grpc` you first have to install the exporter in your project:
+
+```console
+$ poetry add opentelemetry-exporter-otlp-proto-grpc
+```
+
+... and then choose it when you initialize tracing:
+
+<!--pytest.mark.skip-->
+
+```python
+from os import environ
+from troncos.traces import init_tracing_basic, http_endpoint_from_env
+
+init_tracing_basic(
+    endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+    exporter_type="http",  # Can also be grpc
+    attributes={
+        "environment": environ.get("ENVIRONMENT", "localdev"),
+        "service.name": "myservice",
+    }
+)
 ```
 
 ## Logging

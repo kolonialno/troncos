@@ -154,6 +154,7 @@ def init_tracing_debug(
 def init_tracing_basic(
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
+    exporter_type: Literal["http", "grpc"] = "http",
     attributes: Attributes | None = None,
     debug: bool = False,
 ) -> TracerProvider:
@@ -161,7 +162,7 @@ def init_tracing_basic(
     Setup rudimentary tracing.
     """
 
-    init_tracing_endpoints(endpoint, endpoint_dd)
+    init_tracing_endpoints(endpoint, endpoint_dd, exporter_type=exporter_type)
     global_tracer = init_tracing_provider(attributes or {}, global_provider=True)
     if debug:
         init_tracing_debug(global_tracer)
