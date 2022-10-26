@@ -4,15 +4,6 @@ import sys
 from typing import IO, Iterable, List, Literal
 
 import opentelemetry.trace
-
-try:
-    from opentelemetry.exporter.otlp.proto.grpc import (  # type: ignore
-        trace_exporter as grpc_trace_exporter,
-    )
-except ImportError:  # pragma: no cover
-    grpc_trace_exporter = None
-
-from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.sdk.resources import Attributes, Resource
 from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (
@@ -75,21 +66,27 @@ def init_tracing_endpoints(
     Initialize the global span processor.
     """
     assert exporter_type in ["http", "grpc"]
-    exporters = []
+    exporters: list[SpanProcessor] = []
+
+    if exporter_type == "http":
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+            OTLPSpanExporter,
+        )
+    elif exporter_type == "grpc":
+        from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+            OTLPSpanExporter,
+        )
+    else:
+        raise ValueError(f"Exporter type must be http or grpc, got {exporter_type}")
 
     if endpoint:
-        if exporter_type == "http":
-            otel_exp: SpanExporter = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
-        elif exporter_type == "grpc":
-            if not grpc_trace_exporter:
-                raise ValueError(GRPC_ERROR_MESSAGE)
-            otel_exp = grpc_trace_exporter.OTLPSpanExporter(endpoint=endpoint)
+        otel_exporter: SpanExporter = OTLPSpanExporter(endpoint=endpoint)
         logging.getLogger(__name__).info(
             "Reporting OTEL traces with %s(endpoint=%s)",
-            type(otel_exp).__name__,
+            type(otel_exporter).__name__,
             endpoint,
         )
-        exporters.append(BatchSpanProcessor(otel_exp))
+        exporters.append(BatchSpanProcessor(otel_exporter))
 
     if endpoint_dd:
         if exporter_type == "http":

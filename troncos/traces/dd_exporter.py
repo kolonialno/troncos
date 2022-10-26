@@ -1,13 +1,5 @@
 from typing import Sequence
 
-try:
-    from opentelemetry.exporter.otlp.proto.grpc import (  # type: ignore
-        trace_exporter as grpc_trace_exporter,
-    )
-except ImportError:  # pragma: no cover
-    grpc_trace_exporter = None
-
-from opentelemetry.exporter.otlp.proto.http import trace_exporter
 from opentelemetry.proto.collector.trace.v1.trace_service_pb2 import (
     ExportTraceServiceRequest,
 )
@@ -45,17 +37,32 @@ def fix_span(sdk_span: ReadableSpan) -> None:
         sdk_span._name = attr["resource"]
 
 
-class OTLPGrpcSpanExporterDD(grpc_trace_exporter.OTLPSpanExporter if grpc_trace_exporter else object):  # type: ignore  # noqa: E501
-    def _translate_data(
-        self, data: Sequence[ReadableSpan]
-    ) -> ExportTraceServiceRequest:
-        for sdk_span in data:
-            fix_span(sdk_span)
-        return super()._translate_data(data)  # type: ignore
+try:
+    from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
+        OTLPSpanExporter as GRPCSpanExporter,
+    )
 
+    class OTLPGrpcSpanExporterDD(GRPCSpanExporter):
+        def _translate_data(
+            self, data: Sequence[ReadableSpan]
+        ) -> ExportTraceServiceRequest:
+            for sdk_span in data:
+                fix_span(sdk_span)
+            return super()._translate_data(data)
 
-class OTLPHttpSpanExporterDD(trace_exporter.OTLPSpanExporter):
-    def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
-        for sdk_span in spans:
-            fix_span(sdk_span)
-        return super().export(spans)
+except ImportError:  # pragma: no cover
+    pass
+
+try:
+    from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+        OTLPSpanExporter as HTTPSpanExporter,
+    )
+
+    class OTLPHttpSpanExporterDD(HTTPSpanExporter):
+        def export(self, spans: Sequence[ReadableSpan]) -> SpanExportResult:
+            for sdk_span in spans:
+                fix_span(sdk_span)
+            return super().export(spans)
+
+except ImportError:
+    pass

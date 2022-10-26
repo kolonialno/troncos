@@ -16,12 +16,18 @@ keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-opentelemetry-propagator-b3 = "^1.12.0"
-opentelemetry-propagator-jaeger = "^1.12.0"
-opentelemetry-exporter-otlp-proto-http = "^1.13.0"
 backoff = ">=1.0,<2.0"
 # Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
+opentelemetry-exporter-otlp-proto-http = {version = "^1.13.0", optional = true}
 opentelemetry-exporter-otlp-proto-grpc = {version = "^1.13.0", optional = true}
+opentelemetry-propagator-b3 = {version = " ^1.12.0", optional = true}
+opentelemetry-propagator-jaeger = {version = "^1.12.0", optional = true}
+
+[tool.poetry.extras]
+grpc = ["opentelemetry-exporter-otlp-proto-http"]
+http = ["opentelemetry-exporter-otlp-proto-grpc"]
+b3 = ["opentelemetry-propagator-b3"]
+jaeger = ["opentelemetry-propagator-jaeger"]
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.10.1"
