@@ -497,3 +497,4 @@ You can turn on [trace sampling](https://opentelemetry-python.readthedocs.io/en/
 ```console
 OTEL_TRACES_SAMPLER=parentbased_traceidratio
 OTEL_TRACES_SAMPLER_ARG=0.05
+```
