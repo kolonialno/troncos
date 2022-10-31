@@ -1,9 +1,48 @@
+"""
+The processors are used by Structlog to process incoming log entries, a bit like how the stdlib
+logging uses logging filters. This is currently implemented alongside the filters to allow for
+parallel feature parity while we finish the current troncos adoption.
+"""
+
+
 import opentelemetry.trace as trace
 
 try:
     from structlog.types import EventDict, WrappedLogger
 except ImportError:
     raise Exception("This feature is only available if 'structlog' is installed")
+
+
+class StaticValue:
+    """
+    Annotating log entries with values that are not subject to change after logger instantiation
+    (i.e. version number or environment)
+
+    :param key: The name of the variable
+    :param value: The value of the variable
+
+    Example:
+        init_logging_structlog(
+            ...,
+            extra_processors=[
+                StaticValue("process_start_time", str(datetime.now())),
+                StaticValue("foo", "bar")
+            ]
+        )
+
+        Would add the following data to the log entries,
+            process_start_time=2022-10-31 14:27:11.081182 foo=bar
+    """
+
+    def __init__(self, key: str, value: str) -> None:
+        self.key = key
+        self.value = value
+
+    def __call__(
+        self, _logger: WrappedLogger, method: str, event_dict: EventDict
+    ) -> EventDict:
+        event_dict[self.key] = self.value
+        return event_dict
 
 
 def trace_injection_processor(
