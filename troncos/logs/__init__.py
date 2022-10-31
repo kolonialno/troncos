@@ -116,8 +116,6 @@ def init_logging_basic(
         └ FORMATTER troncos.logs.formatters.PrettyFormatter
 
     """
-    _structlog = False
-
     # Create handler
     root_handler = logging.StreamHandler()
     root_handler.setLevel(level)

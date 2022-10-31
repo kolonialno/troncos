@@ -1,5 +1,5 @@
 import logging
-from typing import Literal, Iterable, Callable
+from typing import Iterable, Literal
 
 from structlog.contextvars import merge_contextvars
 
@@ -9,11 +9,11 @@ try:
 except ImportError:
     raise Exception("This feature is only available if 'structlog' is installed")
 
-from troncos.logs import init_logging_basic
 from troncos.frameworks.structlog.processors import (
     StaticValue,
     trace_injection_processor,
 )
+from troncos.logs import init_logging_basic
 
 
 def init_logging_structlog(
@@ -27,21 +27,26 @@ def init_logging_structlog(
     """
     Setting up Python logging with Structlog support
 
-    :param level: Log level for logger and handler (minimum level for entries to be picked
-        up/printed)
-    :param formatter: The name of the formatter to use for log entries (must be defined in inside
-        this function)
-    :param app_release: Optional string representing release version (i.e. "v22.1" or "0.0.1")
-    :param environment: Optional string representing the environment (i.e. "prod" or "dev")
-    :param app_name: Optional string with the name of the app/service (i.e. "trex" or "interno")
+    :param level: Log level for logger and handler (minimum level for entries to be
+        picked up/printed)
+    :param formatter: The name of the formatter to use for log entries (must be defined
+        inside this function)
+    :param app_release: Optional string representing release version (i.e. "v22.1" or
+        "0.0.1")
+    :param environment: Optional string representing the environment (i.e. "prod" or
+        "dev")
+    :param app_name: Optional string with the name of the app/service (i.e. "trex" or
+        "interno")
     :param extra_processors: Optional list of structlog processors to add to the chain
     """
     logger = init_logging_basic(
         level=level,
         formatter="structlog",
     )
+    renderer: Processor
 
-    # The renderer is the last processor in the chain of structlog processors, acts as formatter
+    # The renderer is the last processor in the chain of structlog processors, acts as
+    # formatter
     if formatter == "cli":
         renderer = structlog.dev.ConsoleRenderer()
     elif formatter == "logfmt":
@@ -60,7 +65,7 @@ def init_logging_structlog(
 
 
 def configure_structlog(
-    renderer: Callable,
+    renderer: Processor,
     handler: logging.Handler,
     release: str | None = None,
     environment: str | None = None,
@@ -69,20 +74,25 @@ def configure_structlog(
 ) -> None:
     """
 
-    :param renderer: Function which will be last in processor chain, will be used as formatter
+    :param renderer: Function which will be last in processor chain, will be used as
+        formatter
     :param handler: The logging.Handler object used for the root logger
-    :param release: Optional string representing release version (i.e. "v22.1" or "0.0.1")
-    :param environment: Optional string representing the environment (i.e. "prod" or "dev")
-    :param app_name: Optional string with the name of the app/service (i.e. "trex" or "interno")
+    :param release: Optional string representing release version (i.e. "v22.1" or
+        "0.0.1")
+    :param environment: Optional string representing the environment (i.e. "prod" or
+        "dev")
+    :param app_name: Optional string with the name of the app/service (i.e. "trex" or
+        "interno")
     :param extra_processors: Optional list of structlog processors to add to the chain
     """
 
     # Use ISO-format for all timestamps output by structlog
     timestamper = structlog.processors.TimeStamper(fmt="ISO")
 
-    # The shared processors are used both for entries originating from the builtin Python logger,
-    # and entries that are created through structlog (`structlog.get_logger()`)
-    shared_processors = [
+    # The shared processors are used both for entries originating from the builtin
+    # Python logger, and entries that are created through structlog (
+    # `structlog.get_logger()`)
+    shared_processors: list[Processor] = [
         merge_contextvars,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
@@ -117,7 +127,8 @@ def configure_structlog(
         structlog.stdlib.ExtraAdder(),
     ]
 
-    # Processing chain for entries originating from structlog (from `structlog.get_logger()`)
+    # Processing chain for entries originating from structlog (from
+    # `structlog.get_logger()`)
     _processors = shared_processors + [
         structlog.processors.StackInfoRenderer(),
         structlog.stdlib.PositionalArgumentsFormatter(),
@@ -125,7 +136,7 @@ def configure_structlog(
     ]
 
     # All entries pass through structlog processors before going to the formatter
-    structlog_processors = _processors + [  # type: ignore
+    structlog_processors = _processors + [
         structlog.stdlib.ProcessorFormatter.wrap_for_formatter
     ]
 
@@ -139,7 +150,6 @@ def configure_structlog(
     structlog.configure(
         processors=structlog_processors,
         logger_factory=structlog.stdlib.LoggerFactory(),
-        wrapper_class=structlog.stdlib.BoundLogger,  # type: ignore
         # Caching makes this config immutable
         cache_logger_on_first_use=True,
     )
