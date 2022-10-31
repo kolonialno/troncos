@@ -33,10 +33,12 @@ pytest_codeblocks = "^0.16.1"
 fastapi = "^0.85.0"
 opentelemetry-instrumentation-requests = "^0.34b0"
 requests = "^2.28.1"
-structlog = "^22.1.0"
 pytest-cov = "^4.0.0"
 types-requests = "^2.28.11.2"
 pytest-asyncio = "^0.19.0"
+
+[tool.poetry.extras]
+structlog = ["^22.1.0"]
 
 [tool.black]
 target-version = ['py310']
