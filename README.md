@@ -244,10 +244,9 @@ init_tracing_basic(
         "service.name": "myservice",
     }
 )
-
-Note that you need to change the `TRACE_PORT` depending on your choice of protocol http/grpc.
-
 ```
+
+> **Note**: You need to change the `TRACE_PORT` depending on your choice of protocol http/grpc.
 
 ## Logging
 
