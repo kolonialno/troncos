@@ -104,8 +104,8 @@ def print_loggers(verbose: bool = True) -> None:
 def init_logging_basic(
     *,
     level: str | int,
-    formatter: Literal["cli", "logfmt", "json"] | logging.Formatter,
-) -> None:
+    formatter: Literal["cli", "logfmt", "json", "structlog"] | logging.Formatter,
+) -> logging.Logger:
     """
     Setup root logger to handle trace_id in records.
 
@@ -116,7 +116,6 @@ def init_logging_basic(
         └ FORMATTER troncos.logs.formatters.PrettyFormatter
 
     """
-
     # Create handler
     root_handler = logging.StreamHandler()
     root_handler.setLevel(level)
@@ -129,6 +128,9 @@ def init_logging_basic(
         root_handler.setFormatter(LogfmtFormatter())
     elif formatter == "json":
         root_handler.setFormatter(JsonFormatter())
+    elif formatter == "structlog":
+        # Formatter handled by structlog
+        pass
     else:
         root_handler.setFormatter(formatter)
 
@@ -136,3 +138,5 @@ def init_logging_basic(
     root = logging.getLogger()
     root.setLevel(level)
     root.handlers = [root_handler]
+
+    return root
