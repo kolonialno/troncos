@@ -133,6 +133,8 @@ init_uvicorn_observability(
 )
 ```
 
+> **Note**: If you are running starlette but not calling `init_uvicorn_observability`, you should call `init_starlette` to patch the routing api.
+
 ### Django with gunicorn
 
 To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
@@ -220,7 +222,7 @@ LOGGING = {
 
 ### Using the grpc exporter
 
-Using `grpc` instead of `http` gives you significant performance gains. To use `grpc` you first have to install the exporter in your project:
+Using `grpc` instead of `http` gives you significant performance gains. If you are running a critical service with high load in production, we recommend using `grpc`. To enable `grpc` install the exporter in your project:
 
 ```console
 $ poetry add opentelemetry-exporter-otlp-proto-grpc
@@ -242,10 +244,9 @@ init_tracing_basic(
         "service.name": "myservice",
     }
 )
-
-Note that you need to change the `TRACE_PORT` depending on your choice of protocol http/grpc.
-
 ```
+
+> **Note**: You need to change the `TRACE_PORT` depending on your choice of protocol http/grpc.
 
 ## Logging
 
