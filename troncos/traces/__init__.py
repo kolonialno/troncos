@@ -43,6 +43,8 @@ GRPC_ERROR_MESSAGE = (
     "installing 'opentelemetry-exporter-otlp-proto-grpc'"
 )
 
+logger = logging.getLogger(__name__)
+
 
 def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
     host = os.environ.get(host_var)
@@ -118,7 +120,10 @@ def init_tracing_provider(
     """
 
     if _GLOBAL_SPAN_PROCESSORS is None:
-        raise RuntimeError("Call 'init_tracing_endpoint' before calling this function")
+        logger.warning(
+            "Span processors have not been initialized with 'init_tracing_endpoint'. "
+            "Your tracing spans will not be exported!"
+        )
 
     if not attributes.get("service.name"):
         raise ValueError("Tracer must have 'service.name' in attributes")
@@ -128,7 +133,7 @@ def init_tracing_provider(
 
     resource = Resource.create(attributes)
     provider = TracerProvider(resource=resource)
-    for span_processor in _GLOBAL_SPAN_PROCESSORS:
+    for span_processor in _GLOBAL_SPAN_PROCESSORS or []:
         provider.add_span_processor(span_processor)
 
     if global_provider:
