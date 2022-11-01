@@ -235,13 +235,16 @@ from os import environ
 from troncos.traces import init_tracing_basic, http_endpoint_from_env
 
 init_tracing_basic(
-    endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-    exporter_type="http",  # Can also be grpc
+    endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT"),
+    exporter_type="grpc",
     attributes={
         "environment": environ.get("ENVIRONMENT", "localdev"),
         "service.name": "myservice",
     }
 )
+
+Note that you need to change the `TRACE_PORT` depending on your choice of protocol http/grpc.
+
 ```
 
 ## Logging
