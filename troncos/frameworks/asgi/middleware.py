@@ -1,5 +1,6 @@
 import collections
 import logging
+import time
 from typing import Any, Awaitable, Callable
 
 from opentelemetry import trace
@@ -123,6 +124,7 @@ class AsgiLoggingMiddleware:
         path = scope.get("path")
         http_version = scope.get("http_version")
         status = [0]
+        start_time = time.time()
 
         async def wrapped_send(message: dict[str, Any]) -> None:
             if "status" in message:
@@ -143,6 +145,7 @@ class AsgiLoggingMiddleware:
                         "http_path": path,
                         "http_version": http_version,
                         "http_status_code": status[0],
+                        "duration": f"{time.time()-start_time:.6f}",
                     },
                 )
 
@@ -158,6 +161,7 @@ class AsgiLoggingMiddleware:
                     "http_path": path,
                     "http_version": http_version,
                     "http_status_code": 500,
+                    "duration": f"{time.time()-start_time:.6f}",
                 },
             )
             raise e
