@@ -81,11 +81,14 @@ def create_http_span(
         "http.scheme": http_req_scheme,
         "http.flavor": http_req_flavor,
         "http.client_ip": http_req_client_ip,
-        "net.host.name": http_req_server_ip,
-        "net.host.port": http_req_server_port,
         "net.peer.ip": http_req_client_ip,
         "net.peer.port": http_req_client_port,
     }
+
+    if http_req_server_ip:
+        attr["net.host.name"] = http_req_server_ip
+    if http_req_server_port:
+        attr["net.host.port"] = http_req_server_port
 
     for k, vs in http_req_headers.items():
         if k == "user-agent":
