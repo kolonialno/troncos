@@ -173,6 +173,7 @@ class LogfmtFormatter(logging.Formatter):
                 ("http_path", "http_path"),
                 ("http_version", "http_version"),
                 ("http_status_code", "http_status_code"),
+                ("duration", "duration"),
                 ("trace_id", "trace_id"),
                 ("span_id", "span_id"),
                 ("msg", "msg"),
@@ -276,12 +277,14 @@ class PrettyFormatter(logging.Formatter):
             and hasattr(rc, "http_method")
             and hasattr(rc, "http_path")
             and hasattr(rc, "http_status_code")
+            and hasattr(rc, "duration")
         ):
             rc.message = f"{rc.http_client_addr}"  # type: ignore[attr-defined]
             rc.message += " - "
             rc.message += f"{rc.http_method}"  # type: ignore[attr-defined]
             rc.message += f" {rc.http_path}"  # type: ignore[attr-defined]
             rc.message += f" {rc.http_status_code}"  # type: ignore[attr-defined]
+            rc.message += f" {rc.duration}"  # type: ignore[attr-defined]
         if hasattr(rc, "trace_id"):
             rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
 
