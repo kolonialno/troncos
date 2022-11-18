@@ -30,6 +30,7 @@
     * [Using the grpc exporter](#using-the-grpc-exporter)
   * [Logging](#logging)
     * [Structlog](#structlog)
+  * [Profiling](#profiling)
   * [Tracing](#tracing)
     * [trace_function](#trace_function)
     * [trace_block](#trace_block)
