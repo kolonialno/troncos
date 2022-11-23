@@ -31,6 +31,8 @@
   * [Logging](#logging)
     * [Structlog](#structlog)
   * [Profiling](#profiling)
+    * [Setup](#setup)
+    * [Shipping data to Phlare](#shipping-data-to-phlare)
   * [Tracing](#tracing)
     * [trace_function](#trace_function)
     * [trace_block](#trace_block)
@@ -299,6 +301,8 @@ structlog.configure(
 
 ## Profiling
 
+### Setup
+
 You can enable continuous profiling by installing the extra feature `profiling`:
 
 ```toml
@@ -306,7 +310,9 @@ You can enable continuous profiling by installing the extra feature `profiling`:
 troncos = {version="^?.?", extras = ["profiling"]}
 ```
 
-Then simply create an endpoint that returns the profile (using flask here as an example):
+> **Note**: Python 3.11 is [not yet supported](https://github.com/DataDog/dd-trace-py/issues/4149)!
+
+Then simply add a `/debug/pprof` endpoint that returns the profile (using flask here as an example):
 
 <!--pytest.mark.skip-->
 
@@ -331,6 +337,16 @@ $ pprof -http :6060 "http://localhost:8080/debug/pprof"
 ```
 
 > **Note**: You will get an empty string from `profiler.python_pprof()` until the first profile has been collected.
+
+### Shipping data to Phlare
+
+When you deploy your application, be sure to use the custom annotation for scraping:
+
+```yaml
+annotations:
+    phlare.oda.com/port: "8080"
+    phlare.oda.com/scrape: "true"
+```
 
 ## Tracing
 
