@@ -31,8 +31,8 @@
   * [Logging](#logging)
     * [Structlog](#structlog)
   * [Profiling](#profiling)
-    * [Setup](#setup)
-    * [Shipping data to Phlare](#shipping-data-to-phlare)
+    * [Setup endpoint](#setup-endpoint)
+    * [Enable scraping](#enable-scraping)
   * [Tracing](#tracing)
     * [trace_function](#trace_function)
     * [trace_block](#trace_block)
@@ -301,7 +301,7 @@ structlog.configure(
 
 ## Profiling
 
-### Setup
+### Setup endpoint
 
 You can enable continuous profiling by installing the extra feature `profiling`:
 
@@ -338,9 +338,9 @@ $ pprof -http :6060 "http://localhost:8080/debug/pprof"
 
 > **Note**: You will get an empty string from `profiler.python_pprof()` until the first profile has been collected.
 
-### Shipping data to Phlare
+### Enable scraping
 
-When you deploy your application, be sure to use the custom annotation for scraping:
+When you deploy your application, be sure to use the custom oda annotation for scraping:
 
 ```yaml
 annotations:
