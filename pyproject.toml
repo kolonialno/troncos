@@ -23,6 +23,7 @@ backoff = ">=1.0,<2.0"
 # Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
 opentelemetry-exporter-otlp-proto-grpc = {version = "^1.13.0", optional = true}
 structlog = {version = "^22.1.0", optional = true}
+ddtrace = {version="^1.6", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.10.1"
@@ -40,6 +41,7 @@ pytest-asyncio = "^0.19.0"
 
 [tool.poetry.extras]
 structlog = ["structlog"]
+profiling = ["ddtrace"]
 
 [tool.black]
 target-version = ['py310']

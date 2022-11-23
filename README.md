@@ -30,6 +30,9 @@
     * [Using the grpc exporter](#using-the-grpc-exporter)
   * [Logging](#logging)
     * [Structlog](#structlog)
+  * [Profiling](#profiling)
+    * [Setup endpoint](#setup-endpoint)
+    * [Enable scraping](#enable-scraping)
   * [Tracing](#tracing)
     * [trace_function](#trace_function)
     * [trace_block](#trace_block)
@@ -294,6 +297,55 @@ structlog.configure(
        trace_injection_processor,
     ],
 )
+```
+
+## Profiling
+
+### Setup endpoint
+
+You can enable continuous profiling by installing the extra feature `profiling`:
+
+```toml
+[tool.poetry.dependencies]
+troncos = {version="^?.?", extras = ["profiling"]}
+```
+
+> **Note**: Python 3.11 is [not yet supported](https://github.com/DataDog/dd-trace-py/issues/4149)!
+
+Then simply add a `/debug/pprof` endpoint that returns the profile (using flask here as an example):
+
+<!--pytest.mark.skip-->
+
+```python
+import flask
+from troncos.profiling import profiler  # The import will start the profiler
+
+app = flask.Flask(__name__)
+
+@app.route('/debug/pprof')
+def pprof():
+    content, headers = profiler.python_pprof()
+    res = flask.Response(content)
+    res.headers = headers
+    return res
+```
+
+You can verify that your setup works with the [pprof](https://github.com/google/pprof) cli:
+
+```console
+$ pprof -http :6060 "http://localhost:8080/debug/pprof"
+```
+
+> **Note**: You will get an empty string from `profiler.python_pprof()` until the first profile has been collected.
+
+### Enable scraping
+
+When you deploy your application, be sure to use the custom oda annotation for scraping:
+
+```yaml
+annotations:
+    phlare.oda.com/port: "8080"
+    phlare.oda.com/scrape: "true"
 ```
 
 ## Tracing
