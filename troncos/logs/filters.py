@@ -1,5 +1,6 @@
 import logging
 
+import ddtrace
 import opentelemetry.trace as trace
 
 
@@ -17,10 +18,16 @@ class TraceIdFilter(logging.Filter):
         super().__init__(name)
 
     def filter(self, record: logging.LogRecord) -> bool:
-        span = trace.get_current_span()
-        if not isinstance(span, trace.NonRecordingSpan):
-            record.trace_id = f"{span.get_span_context().trace_id:x}"
-            record.span_id = f"{span.get_span_context().span_id:x}"
+        otel_span = trace.get_current_span()
+        if not isinstance(otel_span, trace.NonRecordingSpan):
+            record.trace_id = f"{otel_span.get_span_context().trace_id:x}"
+            record.span_id = f"{otel_span.get_span_context().span_id:x}"
+
+        dd_context = ddtrace.tracer.current_trace_context()
+        if dd_context:
+            record.dd_trace_id = dd_context.trace_id
+            record.dd_span_id = dd_context.span_id
+
         return True
 
 

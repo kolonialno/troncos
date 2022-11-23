@@ -46,6 +46,8 @@ class JsonFormatter(logging.Formatter):
         "threadName",
         "trace_id",
         "span_id",
+        "dd_trace_id",
+        "dd_span_id",
     )
 
     DEFAULT_FIELDS = (
@@ -176,6 +178,8 @@ class LogfmtFormatter(logging.Formatter):
                 ("duration", "duration"),
                 ("trace_id", "trace_id"),
                 ("span_id", "span_id"),
+                ("dd_trace_id", "dd_trace_id"),
+                ("dd_span_id", "dd_span_id"),
                 ("msg", "msg"),
             ]
 
@@ -287,5 +291,7 @@ class PrettyFormatter(logging.Formatter):
             rc.message += f" {rc.duration}"  # type: ignore[attr-defined]
         if hasattr(rc, "trace_id"):
             rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
+        if hasattr(rc, "dd_trace_id"):
+            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore[attr-defined]
 
         return super().formatMessage(rc)
