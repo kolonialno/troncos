@@ -292,6 +292,6 @@ class PrettyFormatter(logging.Formatter):
         if hasattr(rc, "trace_id"):
             rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
         if hasattr(rc, "dd_trace_id"):
-            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore[attr-defined]
+            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore
 
         return super().formatMessage(rc)

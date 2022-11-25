@@ -13,9 +13,7 @@ def get_context_from_dict(carrier: dict[str, str]) -> Context:
     return HTTPPropagator().extract(carrier)
 
 
-def add_context_to_dict(
-        carrier: dict[str, str]
-) -> dict[str, str]:
+def add_context_to_dict(carrier: dict[str, str]) -> dict[str, str]:
     """
     Adds a trace "parent" entry to a dictionary. This injects all available formats
     """

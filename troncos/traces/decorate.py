@@ -11,7 +11,6 @@ from typing import Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
 
 import ddtrace
 
-
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 
 TClass = TypeVar("TClass")
@@ -22,11 +21,11 @@ R = TypeVar("R")
 
 @contextlib.contextmanager
 def trace_block(
-        name: str,
-        *,
-        resource: str | None = None,
-        service: str | None = None,
-        attributes: dict[str, str] | None = None,
+    name: str,
+    *,
+    resource: str | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> _GeneratorContextManager[ddtrace.span.Span]:
     """
     Trace using a with statement. You can supply a tracer provider, if none is supplied,
@@ -37,9 +36,9 @@ def trace_block(
     """
     attributes = attributes or {}
     with ddtrace.tracer.trace(
-            name=name,
-            resource=resource,
-            service=service,
+        name=name,
+        resource=resource,
+        service=service,
     ) as span:
         if attributes:
             span.set_tags(attributes)
@@ -53,6 +52,8 @@ def _trace_function(
     service: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
+    # Set this to make sure f is only traced once
+    setattr(f, _TRACE_IGNORE_ATTR, ())
 
     if inspect.iscoroutinefunction(f):
 
@@ -62,7 +63,7 @@ def _trace_function(
                 name=name or f"{f.__module__}.{f.__qualname__}",
                 resource=resource,
                 service=service,
-                attributes=attributes
+                attributes=attributes,
             ):
                 awaitable_func = cast(Callable[P, Awaitable[R]], f)
                 return await awaitable_func(*args, **kwargs)
@@ -77,10 +78,10 @@ def _trace_function(
         @wraps(f)
         def traced_func(*args: P.args, **kwargs: P.kwargs) -> R:
             with trace_block(
-                    name=name or f"{f.__module__}.{f.__qualname__}",
-                    resource=resource,
-                    service=service,
-                    attributes=attributes
+                name=name or f"{f.__module__}.{f.__qualname__}",
+                resource=resource,
+                service=service,
+                attributes=attributes,
             ):
                 return f(*args, **kwargs)
 

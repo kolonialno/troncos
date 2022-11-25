@@ -1,8 +1,6 @@
 import logging
 
-from troncos.frameworks.asgi.middleware import (
-    AsgiLoggingMiddleware,
-)
+from troncos.frameworks.asgi.middleware import AsgiLoggingMiddleware
 from troncos.logs.filters import HttpPathFilter
 
 try:
@@ -72,7 +70,9 @@ def init_uvicorn_logging(
     [ velodrome.error      ] logging.Logger LEVEL: 40 PROPAGATE:True
     """
 
-    logger_name = logger_name or (getattr(app, "title") if hasattr(app, "title") else "starlette")
+    logger_name = logger_name or (
+        getattr(app, "title") if hasattr(app, "title") else "starlette"
+    )
 
     # Setup uvicorn by just propagating to root logger
     uvicorn = logging.getLogger("uvicorn")

@@ -2,26 +2,30 @@ import logging
 import os
 import sys
 
-from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.trace.export import (
+    BatchSpanProcessor,
+    ConsoleSpanExporter,
+    SimpleSpanProcessor,
+)
 
-from troncos.traces.dd_shim import OtelTracerProvider, DDSpanProcessor
+from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
 logger = logging.getLogger(__name__)
 
 
 def init_tracing_basic(
-        service_name: str,
-        service_env: str | None = None,
-        service_version: str | None = None,
-        endpoint: str | None = None,
-        endpoint_dd: str | None = None,
-        ignored_paths: list[str] | None = None,  # TODO: FIX
+    service_name: str,
+    service_env: str | None = None,
+    service_version: str | None = None,
+    endpoint: str | None = None,
+    endpoint_dd: str | None = None,
+    ignored_paths: list[str] | None = None,  # TODO: FIX
 ):
     service_version = service_version or "unset"
     # Set variables
-    os.environ['DD_SERVICE'] = service_name
-    os.environ['DD_ENV'] = service_env
-    os.environ['DD_VERSION'] = service_version
+    os.environ["DD_SERVICE"] = service_name
+    os.environ["DD_ENV"] = service_env
+    os.environ["DD_VERSION"] = service_version
 
     # Setup OTEL exporter
     otel_span_processors = []
@@ -54,10 +58,14 @@ def init_tracing_basic(
     otel_trace_debug_file = os.environ.get("OTEL_TRACE_DEBUG_FILE")
     if otel_trace_debug:
         logger.info(f"OTEL debug processor to {otel_trace_debug_file or 'stdout'}")
-        debug_out = sys.stdout if not otel_trace_debug_file else open(otel_trace_debug_file, "w")
-        otel_span_processors.append(SimpleSpanProcessor(
-            ConsoleSpanExporter(out=debug_out)
-        ))
+        debug_out = (
+            sys.stdout
+            if not otel_trace_debug_file
+            else open(otel_trace_debug_file, "w")
+        )
+        otel_span_processors.append(
+            SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
+        )
 
     # Setup OTEL trace provider
     otel_trace_provider = OtelTracerProvider(
@@ -69,16 +77,16 @@ def init_tracing_basic(
 
     dd_span_processor = DDSpanProcessor(
         otel_tracer_provider=otel_trace_provider,
-        dd_traces_exported=endpoint_dd is not None
+        dd_traces_exported=endpoint_dd is not None,
     )
 
-    os.environ['DD_INSTRUMENTATION_TELEMETRY_ENABLED'] = "false"
+    os.environ["DD_INSTRUMENTATION_TELEMETRY_ENABLED"] = "false"
     if endpoint_dd:
-        os.environ['DD_TRACE_AGENT_URL'] = endpoint_dd
+        os.environ["DD_TRACE_AGENT_URL"] = endpoint_dd
 
     # Setup propagation
-    os.environ['DD_TRACE_PROPAGATION_STYLE_INJECT'] = "datadog,b3,b3 single header"
-    os.environ['DD_TRACE_PROPAGATION_STYLE_EXTRACT'] = "datadog,b3,b3 single header"
+    os.environ["DD_TRACE_PROPAGATION_STYLE_INJECT"] = "datadog,b3,b3 single header"
+    os.environ["DD_TRACE_PROPAGATION_STYLE_EXTRACT"] = "datadog,b3,b3 single header"
 
     import ddtrace
 

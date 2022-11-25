@@ -49,9 +49,9 @@ class OtelTracerProvider:
         self._info_version = version
         attributes = {}
         if env:
-            attributes['environment'] = env
+            attributes["environment"] = env
         if version:
-            attributes['version'] = version
+            attributes["version"] = version
         set_tracer_provider(self._get_tracer_provider(attributes=attributes))
 
     def get_id_generator(self):
@@ -76,8 +76,9 @@ class OtelTracerProvider:
 
 
 class DDSpanProcessor:
-
-    def __init__(self, otel_tracer_provider: OtelTracerProvider, dd_traces_exported) -> None:
+    def __init__(
+        self, otel_tracer_provider: OtelTracerProvider, dd_traces_exported
+    ) -> None:
         self._otel = otel_tracer_provider
         self._propagator = tracecontext.TraceContextTextMapPropagator()
         self._otel_spans = {}
@@ -86,11 +87,18 @@ class DDSpanProcessor:
     @staticmethod
     def _translate_data(dd_span, otel_span):
         dd_span_attr = {**dd_span._meta, **dd_span._metrics}
-        dd_span_ignore_attr = ['runtime-id', '_dd.agent_psr', '_dd.top_level', '_dd.measured', 'env', 'version']
+        dd_span_ignore_attr = [
+            "runtime-id",
+            "_dd.agent_psr",
+            "_dd.top_level",
+            "_dd.measured",
+            "env",
+            "version",
+        ]
         dd_span_err_attr_mapping = {
-            'error.msg': 'exception.message',
-            'error.type': 'exception.type',
-            'error.stack': 'exception.stacktrace'
+            "error.msg": "exception.message",
+            "error.type": "exception.type",
+            "error.stack": "exception.stacktrace",
         }
         otel_error_attr_dict = {}
         for k, v in dd_span_attr.items():
@@ -102,19 +110,21 @@ class DDSpanProcessor:
 
         if otel_error_attr_dict:
             otel_span.set_attributes(otel_error_attr_dict)
-            otel_span.add_event(
-                name="exception", attributes=otel_error_attr_dict
-            )
+            otel_span.add_event(name="exception", attributes=otel_error_attr_dict)
+
+            status_exp_type = otel_error_attr_dict.get("exception.type", None)
+            status_exp_msg = otel_error_attr_dict.get("exception.message", None)
+
             otel_span.set_status(
                 Status(
                     status_code=StatusCode.ERROR,
-                    description=f"{otel_error_attr_dict.get('exception.type', None)}: {otel_error_attr_dict.get('exception.message', None)}",
+                    description=f"{status_exp_type}: {status_exp_msg}",
                 )
             )
 
     @staticmethod
     def _get_service_name(service):
-        if service in ['fastapi', 'flask', 'starlette', 'django']:
+        if service in ["fastapi", "flask", "starlette", "django"]:
             return None
         return service
 
