@@ -40,9 +40,9 @@ def init_tracing_basic(
     otel_span_processors: list[SpanProcessor] = []
     if endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc import (
+            from opentelemetry.exporter.otlp.proto.grpc import (  # isort: skip # noqa: 501
                 trace_exporter,
-            )  # isort: skip # noqa: 501
+            )
 
             clean_logger("OTEL using GRPC exporter")
         except ImportError:  # pragma: no cover
