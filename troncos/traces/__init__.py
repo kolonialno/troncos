@@ -1,174 +1,97 @@
 import logging
 import os
 import sys
-from typing import IO, Iterable, List, Literal
 
-import opentelemetry.trace
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor, ConsoleSpanExporter
 
-try:
-    from opentelemetry.exporter.otlp.proto.grpc import (  # type: ignore
-        trace_exporter as grpc_trace_exporter,
-    )
-except ImportError:  # pragma: no cover
-    grpc_trace_exporter = None
-
-from opentelemetry.exporter.otlp.proto.http import trace_exporter
-from opentelemetry.sdk.resources import Attributes, Resource
-from opentelemetry.sdk.trace import SpanProcessor, TracerProvider
-from opentelemetry.sdk.trace.export import (
-    BatchSpanProcessor,
-    ConsoleSpanExporter,
-    SimpleSpanProcessor,
-    SpanExporter,
-)
-
-# noinspection PyProtectedMember
-from opentelemetry.util._once import Once
-
-from troncos.traces.dd_exporter import OTLPGrpcSpanExporterDD, OTLPHttpSpanExporterDD
-
-_GLOBAL_SPAN_PROCESSORS: list[SpanProcessor] | None = None
-_GLOBAL_SPAN_PROCESSORS_SET_ONCE = Once()
-
-if out_file := os.environ.get("TRACING_DEBUGGING_FILE", None):
-    traces_out: IO[str] = open("traces.json", "w")
-else:
-    traces_out = sys.stdout
-_DEBUG_SPAN_PROCESSOR: SpanProcessor = SimpleSpanProcessor(
-    ConsoleSpanExporter(out=traces_out)
-)
-
-GRPC_ERROR_MESSAGE = (
-    "Cannot use 'exporter_type==grpc' without "
-    "installing 'opentelemetry-exporter-otlp-proto-grpc'"
-)
+from troncos.traces.dd_shim import OtelTracerProvider, DDSpanProcessor
 
 logger = logging.getLogger(__name__)
 
 
-def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
-    host = os.environ.get(host_var)
-    if not host:
-        return None
-    port = os.environ.get(port_var)
-    if not port:
-        return None
-    return f"http://{host}:{port}{path}"
-
-
-def _set_span_processors(span_processors: list[SpanProcessor]) -> None:
-    def set_sp() -> None:
-        global _GLOBAL_SPAN_PROCESSORS
-        _GLOBAL_SPAN_PROCESSORS = span_processors
-
-    did_set = _GLOBAL_SPAN_PROCESSORS_SET_ONCE.do_once(set_sp)
-    if not did_set:
-        logging.getLogger(__name__).warning(
-            "Global span processors already set, not doing that again!"
-        )
-
-
-def init_tracing_endpoints(
-    endpoint: str | None,
-    endpoint_dd: str | None = None,
-    exporter_type: Literal["http", "grpc"] = "http",
-) -> list[SpanProcessor]:
-    """
-    Initialize the global span processor.
-    """
-    assert exporter_type in ["http", "grpc"]
-    exporters = []
-
-    if endpoint:
-        if exporter_type == "http":
-            otel_exp: SpanExporter = trace_exporter.OTLPSpanExporter(endpoint=endpoint)
-        elif exporter_type == "grpc":
-            if not grpc_trace_exporter:
-                raise ValueError(GRPC_ERROR_MESSAGE)
-            otel_exp = grpc_trace_exporter.OTLPSpanExporter(endpoint=endpoint)
-        logging.getLogger(__name__).info(
-            "Reporting OTEL traces with %s(endpoint=%s)",
-            type(otel_exp).__name__,
-            endpoint,
-        )
-        exporters.append(BatchSpanProcessor(otel_exp))
-
-    if endpoint_dd:
-        if exporter_type == "http":
-            dd_exp: SpanExporter = OTLPHttpSpanExporterDD(endpoint=endpoint_dd)
-        elif exporter_type == "grpc":
-            if not grpc_trace_exporter:
-                raise ValueError(GRPC_ERROR_MESSAGE)
-            dd_exp = OTLPGrpcSpanExporterDD(endpoint=endpoint_dd)
-        logging.getLogger(__name__).info(
-            "Reporting DD traces with %s(endpoint=%s)",
-            type(dd_exp).__name__,
-            endpoint_dd,
-        )
-        exporters.append(BatchSpanProcessor(dd_exp))
-
-    _set_span_processors(exporters)  # type: ignore[arg-type]
-    return _GLOBAL_SPAN_PROCESSORS  # type: ignore[return-value]
-
-
-def init_tracing_provider(
-    attributes: Attributes, global_provider: bool = False
-) -> TracerProvider:
-    """
-    Initialize a tracing provider. By default, this function will make the new tracer
-    provider the global one. If that is not desired, pass in global_provider=False.
-    """
-
-    if _GLOBAL_SPAN_PROCESSORS is None:
-        logger.warning(
-            "Span processors have not been initialized with 'init_tracing_endpoint'. "
-            "Your tracing spans will not be exported!"
-        )
-
-    if not attributes.get("service.name"):
-        raise ValueError("Tracer must have 'service.name' in attributes")
-
-    if global_provider and not attributes.get("environment"):
-        raise ValueError("Global tracer must have 'environment' in attributes")
-
-    resource = Resource.create(attributes)
-    provider = TracerProvider(resource=resource)
-    for span_processor in _GLOBAL_SPAN_PROCESSORS or []:
-        provider.add_span_processor(span_processor)
-
-    if global_provider:
-        opentelemetry.trace.set_tracer_provider(provider)
-
-    return provider
-
-
-def init_tracing_debug(
-    trace_provider: TracerProvider | List[TracerProvider],
-) -> None:
-    """
-    Add debug processor to tracing providers.
-    """
-
-    if isinstance(trace_provider, Iterable):
-        for p in trace_provider:
-            p.add_span_processor(_DEBUG_SPAN_PROCESSOR)
-    else:
-        trace_provider.add_span_processor(_DEBUG_SPAN_PROCESSOR)
-
-
 def init_tracing_basic(
-    endpoint: str | None = None,
-    endpoint_dd: str | None = None,
-    exporter_type: Literal["http", "grpc"] = "http",
-    attributes: Attributes | None = None,
-    debug: bool = False,
-) -> TracerProvider:
-    """
-    Setup rudimentary tracing.
-    """
+        service_name: str,
+        service_env: str | None = None,
+        service_version: str | None = None,
+        endpoint: str | None = None,
+        endpoint_dd: str | None = None,
+        ignored_paths: list[str] | None = None,  # TODO: FIX
+):
+    service_version = service_version or "unset"
+    # Set variables
+    os.environ['DD_SERVICE'] = service_name
+    os.environ['DD_ENV'] = service_env
+    os.environ['DD_VERSION'] = service_version
 
-    init_tracing_endpoints(endpoint, endpoint_dd, exporter_type=exporter_type)
-    global_tracer = init_tracing_provider(attributes or {}, global_provider=True)
-    if debug:
-        init_tracing_debug(global_tracer)
-    return global_tracer
+    # Setup OTEL exporter
+    otel_span_processors = []
+    if endpoint:
+        try:
+            from opentelemetry.exporter.otlp.proto.grpc import trace_exporter
+
+            logger.info("OTEL using GRPC exporter")
+        except ImportError:  # pragma: no cover
+            try:
+                from opentelemetry.exporter.otlp.proto.http import trace_exporter
+
+                logger.info("OTEL using HTTP exporter")
+            except ImportError:  # pragma: no cover
+                trace_exporter = None
+                logger.warning("OTEL exporter not setup")
+
+        if trace_exporter:
+            logger.info(f"OTEL traces exported to {endpoint}")
+            otel_span_processors.append(
+                BatchSpanProcessor(trace_exporter.OTLPSpanExporter(endpoint=endpoint))
+            )
+        else:
+            logger.info("OTEL traces not exported")
+    else:
+        logger.info("OTEL traces not exported")
+
+    # Setup OTEL debug processor
+    otel_trace_debug = os.environ.get("OTEL_TRACE_DEBUG")
+    otel_trace_debug_file = os.environ.get("OTEL_TRACE_DEBUG_FILE")
+    if otel_trace_debug:
+        logger.info(f"OTEL debug processor to {otel_trace_debug_file or 'stdout'}")
+        debug_out = sys.stdout if not otel_trace_debug_file else open(otel_trace_debug_file, "w")
+        otel_span_processors.append(SimpleSpanProcessor(
+            ConsoleSpanExporter(out=debug_out)
+        ))
+
+    # Setup OTEL trace provider
+    otel_trace_provider = OtelTracerProvider(
+        span_processors=otel_span_processors,
+        service=service_name,
+        env=service_env,
+        version=service_version,
+    )
+
+    dd_span_processor = DDSpanProcessor(
+        otel_tracer_provider=otel_trace_provider,
+        dd_traces_exported=endpoint_dd is not None
+    )
+
+    os.environ['DD_INSTRUMENTATION_TELEMETRY_ENABLED'] = "false"
+    if endpoint_dd:
+        os.environ['DD_TRACE_AGENT_URL'] = endpoint_dd
+
+    # Setup propagation
+    os.environ['DD_TRACE_PROPAGATION_STYLE_INJECT'] = "datadog,b3,b3 single header"
+    os.environ['DD_TRACE_PROPAGATION_STYLE_EXTRACT'] = "datadog,b3,b3 single header"
+
+    import ddtrace
+
+    if not endpoint_dd:
+        to_pop = None
+        for i, s in enumerate(ddtrace.tracer._span_processors):
+            if isinstance(s, ddtrace.internal.processor.trace.SpanAggregator):
+                to_pop = i
+        if to_pop:
+            ddtrace.tracer._span_processors.pop(to_pop)
+        logger.info("DD traces not exported")
+    else:
+        logger.info(f"DD traces exported to {endpoint_dd}")
+
+    ddtrace.tracer._span_processors.append(dd_span_processor)
+    ddtrace.patch_all()  # TODO: Allow people to do what they want here!

@@ -1,14 +1,8 @@
 import logging
-from typing import Optional
-
-import opentelemetry.trace
-from opentelemetry.trace import TracerProvider
 
 from troncos.frameworks.asgi.middleware import (
     AsgiLoggingMiddleware,
-    AsgiTracingMiddleware,
 )
-from troncos.frameworks.starlette import init_starlette
 from troncos.logs.filters import HttpPathFilter
 
 try:
@@ -30,11 +24,11 @@ class _UvicornErrorFilter(logging.Filter):
         return record.msg != "Exception in ASGI application\n"
 
 
-def _init_uvicorn_logging(
+def init_uvicorn_logging(
     *,
     app: Starlette,
-    logger_name: str,
-    log_access_ignored_paths: Optional[list[str]] = None,
+    logger_name: str | None = None,
+    log_access_ignored_paths: list[str] | None = None,
 ) -> None:
     """
     This function sets up logging for uvicorn + starlette. There is a lot of meddling
@@ -78,6 +72,8 @@ def _init_uvicorn_logging(
     [ velodrome.error      ] logging.Logger LEVEL: 40 PROPAGATE:True
     """
 
+    logger_name = logger_name or (getattr(app, "title") if hasattr(app, "title") else "starlette")
+
     # Setup uvicorn by just propagating to root logger
     uvicorn = logging.getLogger("uvicorn")
     uvicorn.propagate = True
@@ -107,35 +103,4 @@ def _init_uvicorn_logging(
     app.add_middleware(
         AsgiLoggingMiddleware,
         logger_name=logger_name,
-    )
-
-
-def init_uvicorn_observability(
-    *,
-    app: Starlette,
-    log_access_ignored_paths: Optional[list[str]] = None,
-    tracing_ignored_paths: Optional[list[str]] = None,
-    tracer_provider: TracerProvider | None = None,
-) -> None:
-    """
-    Sets up logging and tracing for a starlette app that is run by unicorn.
-    """
-
-    init_starlette()
-
-    name = getattr(app, "title") if hasattr(app, "title") else "starlette"
-
-    # Setup logging
-    _init_uvicorn_logging(
-        app=app,
-        logger_name=name,
-        log_access_ignored_paths=log_access_ignored_paths,
-    )
-
-    tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-    app.add_middleware(
-        AsgiTracingMiddleware,
-        tracer_provider=tp,
-        span_name=f"{name}.request",
-        tracing_ignored_urls=tracing_ignored_paths,
     )

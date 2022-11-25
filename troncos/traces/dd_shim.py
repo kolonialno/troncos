@@ -3,9 +3,10 @@ import logging
 import random
 import sys
 
-from opentelemetry import trace
-from opentelemetry.sdk.trace import IdGenerator
-from opentelemetry.trace import Status, StatusCode
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import IdGenerator, TracerProvider
+from opentelemetry.trace import Status, StatusCode, set_tracer_provider
+from opentelemetry.trace.propagation import tracecontext
 
 from troncos import OTEL_LIBRARY_NAME
 
@@ -38,19 +39,54 @@ class _OtelIdGenerator(IdGenerator):
         self._span_id = None
 
 
-otel_id_generator = _OtelIdGenerator()
+class OtelTracerProvider:
+    def __init__(self, span_processors, service, env, version) -> None:
+        self._span_processors = span_processors
+        self._id_gen = _OtelIdGenerator()
+        self._trace_providers = {}
+        self._info_service = service
+        self._info_env = env
+        self._info_version = version
+        attributes = {}
+        if env:
+            attributes['environment'] = env
+        if version:
+            attributes['version'] = version
+        set_tracer_provider(self._get_tracer_provider(attributes=attributes))
+
+    def get_id_generator(self):
+        return self._id_gen
+
+    def _get_tracer_provider(self, name=None, attributes=None):
+        p_name = name or self._info_service
+        p_prov = self._trace_providers.get(p_name)
+        if not p_prov:
+            attributes = attributes or {}
+            attributes["service.name"] = p_name
+            resource = Resource.create(attributes)
+            p_prov = TracerProvider(resource=resource)
+            p_prov.id_generator = self.get_id_generator()
+            for span_processor in self._span_processors:
+                p_prov.add_span_processor(span_processor)
+            self._trace_providers[p_name] = p_prov
+        return p_prov
+
+    def get_tracer(self, name=None):
+        return self._get_tracer_provider(name).get_tracer(OTEL_LIBRARY_NAME)
 
 
-class _DDSpanProcessor:
-    _otel_spans = {}
-    _otel_tracers = {}
+class DDSpanProcessor:
 
-    def _get_tracer(self, dd_span):
-        return trace.get_tracer(OTEL_LIBRARY_NAME)
+    def __init__(self, otel_tracer_provider: OtelTracerProvider, dd_traces_exported) -> None:
+        self._otel = otel_tracer_provider
+        self._propagator = tracecontext.TraceContextTextMapPropagator()
+        self._otel_spans = {}
+        self._dd_traces_exported = dd_traces_exported
 
-    def _translate_data(self, dd_span, otel_span):
+    @staticmethod
+    def _translate_data(dd_span, otel_span):
         dd_span_attr = {**dd_span._meta, **dd_span._metrics}
-        dd_span_ignore_attr = ['runtime-id', '_dd.agent_psr', '_dd.top_level']
+        dd_span_ignore_attr = ['runtime-id', '_dd.agent_psr', '_dd.top_level', '_dd.measured', 'env', 'version']
         dd_span_err_attr_mapping = {
             'error.msg': 'exception.message',
             'error.type': 'exception.type',
@@ -76,14 +112,34 @@ class _DDSpanProcessor:
                 )
             )
 
+    @staticmethod
+    def _get_service_name(service):
+        if service in ['fastapi', 'flask', 'starlette', 'django']:
+            return None
+        return service
+
     def on_span_start(self, dd_span):
-        otel_tracer = self._get_tracer(dd_span)
-        with otel_id_generator.with_ids(dd_span.trace_id, dd_span.span_id):
-            otel_ctx = otel_tracer.start_as_current_span(dd_span.name)
+        otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
+
+        context = None
+        if dd_span.parent_id and not dd_span._parent:
+            # This span has an external parent, extract that
+            parent_trace_id = f"{dd_span.trace_id:x}".zfill(32)
+            parent_span_id = f"{dd_span.parent_id:x}".zfill(16)
+            trace_ctx = {
+                "traceparent": f"00-{parent_trace_id}-{parent_span_id}-01",
+            }
+            context = self._propagator.extract(carrier=trace_ctx)
+
+        with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
+            otel_ctx = otel_tracer.start_as_current_span(dd_span.name, context=context)
             otel_span = otel_ctx.__enter__()
 
-            otel_span.set_attribute("dd_trace_id", str(dd_span.trace_id))
-            otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
+            if self._dd_traces_exported:
+                otel_span.set_attribute("dd_trace_id", str(dd_span.trace_id))
+                otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
+            if dd_span.name != dd_span.resource:
+                otel_span.set_attribute("resource", dd_span.resource)
 
             self._otel_spans[dd_span.span_id] = (otel_ctx, otel_span)
 
@@ -91,6 +147,3 @@ class _DDSpanProcessor:
         otel_ctx, otel_span = self._otel_spans.pop(dd_span.span_id)
         self._translate_data(dd_span, otel_span)
         otel_ctx.__exit__(None, None, None)
-
-
-dd_span_processor = _DDSpanProcessor()

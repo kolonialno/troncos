@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 import inspect
 import logging
 
@@ -8,10 +9,8 @@ from functools import wraps
 from types import FunctionType
 from typing import Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
 
-import opentelemetry.trace
-from opentelemetry.sdk.resources import Attributes
+import ddtrace
 
-from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 
@@ -21,25 +20,49 @@ P = ParamSpec("P")
 R = TypeVar("R")
 
 
+@contextlib.contextmanager
+def trace_block(
+        name: str,
+        *,
+        resource: str | None = None,
+        service: str | None = None,
+        attributes: dict[str, str] | None = None,
+) -> _GeneratorContextManager[ddtrace.span.Span]:
+    """
+    Trace using a with statement. You can supply a tracer provider, if none is supplied,
+    the global tracer provider will be used. Example:
+
+    with trace_block("cool.block", "data!", attributes={"some": "attribute"}):
+        time.sleep(1)
+    """
+    attributes = attributes or {}
+    with ddtrace.tracer.trace(
+            name=name,
+            resource=resource,
+            service=service,
+    ) as span:
+        if attributes:
+            span.set_tags(attributes)
+        yield span
+
+
 def _trace_function(
     f: Callable[P, R],
     name: str | None = None,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
-    attributes = attributes or {}
-    if resource:
-        attributes["resource"] = resource
 
     if inspect.iscoroutinefunction(f):
 
         @wraps(f)
         async def traced_func_async(*args: P.args, **kwargs: P.kwargs) -> R:
-            tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-            tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(
-                name or f"{f.__module__}.{f.__qualname__}", attributes=attributes
+            with trace_block(
+                name=name or f"{f.__module__}.{f.__qualname__}",
+                resource=resource,
+                service=service,
+                attributes=attributes
             ):
                 awaitable_func = cast(Callable[P, Awaitable[R]], f)
                 return await awaitable_func(*args, **kwargs)
@@ -53,10 +76,11 @@ def _trace_function(
 
         @wraps(f)
         def traced_func(*args: P.args, **kwargs: P.kwargs) -> R:
-            tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-            tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-            with tr.start_as_current_span(
-                name or f"{f.__module__}.{f.__qualname__}", attributes=attributes
+            with trace_block(
+                    name=name or f"{f.__module__}.{f.__qualname__}",
+                    resource=resource,
+                    service=service,
+                    attributes=attributes
             ):
                 return f(*args, **kwargs)
 
@@ -72,8 +96,8 @@ def trace_function(
     *,
     name: str | None = None,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
     ...
 
@@ -84,8 +108,8 @@ def trace_function(
     *,
     name: str | None = None,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     ...
 
@@ -95,8 +119,8 @@ def trace_function(
     *,
     name: str | None = None,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
     """
     This decorator adds tracing to a function. You can supply a tracer provider, if none
@@ -112,36 +136,13 @@ def trace_function(
     """
     if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
         assert fn
-        return _trace_function(fn, name, resource, attributes, tracer_provider)
+        return _trace_function(fn, name, resource, service, attributes)
     else:
         # No args
         def _inner(f: Callable[P, R]) -> Callable[P, R]:
-            return _trace_function(f, name, resource, attributes, tracer_provider)
+            return _trace_function(f, name, resource, service, attributes)
 
         return _inner
-
-
-def trace_block(
-    name: str,
-    *,
-    resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
-) -> _GeneratorContextManager[opentelemetry.trace.Span]:
-    """
-    Trace using a with statement. You can supply a tracer provider, if none is supplied,
-    the global tracer provider will be used. Example:
-
-    with trace_block("cool.block", "data!", attributes={"some": "attribute"}):
-        time.sleep(1)
-    """
-    attributes = attributes or {}
-    if resource:
-        attributes["resource"] = resource
-
-    tp = tracer_provider or opentelemetry.trace.get_tracer_provider()
-    tr = tp.get_tracer(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
-    return tr.start_as_current_span(name, attributes=attributes)
 
 
 @overload
@@ -149,8 +150,8 @@ def trace_class(
     klass: None = None,
     *,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Callable[[Type[TClass]], Type[TClass]]:
     ...
 
@@ -160,8 +161,8 @@ def trace_class(
     klass: Type[TClass],
     *,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Type[TClass]:
     ...
 
@@ -170,8 +171,8 @@ def trace_class(
     klass: Type[TClass] | None = None,
     *,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> Type[TClass] | Callable[[Type[TClass]], Type[TClass]]:
     """
     This decorator adds a tracing decorator to every method of the decorated class. If
@@ -214,8 +215,8 @@ def trace_class(
                     value,
                     name=None,
                     resource=resource,
+                    service=service,
                     attributes=attributes,
-                    tracer_provider=tracer_provider,
                 ),
             )
         return cls
@@ -229,8 +230,8 @@ def trace_class(
 def trace_module(
     *,
     resource: str | None = None,
-    attributes: Attributes | None = None,
-    tracer_provider: opentelemetry.trace.TracerProvider | None = None,
+    service: str | None = None,
+    attributes: dict[str, str] | None = None,
 ) -> None:
     """
     This function adds a tracing decorator to every function of the calling module. If
@@ -267,8 +268,8 @@ def trace_module(
             value,
             name=None,
             resource=resource,
+            service=service,
             attributes=attributes,
-            tracer_provider=tracer_provider,
         )
 
 

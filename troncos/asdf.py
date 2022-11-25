@@ -1,48 +1,52 @@
-import logging
-import os
-
-from troncos.logs import init_logging_basic
-from troncos.traces import init_tracing_basic
-import troncos.traces
-from troncos.traces.dd_shim import otel_id_generator, dd_span_processor
-
-init_logging_basic(
-    level=os.environ.get("LOG_LEVEL", "INFO"),
-    formatter=os.environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
-)
-
-otel_tracer = init_tracing_basic(
-    endpoint="http://localhost:4318/v1/traces",
-    exporter_type="http",
-    attributes={
-        "environment": os.environ.get("ENVIRONMENT", "localdev"),
-        "service.name": "myservice",
-    }
-)
-
-os.environ['DD_INSTRUMENTATION_TELEMETRY_ENABLED'] = "false"
-os.environ['DD_TRACE_AGENT_URL'] = "http://localhost:8083"
-
-import ddtrace
-
-otel_tracer.id_generator = otel_id_generator
-
-ddtrace.tracer._span_processors.pop(1)  # Disable DD trace shipping
-ddtrace.tracer._span_processors.append(dd_span_processor)  # Enable OTEL tracing
-
-ddtrace.patch_all()
-
-if __name__ == '__main__':
-    with ddtrace.tracer.trace("hello") as span:
-        span.set_tag("gummier", "bestur")
-        try:
-            with ddtrace.tracer.trace("hello2"):
-                context = ddtrace.tracer.current_trace_context()
-                logging.getLogger("ahaha").info("TÖFF")
-                raise ValueError("OMG")
-        except:
-            pass
-
-# Flush
-ddtrace.tracer.flush()
-troncos.traces._GLOBAL_SPAN_PROCESSORS[0].force_flush(5000)
+# import asyncio
+# import logging
+# import os
+# import time
+#
+# from troncos.logs import init_logging_basic
+# from troncos.traces import init_tracing_basic
+# from troncos.traces.decorate import trace_module, trace_block
+#
+# init_logging_basic(
+#     level=os.environ.get("LOG_LEVEL", "INFO"),
+#     formatter=os.environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
+# )
+#
+# init_tracing_basic(
+#     service_name="whatever",
+#     service_env="local",
+#     service_version="testing",
+#     endpoint="http://localhost:4318/v1/traces",
+# )
+#
+#
+# import ddtrace
+#
+# async def mythang(msg):
+#     await asyncio.sleep(1)
+#     print(msg)
+#
+# async def main():
+#     with trace_block("hello") as span:
+#         span.set_tag("gummier", "bestur")
+#         await asyncio.gather(mythang("einn"), mythang("tveir"))
+#         try:
+#             with trace_block("hello2", resource="someres", service="something"):
+#                 logging.getLogger("ahaha").info("TÖFF")
+#                 raise ValueError("OMG")
+#         except:
+#             pass
+#
+# trace_module()
+#
+# if __name__ == '__main__':
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(main())
+#
+#
+# # Flush
+# ddtrace.tracer.flush()
+# # for s in troncos.newtrace.setup.otel_span_processors:
+# #     s.force_flush(5000)
+#
+# time.sleep(4)
