@@ -1,8 +1,6 @@
-import logging
 import os
 import sys
 
-from ddtrace.internal.constants import PROPAGATION_STYLE_ALL
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
@@ -11,9 +9,17 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
+from troncos._lazydd import clean_logger
 
-logger = logging.getLogger(__name__)
+
+def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
+    host = os.environ.get(host_var)
+    if not host:
+        return None
+    port = os.environ.get(port_var)
+    if not port:
+        return None
+    return f"http://{host}:{port}{path}"
 
 
 def init_tracing_basic(
@@ -36,31 +42,33 @@ def init_tracing_basic(
         try:
             from opentelemetry.exporter.otlp.proto.grpc import trace_exporter  # type: ignore # isort: skip # noqa: 501
 
-            logger.info("OTEL using GRPC exporter")
+            clean_logger("OTEL using GRPC exporter")
         except ImportError:  # pragma: no cover
             try:
                 from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore # isort: skip # noqa: 501
 
-                logger.info("OTEL using HTTP exporter")
+                clean_logger("OTEL using HTTP exporter")
             except ImportError:  # pragma: no cover
                 trace_exporter = None
-                logger.warning("OTEL exporter not setup")
 
         if trace_exporter:
-            logger.info(f"OTEL traces exported to {endpoint}")
+            clean_logger(f"OTEL traces exported to {endpoint}")
             otel_span_processors.append(
                 BatchSpanProcessor(trace_exporter.OTLPSpanExporter(endpoint=endpoint))
             )
-        else:
-            logger.info("OTEL traces not exported")
-    else:
-        logger.info("OTEL traces not exported")
+
+    if len(otel_span_processors) == 0:
+        clean_logger(
+            "No OTEL span processor configured",
+            "WARNING"
+        )
+        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
 
     # Setup OTEL debug processor
     otel_trace_debug = os.environ.get("OTEL_TRACE_DEBUG")
     otel_trace_debug_file = os.environ.get("OTEL_TRACE_DEBUG_FILE")
     if otel_trace_debug:
-        logger.info(f"OTEL debug processor to {otel_trace_debug_file or 'stdout'}")
+        clean_logger(f"OTEL debug processor to {otel_trace_debug_file or 'stdout'}")
         debug_out = (
             sys.stdout
             if not otel_trace_debug_file
@@ -70,11 +78,11 @@ def init_tracing_basic(
             SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
         )
 
-    if len(otel_span_processors) == 0:
-        logger.warning(
-            "No span processor configured for OTEL. Adding InMemorySpanExporter"
-        )
-        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
+    if endpoint_dd:
+        os.environ["DD_TRACE_AGENT_URL"] = endpoint_dd
+
+    import ddtrace
+    from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
     # Setup OTEL trace provider
     otel_trace_provider = OtelTracerProvider(
@@ -95,7 +103,10 @@ def init_tracing_basic(
     import ddtrace
 
     # Setup propagation
-    ddtrace.config._propagation_style_inject = PROPAGATION_STYLE_ALL  # type: ignore
+    inject_set = set()
+    inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
+    ddtrace.config._propagation_style_extract = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
+    ddtrace.config._propagation_style_inject = inject_set
     ddtrace.config.analytics_enabled = False
 
     if not endpoint_dd:
@@ -105,9 +116,16 @@ def init_tracing_basic(
                 to_pop = i
         if to_pop:
             ddtrace.tracer._span_processors.pop(to_pop)
-        logger.info("DD traces not exported")
+        clean_logger("DD traces not exported")
     else:
-        logger.info(f"DD traces exported to {endpoint_dd}")
+        clean_logger(f"DD traces exported to {endpoint_dd}")
 
     ddtrace.tracer._span_processors.append(dd_span_processor)
+
+    if len(ddtrace.config._propagation_style_extract) != 3:
+        clean_logger(
+            "ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE troncos INITIALIZED IT. THIS IS BAD!",
+            "WARNING",
+        )
+
     ddtrace.patch_all()  # TODO: Allow people to do what they want here!

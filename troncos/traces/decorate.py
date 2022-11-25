@@ -14,10 +14,10 @@ from typing import (
     Type,
     TypeVar,
     cast,
-    overload,
+    overload, Any,
 )
 
-import ddtrace
+from troncos._lazydd import dd_tracer
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 
@@ -34,7 +34,7 @@ def trace_block(
     resource: str | None = None,
     service: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> Iterator[ddtrace.span.Span]:
+) -> Iterator[Any]:  # This is set to any, because we want to lazy-load ddtrace
     """
     Trace using a with statement. You can supply a tracer provider, if none is supplied,
     the global tracer provider will be used. Example:
@@ -42,8 +42,9 @@ def trace_block(
     with trace_block("cool.block", "data!", attributes={"some": "attribute"}):
         time.sleep(1)
     """
+
     attributes = attributes or {}
-    with ddtrace.tracer.trace(
+    with dd_tracer().trace(
         name=name,
         resource=resource,
         service=service,

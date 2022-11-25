@@ -1,3 +1,5 @@
+import ddtrace
+
 from troncos.traces.decorate import trace_block
 from troncos.traces.propagation import (
     add_context_to_dict,
@@ -17,7 +19,7 @@ def test_propagation_inject() -> None:
     with trace_block("test"):
         add_context_to_dict(d)
 
-    assert len(d) == 8
+    assert len(d) == 1
     assert d.get("b3", None)
 
 

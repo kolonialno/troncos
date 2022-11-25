@@ -2,7 +2,7 @@ import logging
 import time
 from typing import Any, Awaitable, Callable
 
-from ddtrace.contrib.asgi.utils import guarantee_single_callable
+from troncos.frameworks.asgi.utils import guarantee_single_callable
 
 
 class AsgiLoggingMiddleware:
@@ -15,7 +15,7 @@ class AsgiLoggingMiddleware:
         app: Any,
         logger_name: str | None = None,
     ) -> None:
-        self._app = guarantee_single_callable(app)  # type: ignore
+        self._app = guarantee_single_callable(app)
         ln = logger_name or "asgi"
         self._access = logging.getLogger(f"{ln}.access")
         self._error = logging.getLogger(f"{ln}.error")

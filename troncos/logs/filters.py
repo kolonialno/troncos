@@ -1,7 +1,8 @@
 import logging
 
-import ddtrace
 import opentelemetry.trace as trace
+
+from troncos._lazydd import dd_tracer
 
 
 class TraceIdFilter(logging.Filter):
@@ -23,7 +24,7 @@ class TraceIdFilter(logging.Filter):
             record.trace_id = f"{otel_span.get_span_context().trace_id:x}"
             record.span_id = f"{otel_span.get_span_context().span_id:x}"
 
-        dd_context = ddtrace.tracer.current_trace_context()
+        dd_context = dd_tracer().current_trace_context()
         if dd_context:
             record.dd_trace_id = dd_context.trace_id
             record.dd_span_id = dd_context.span_id

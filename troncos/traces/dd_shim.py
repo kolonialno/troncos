@@ -5,7 +5,6 @@ import sys
 from contextlib import _GeneratorContextManager
 from typing import Any, Iterator, Tuple
 
-import ddtrace
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import IdGenerator, SpanProcessor, TracerProvider
 from opentelemetry.trace import Span, Status, StatusCode, Tracer, set_tracer_provider
@@ -86,7 +85,7 @@ class OtelTracerProvider:
         return self._get_tracer_provider(name).get_tracer(OTEL_LIBRARY_NAME)
 
 
-class DDSpanProcessor(ddtrace.internal.processor.SpanProcessor):
+class DDSpanProcessor:
     def __init__(
         self, otel_tracer_provider: OtelTracerProvider, dd_traces_exported: bool
     ) -> None:
@@ -96,7 +95,7 @@ class DDSpanProcessor(ddtrace.internal.processor.SpanProcessor):
         self._dd_traces_exported = dd_traces_exported
 
     @staticmethod
-    def _translate_data(dd_span: ddtrace.Span, otel_span: Span) -> None:
+    def _translate_data(dd_span: Any, otel_span: Span) -> None:
         dd_span_attr: dict[str, Any] = {
             **dd_span._meta,  # type: ignore
             **dd_span._metrics,  # type: ignore
@@ -142,7 +141,7 @@ class DDSpanProcessor(ddtrace.internal.processor.SpanProcessor):
             return None
         return service
 
-    def on_span_start(self, dd_span: ddtrace.Span) -> None:
+    def on_span_start(self, dd_span: Any) -> None:
         otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
 
         context = None
@@ -167,7 +166,7 @@ class DDSpanProcessor(ddtrace.internal.processor.SpanProcessor):
 
             self._otel_spans[dd_span.span_id] = (otel_ctx, otel_span)
 
-    def on_span_finish(self, dd_span: ddtrace.Span) -> None:
+    def on_span_finish(self, dd_span: Any) -> None:
         otel_ctx, otel_span = self._otel_spans.pop(dd_span.span_id)
         self._translate_data(dd_span, otel_span)
         otel_ctx.__exit__(None, None, None)

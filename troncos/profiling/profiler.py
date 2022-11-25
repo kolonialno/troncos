@@ -1,6 +1,7 @@
-import logging
 import os
 from typing import Tuple
+
+from troncos._lazydd import clean_logger, dd_initialized
 
 try:
     import ddtrace
@@ -52,15 +53,16 @@ def python_pprof() -> Tuple[str, dict[str, str]]:
     }
 
 
+if not dd_initialized():
+    clean_logger(
+        "YOU SHOULD CALL 'init_tracing_basic' BEFORE YOU INITIALIZE THE PROFILER",
+        "WARNING"
+    )
+
 ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore # noqa: 501
 
 # Set this to the phlare scrape interval
 os.environ["DD_PROFILING_UPLOAD_INTERVAL"] = os.environ.get(
     "DD_PROFILING_UPLOAD_INTERVAL", "14"
-)
-_interval = os.environ["DD_PROFILING_UPLOAD_INTERVAL"]
-
-logging.getLogger(__name__).info(
-    f"Starting continuous profiling with interval of {_interval} seconds"
 )
 import ddtrace.profiling.auto  # noqa: E402

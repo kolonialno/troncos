@@ -1,23 +1,26 @@
-# import asyncio
-# import logging
 # import os
-# import time
 #
 # from troncos.logs import init_logging_basic
-# from troncos.traces import init_tracing_basic
-# from troncos.traces.decorate import trace_module, trace_block
-#
 # init_logging_basic(
 #     level=os.environ.get("LOG_LEVEL", "INFO"),
 #     formatter=os.environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
 # )
 #
+# from troncos.traces import init_tracing_basic
 # init_tracing_basic(
 #     service_name="whatever",
 #     service_env="local",
 #     service_version="testing",
-#     endpoint="http://localhost:4318/v1/traces",
+#     endpoint="http://localhost:4317/v1/traces",
+#     endpoint_dd="http://localhost:8083",
 # )
+#
+# import asyncio
+# import logging
+# import time
+# from troncos.traces.decorate import trace_module, trace_block
+# from troncos.profiling.profiler import python_pprof
+# python_pprof()
 #
 #
 # import ddtrace
