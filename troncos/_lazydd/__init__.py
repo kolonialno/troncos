@@ -12,6 +12,7 @@ def dd_initialized():
 def dd_tracer():
     if not _dd_tracer:
         import ddtrace
+
         _dd_tracer.append(ddtrace.tracer)
     return _dd_tracer[0]
 

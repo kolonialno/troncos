@@ -7,6 +7,7 @@ import logging
 from functools import wraps
 from types import FunctionType
 from typing import (
+    Any,
     Awaitable,
     Callable,
     Iterator,
@@ -14,7 +15,7 @@ from typing import (
     Type,
     TypeVar,
     cast,
-    overload, Any,
+    overload,
 )
 
 from troncos._lazydd import dd_tracer

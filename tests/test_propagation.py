@@ -1,5 +1,3 @@
-import ddtrace
-
 from troncos.traces.decorate import trace_block
 from troncos.traces.propagation import (
     add_context_to_dict,

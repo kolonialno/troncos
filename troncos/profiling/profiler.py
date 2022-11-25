@@ -56,7 +56,7 @@ def python_pprof() -> Tuple[str, dict[str, str]]:
 if not dd_initialized():
     clean_logger(
         "YOU SHOULD CALL 'init_tracing_basic' BEFORE YOU INITIALIZE THE PROFILER",
-        "WARNING"
+        "WARNING",
     )
 
 ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore # noqa: 501

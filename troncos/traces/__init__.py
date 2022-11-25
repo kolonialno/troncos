@@ -58,10 +58,7 @@ def init_tracing_basic(
             )
 
     if len(otel_span_processors) == 0:
-        clean_logger(
-            "No OTEL span processor configured",
-            "WARNING"
-        )
+        clean_logger("No OTEL span processor configured", "WARNING")
         otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
 
     # Setup OTEL debug processor
@@ -81,7 +78,6 @@ def init_tracing_basic(
     if endpoint_dd:
         os.environ["DD_TRACE_AGENT_URL"] = endpoint_dd
 
-    import ddtrace
     from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
     # Setup OTEL trace provider
@@ -105,7 +101,9 @@ def init_tracing_basic(
     # Setup propagation
     inject_set = set()
     inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
-    ddtrace.config._propagation_style_extract = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
+    ddtrace.config._propagation_style_extract = (
+        ddtrace.internal.constants.PROPAGATION_STYLE_ALL
+    )
     ddtrace.config._propagation_style_inject = inject_set
     ddtrace.config.analytics_enabled = False
 
@@ -124,7 +122,7 @@ def init_tracing_basic(
 
     if len(ddtrace.config._propagation_style_extract) != 3:
         clean_logger(
-            "ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE troncos INITIALIZED IT. THIS IS BAD!",
+            "ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE troncos INITIALIZED IT. THIS IS BAD!",  # noqa: E501
             "WARNING",
         )
 
