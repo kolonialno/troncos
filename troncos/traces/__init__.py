@@ -40,7 +40,9 @@ def init_tracing_basic(
     otel_span_processors: list[SpanProcessor] = []
     if endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc import trace_exporter  # type: ignore # isort: skip # noqa: 501
+            from opentelemetry.exporter.otlp.proto.grpc import (
+                trace_exporter,
+            )  # isort: skip # noqa: 501
 
             clean_logger("OTEL using GRPC exporter")
         except ImportError:  # pragma: no cover
@@ -49,7 +51,7 @@ def init_tracing_basic(
 
                 clean_logger("OTEL using HTTP exporter")
             except ImportError:  # pragma: no cover
-                trace_exporter = None
+                trace_exporter = None  # type: ignore
 
         if trace_exporter:
             clean_logger(f"OTEL traces exported to {endpoint}")
@@ -101,9 +103,8 @@ def init_tracing_basic(
     # Setup propagation
     inject_set = set()
     inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
-    ddtrace.config._propagation_style_extract = (
-        ddtrace.internal.constants.PROPAGATION_STYLE_ALL
-    )
+    extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
+    ddtrace.config._propagation_style_extract = extract_set  # type: ignore
     ddtrace.config._propagation_style_inject = inject_set
     ddtrace.config.analytics_enabled = False
 
@@ -118,7 +119,7 @@ def init_tracing_basic(
     else:
         clean_logger(f"DD traces exported to {endpoint_dd}")
 
-    ddtrace.tracer._span_processors.append(dd_span_processor)
+    ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore
 
     if len(ddtrace.config._propagation_style_extract) != 3:
         clean_logger(

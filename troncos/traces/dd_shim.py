@@ -97,8 +97,8 @@ class DDSpanProcessor:
     @staticmethod
     def _translate_data(dd_span: Any, otel_span: Span) -> None:
         dd_span_attr: dict[str, Any] = {
-            **dd_span._meta,  # type: ignore
-            **dd_span._metrics,  # type: ignore
+            **dd_span._meta,
+            **dd_span._metrics,
         }
         dd_span_ignore_attr = [
             "runtime-id",

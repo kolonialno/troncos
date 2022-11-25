@@ -2,14 +2,16 @@
 This modules sole purpose is to lazy import ddtrace for usage in troncos
 """
 
-_dd_tracer = []
+from typing import Any
+
+_dd_tracer: list[Any] = []
 
 
-def dd_initialized():
+def dd_initialized() -> bool:
     return len(_dd_tracer) > 0
 
 
-def dd_tracer():
+def dd_tracer() -> Any:
     if not _dd_tracer:
         import ddtrace
 
@@ -17,6 +19,6 @@ def dd_tracer():
     return _dd_tracer[0]
 
 
-def clean_logger(msg, level=None):
+def clean_logger(msg: str, level: str | None = None) -> None:
     level = level or "INFO"
     print(f"Troncos init {level}: {msg}")
