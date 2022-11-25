@@ -2,11 +2,14 @@ import logging
 import os
 import sys
 
+from ddtrace.internal.constants import PROPAGATION_STYLE_ALL
+from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
     ConsoleSpanExporter,
     SimpleSpanProcessor,
 )
+from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
@@ -20,23 +23,23 @@ def init_tracing_basic(
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
     ignored_paths: list[str] | None = None,  # TODO: FIX
-):
+) -> None:
     service_version = service_version or "unset"
     # Set variables
     os.environ["DD_SERVICE"] = service_name
-    os.environ["DD_ENV"] = service_env
-    os.environ["DD_VERSION"] = service_version
+    os.environ["DD_ENV"] = service_env or "unset"
+    os.environ["DD_VERSION"] = service_version or "unset"
 
     # Setup OTEL exporter
-    otel_span_processors = []
+    otel_span_processors: list[SpanProcessor] = []
     if endpoint:
         try:
-            from opentelemetry.exporter.otlp.proto.grpc import trace_exporter
+            from opentelemetry.exporter.otlp.proto.grpc import trace_exporter  # type: ignore # isort: skip # noqa: 501
 
             logger.info("OTEL using GRPC exporter")
         except ImportError:  # pragma: no cover
             try:
-                from opentelemetry.exporter.otlp.proto.http import trace_exporter
+                from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore # isort: skip # noqa: 501
 
                 logger.info("OTEL using HTTP exporter")
             except ImportError:  # pragma: no cover
@@ -67,6 +70,12 @@ def init_tracing_basic(
             SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
         )
 
+    if len(otel_span_processors) == 0:
+        logger.warning(
+            "No span processor configured for OTEL. Adding InMemorySpanExporter"
+        )
+        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
+
     # Setup OTEL trace provider
     otel_trace_provider = OtelTracerProvider(
         span_processors=otel_span_processors,
@@ -80,15 +89,14 @@ def init_tracing_basic(
         dd_traces_exported=endpoint_dd is not None,
     )
 
-    os.environ["DD_INSTRUMENTATION_TELEMETRY_ENABLED"] = "false"
     if endpoint_dd:
         os.environ["DD_TRACE_AGENT_URL"] = endpoint_dd
 
-    # Setup propagation
-    os.environ["DD_TRACE_PROPAGATION_STYLE_INJECT"] = "datadog,b3,b3 single header"
-    os.environ["DD_TRACE_PROPAGATION_STYLE_EXTRACT"] = "datadog,b3,b3 single header"
-
     import ddtrace
+
+    # Setup propagation
+    ddtrace.config._propagation_style_inject = PROPAGATION_STYLE_ALL  # type: ignore
+    ddtrace.config.analytics_enabled = False
 
     if not endpoint_dd:
         to_pop = None

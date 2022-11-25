@@ -15,7 +15,7 @@ class AsgiLoggingMiddleware:
         app: Any,
         logger_name: str | None = None,
     ) -> None:
-        self._app = guarantee_single_callable(app)
+        self._app = guarantee_single_callable(app)  # type: ignore
         ln = logger_name or "asgi"
         self._access = logging.getLogger(f"{ln}.access")
         self._error = logging.getLogger(f"{ln}.error")

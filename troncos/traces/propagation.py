@@ -17,8 +17,9 @@ def add_context_to_dict(carrier: dict[str, str]) -> dict[str, str]:
     """
     Adds a trace "parent" entry to a dictionary. This injects all available formats
     """
-
-    HTTPPropagator().inject(ddtrace.tracer.current_trace_context(), carrier)
+    context = ddtrace.tracer.current_trace_context()
+    if context:
+        HTTPPropagator().inject(context, carrier)
     return carrier
 
 

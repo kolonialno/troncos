@@ -4,10 +4,18 @@ import inspect
 import logging
 
 # noinspection PyUnresolvedReferences,PyProtectedMember
-from contextlib import _GeneratorContextManager
 from functools import wraps
 from types import FunctionType
-from typing import Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
+from typing import (
+    Awaitable,
+    Callable,
+    Iterator,
+    ParamSpec,
+    Type,
+    TypeVar,
+    cast,
+    overload,
+)
 
 import ddtrace
 
@@ -26,7 +34,7 @@ def trace_block(
     resource: str | None = None,
     service: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> _GeneratorContextManager[ddtrace.span.Span]:
+) -> Iterator[ddtrace.span.Span]:
     """
     Trace using a with statement. You can supply a tracer provider, if none is supplied,
     the global tracer provider will be used. Example:
@@ -52,8 +60,6 @@ def _trace_function(
     service: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
-    # Set this to make sure f is only traced once
-    setattr(f, _TRACE_IGNORE_ATTR, ())
 
     if inspect.iscoroutinefunction(f):
 

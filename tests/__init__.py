@@ -1,12 +1,7 @@
-from opentelemetry.sdk.resources import SERVICE_NAME
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
+from troncos.traces import init_tracing_basic
 
-from troncos.traces import _set_span_processors, init_tracing_provider
+init_tracing_basic(service_name="test")
 
-_set_span_processors(
-    [
-        BatchSpanProcessor(InMemorySpanExporter()),  # type: ignore[no-untyped-call]
-    ]
-)
-init_tracing_provider(attributes={SERVICE_NAME: "test"})
+import ddtrace  # noqa: E402
+
+test_tracer = ddtrace.tracer
