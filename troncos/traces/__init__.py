@@ -9,7 +9,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
-from troncos._lazydd import clean_logger
+from troncos._lazydd import clean_logger, _dd_set_enabled
 
 
 def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
@@ -28,6 +28,7 @@ def init_tracing_basic(
     service_version: str | None = None,
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
+    patch_modules: list[str] | None = None,
     ignored_paths: list[str] | None = None,  # TODO: FIX
 ) -> None:
     service_version = service_version or "unset"
@@ -118,6 +119,7 @@ def init_tracing_basic(
         clean_logger("DD traces not exported")
     else:
         clean_logger(f"DD traces exported to {endpoint_dd}")
+        _dd_set_enabled(True)
 
     ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore
 
@@ -127,4 +129,8 @@ def init_tracing_basic(
             "WARNING",
         )
 
-    ddtrace.patch_all()  # TODO: Allow people to do what they want here!
+    if patch_modules is None:
+        ddtrace.patch_all()
+    elif len(patch_modules) > 0:
+        kwargs = {m: True for m in patch_modules}
+        ddtrace.patch(**kwargs)

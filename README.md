@@ -79,17 +79,21 @@ To export your traces, you have to pick either `grpc` or `http`. Using `grpc` gi
 
 ```toml
 [tool.poetry.dependencies]
-troncos = {version="^?.?", extras = ["grpc"]}
+troncos = {version="?", extras = ["grpc"]}
 ```
 
 #### http
 
 ```toml
 [tool.poetry.dependencies]
-troncos = {version="^?.?", extras = ["http"]}
+troncos = {version="?", extras = ["http"]}
 ```
 
 > **Note**: You need to change the `TRACE_PORT` depending on your choice of protocol `http`/`grpc`.
+
+### Import ordering
+
+It is very important that you do **NOT** import `ddtrace` before you have initialized troncos! Troncos should give you a warning if this is the case.
 
 ### Plain setup
 

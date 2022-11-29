@@ -7,7 +7,10 @@
 # from troncos.traces.http import create_http_span, end_http_span
 # from troncos.traces.propagation import get_propagation_value
 #
-# SPAN_ATTR_NAME = "_troncos_gunicorn_trace_span"
+from troncos._lazydd import dd_tracer
+from troncos.traces.decorate import trace_block
+
+SPAN_ATTR_NAME = "_troncos_gunicorn_trace_span"
 # ACTIVATION_ATTR_NAME = "_troncos_gunicorn_trace_activation"
 #
 #
@@ -18,9 +21,25 @@
 #     return hex(context.trace_id)[2:]
 #
 #
-# def pre_request_trace(  # type: ignore[no-untyped-def]
-#     worker, req, tracer_provider=None, ignored_uris=None
-# ):
+from troncos.traces.propagation import get_context_from_dict
+
+
+def pre_request_trace(  # type: ignore[no-untyped-def]
+    worker, req, tracer_provider=None, ignored_uris=None
+):
+    # Get potential context from headers
+    req_headers = {}
+    for k, v in req.headers:
+        req_headers[k.lower()] = v
+    context = get_context_from_dict(req_headers)
+
+    # Setup span
+    dd_tracer().context_provider.activate(context)
+    span = trace_block("gunicorn.request", resource=__name__)
+    setattr(worker, SPAN_ATTR_NAME, span)
+
+    # Start span
+    span.__enter__()
 #     """
 #     Gunicorn pre request hook function for tracing
 #     """
@@ -92,7 +111,14 @@
 #         return None
 #
 #
-# def post_request_trace(worker, _req, _environ, res):  # type: ignore[no-untyped-def]
+def post_request_trace(worker, _req, _environ, res):  # type: ignore[no-untyped-def]
+    span = getattr(worker, SPAN_ATTR_NAME, None)
+    try:
+        span.__exit__(None, None, None)
+    except:
+        worker.log.exception("Exception finishing trace")
+
+    pass
 #     """
 #     Gunicorn post request hook function for tracing
 #     """
