@@ -27,23 +27,22 @@
     * [Choosing an exporter](#choosing-an-exporter)
       * [gRPC](#grpc)
       * [http](#http)
+    * [Import order](#import-order)
     * [Plain setup](#plain-setup)
     * [Starlette with uvicorn](#starlette-with-uvicorn)
-    * [Django with gunicorn TODO](#django-with-gunicorn-todo)
+    * [Django with gunicorn](#django-with-gunicorn)
   * [Logging](#logging)
     * [Structlog](#structlog)
   * [Tracing](#tracing)
-    * [trace_function](#trace_function)
-    * [trace_block](#trace_block)
-    * [trace_class](#trace_class)
-    * [trace_module](#trace_module)
-    * [trace_ignore](#trace_ignore)
-  * [Trace Propagation](#trace-propagation)
-    * [Send context](#send-context)
-      * [Send manually](#send-manually)
-    * [Receive context](#receive-context)
-      * [Using troncos middleware](#using-troncos-middleware)
-      * [Receive manually TODO](#receive-manually-todo)
+    * [Tracing your code](#tracing-your-code)
+      * [trace_function](#trace_function)
+      * [trace_block](#trace_block)
+      * [trace_class](#trace_class)
+      * [trace_module](#trace_module)
+      * [trace_ignore](#trace_ignore)
+    * [Trace Propagation](#trace-propagation)
+      * [Send context](#send-context)
+      * [Receive context](#receive-context)
     * [Trace sampling](#trace-sampling)
   * [Profiling](#profiling)
     * [Setup endpoint](#setup-endpoint)
@@ -69,7 +68,7 @@ $ poetry add troncos -E http
 
 ## Setup
 
-> **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level etc.) In this README we use `os.environ` for the sake of clarity.
+> **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level, etc). In this README we use `os.environ` for the sake of clarity.
 
 ### Choosing an exporter
 
@@ -91,7 +90,7 @@ troncos = {version="?", extras = ["http"]}
 
 > **Note**: You need to change the `TRACE_PORT` depending on your choice of protocol `http`/`grpc`.
 
-### Import ordering
+### Import order
 
 It is very important that you do **NOT** import `ddtrace` before you have initialized troncos! Troncos should give you a warning if this is the case.
 
@@ -101,17 +100,19 @@ It is very important that you do **NOT** import `ddtrace` before you have initia
 from os import environ
 
 from troncos.logs import init_logging_basic
+from troncos.traces import init_tracing_basic, http_endpoint_from_env
+from troncos.profiling.profiler import init_profiling_basic
+
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
     formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in production
 )
-
-from troncos.traces import init_tracing_basic, http_endpoint_from_env  # Note that this is on purpose!
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
+profiler = init_profiling_basic()
 
 # Import all your other stuff ...
 ```
@@ -122,22 +123,25 @@ init_tracing_basic(
 from os import environ
 
 from troncos.logs import init_logging_basic
+from troncos.traces import init_tracing_basic, http_endpoint_from_env
+from troncos.profiling.profiler import init_profiling_basic
+
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
     formatter=environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in production
 )
-
-from troncos.traces import init_tracing_basic, http_endpoint_from_env  # Note that this is on purpose!
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
+profiler = init_profiling_basic()
 
 # Import all your other stuff ...
 
 from fastapi import FastAPI
 from troncos.frameworks.starlette.uvicorn import init_uvicorn_logging
+
 app = FastAPI(title="my_service")
 init_uvicorn_logging(
     app=app,
@@ -147,11 +151,9 @@ init_uvicorn_logging(
 
 > **Note**: If you are running starlette but not calling `init_uvicorn_logging`, trace ids might not be logged.
 
-### Django with gunicorn TODO
+### Django with gunicorn
 
 To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
-
-<!--pytest.mark.skip-->
 
 ```python
 from os import environ
@@ -163,20 +165,9 @@ from troncos.traces import init_tracing_basic, http_endpoint_from_env
 def post_fork(server, worker):
     init_tracing_basic(
         endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-        exporter_type="http",  # Can also be grpc
-        attributes={
-            "pid": worker.pid,
-            "environment": environ.get("ENVIRONMENT", "localdev"),
-            "service.name": "myservice",
-        }
+        service_name="my_service",
+        service_env=environ.get("ENVIRONMENT", "localdev"),
     )
-
-    # Add other instrumentors here, like:
-    # DjangoInstrumentor().instrument()
-    #
-    # Psycopg2Instrumentor().instrument(tracer_provider=init_tracing_provider(attributes={
-    #     "service.name": "psycopg2",
-    # }))
 
 
 def pre_request(worker, req):
@@ -295,9 +286,11 @@ structlog.configure(
 
 ## Tracing
 
+### Tracing your code
+
 After initializing tracing in your project you can use different methods to trace your code.
 
-### trace_function
+#### trace_function
 
 This decorator adds tracing to a function. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
@@ -310,21 +303,21 @@ def myfunc1():
 
 @trace_function(service="my_custom_service")
 def myfunc2():
-    return "This will be traced using a custom provider"
+    return "This will be traced as my_custom_service"
 ```
 
-### trace_block
+#### trace_block
 
 Trace using a with statement. You can supply a tracer provider, if none is supplied, the global tracer provider will be used.
 
 ```python
 from troncos.traces.decorate import trace_block
 
-with trace_block(name="my.action", resource="some thing", attributes={"some": "attribute"}):
+with trace_block(name="action", resource="thing", attributes={"some": "attribute"}):
     print("... do an action to a thing...")
 ```
 
-### trace_class
+#### trace_class
 
 This decorator adds a tracing decorator to every method of the decorated class. If you don't want some methods to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
@@ -342,14 +335,14 @@ class MyClass1:
         return "This will not traced"
 
 
-@trace_class(service="my_service")
+@trace_class(service="my_custom_service")
 class MyClass2:
 
     def m3(self):
-        return "This will be traced using a custom provider"
+        return "This will be traced as my_custom_service"
 ```
 
-### trace_module
+#### trace_module
 
 This function adds a tracing decorator to every function of the calling module. If you don't want some functions to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
@@ -366,23 +359,21 @@ def my_function():
 trace_module()
 ```
 
-### trace_ignore
+#### trace_ignore
 
 A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function/method.
 
-## Trace Propagation
+### Trace Propagation
 
-If you want to propagate your trace to the next service, you need to send/receive the `b3` header with your requests/message. If you are using plain `requests` that should be handled automatically by troncos.
+If you want to propagate your trace to the next service, you need to send/receive special headers with your request/message. If you are using plain `requests` that should be handled automatically by troncos. Here is how you do this manually:
 
-### Send context
-
-#### Send manually
+#### Send context
 
 ```python
 from troncos.traces.propagation import get_propagation_value
 
-# Get b3 header
-b3 = get_propagation_value()
+# Get header value
+value = get_propagation_value()
 
 # Send it somewhere
 ```
@@ -400,29 +391,18 @@ add_context_to_dict(some_dict)
 # Send it somewhere
 ```
 
-### Receive context
+#### Receive context
 
-#### Using troncos middleware
-
-Troncos will do this automatically for you, but if you want to do it manually, here are some methods:
-
-#### Receive manually TODO
-
-<!--pytest.mark.skip-->
+Again, troncos should in most cases do this automatically for you, but here is how you do it manually:
 
 ```python
-TODO
-from troncos.traces.propagation import get_context_from_dict
-from opentelemetry.trace import get_tracer
+from troncos.traces.propagation import activate_context_from_dict
+from troncos.traces.decorate import trace_block
 
 some_dict = {} 
-context = get_context_from_dict(some_dict)
+activate_context_from_dict(some_dict)
 
-with get_tracer(__name__).start_as_current_span(
-        "span.name",
-        attributes={"some": "attrs"},
-        context=context,
-):
+with trace_block("my_block"):
     print("... do something ...")
 ```
 
@@ -442,22 +422,21 @@ DD_TRACE_SAMPLE_RATE=0.05
 
 > **Note**: Python 3.11 is [not yet supported](https://github.com/DataDog/dd-trace-py/issues/4149)!
 
-Simply add a `/debug/pprof` endpoint that returns the profile (using flask here as an example):
-
-<!--pytest.mark.skip-->
+Simply add a `/debug/pprof` endpoint that returns the profile:
 
 ```python
-import flask
-from troncos.profiling import profiler  # The import will start the profiler
+from fastapi import FastAPI
+from starlette.responses import Response
+from troncos.profiling.profiler import init_profiling_basic
 
-app = flask.Flask(__name__)
+profiler = init_profiling_basic()
 
-@app.route('/debug/pprof')
-def pprof():
-    content, headers = profiler.python_pprof()
-    res = flask.Response(content)
-    res.headers = headers
-    return res
+app = FastAPI(title="my_service")
+
+@app.get("/debug/pprof", response_model=str)
+async def debug_pprof() -> Response:
+    content, headers = profiler()
+    return Response(content=content, headers=headers)
 ```
 
 You can verify that your setup works with the [pprof](https://github.com/google/pprof) cli:
@@ -466,7 +445,7 @@ You can verify that your setup works with the [pprof](https://github.com/google/
 $ pprof -http :6060 "http://localhost:8080/debug/pprof"
 ```
 
-> **Note**: You will get an empty string from `profiler.python_pprof()` until the first profile has been collected.
+> **Note**: You will get an empty string from `profiler()` until the first profile has been collected.
 
 ### Enable scraping
 

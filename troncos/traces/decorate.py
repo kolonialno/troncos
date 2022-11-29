@@ -18,7 +18,7 @@ from typing import (
     overload,
 )
 
-from troncos._lazydd import dd_tracer
+from troncos._ddlazy import ddlazy
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 
@@ -45,7 +45,7 @@ def trace_block(
     """
 
     attributes = attributes or {}
-    with dd_tracer().trace(
+    with ddlazy.dd_tracer().trace(
         name=name,
         resource=resource,
         service=service,

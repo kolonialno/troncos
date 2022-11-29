@@ -6,7 +6,7 @@ adoption.
 """
 import opentelemetry.trace as trace
 
-from troncos._lazydd import dd_tracer, dd_enabled
+from troncos._ddlazy import ddlazy
 
 try:
     from structlog.types import EventDict, WrappedLogger
@@ -54,8 +54,8 @@ def trace_injection_processor(
         event_dict["trace_id"] = f"{span.get_span_context().trace_id:x}"
         event_dict["span_id"] = f"{span.get_span_context().span_id:x}"
 
-    if dd_enabled():
-        dd_context = dd_tracer().current_trace_context()
+    if ddlazy.dd_trace_export_enabled():
+        dd_context = ddlazy.dd_tracer().current_trace_context()
         if dd_context:
             event_dict["dd_trace_id"] = dd_context.trace_id
             event_dict["dd_trace_id"] = dd_context.span_id

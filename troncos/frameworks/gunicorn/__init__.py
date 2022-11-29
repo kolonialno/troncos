@@ -7,7 +7,7 @@
 # from troncos.traces.http import create_http_span, end_http_span
 # from troncos.traces.propagation import get_propagation_value
 #
-from troncos._lazydd import dd_tracer
+from troncos._ddlazy import ddlazy
 from troncos.traces.decorate import trace_block
 
 SPAN_ATTR_NAME = "_troncos_gunicorn_trace_span"
@@ -34,7 +34,7 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
     context = get_context_from_dict(req_headers)
 
     # Setup span
-    dd_tracer().context_provider.activate(context)
+    ddlazy.dd_tracer().context_provider.activate(context)
     span = trace_block("gunicorn.request", resource=__name__)
     setattr(worker, SPAN_ATTR_NAME, span)
 
