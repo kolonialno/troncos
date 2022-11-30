@@ -58,6 +58,7 @@ python_version = "3.10"
 strict = true
 files = ["./troncos", "./tests",]
 namespace_packages = true
+show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = [

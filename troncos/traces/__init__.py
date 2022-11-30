@@ -99,7 +99,9 @@ def init_tracing_basic(
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
 
-    os.environ.setdefault("DD_TRACE_PROPAGATION_STYLE_EXTRACT", "datadog,b3,b3 single header")
+    os.environ.setdefault(
+        "DD_TRACE_PROPAGATION_STYLE_EXTRACT", "datadog,b3,b3 single header"
+    )
     os.environ.setdefault("DD_TRACE_PROPAGATION_STYLE_INJECT", "b3 single header")
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
 
@@ -134,8 +136,6 @@ def init_tracing_basic(
         ddtrace.patch_all()
     elif len(patch_modules) > 0:
         kwargs = {m: True for m in patch_modules}
-        ddtrace.patch(**kwargs)
-
-
+        ddtrace.patch(**kwargs)  # type: ignore[arg-type]
 
     ddlazy._load_dd_lazy()

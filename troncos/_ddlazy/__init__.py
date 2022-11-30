@@ -1,7 +1,3 @@
-"""
-This modules sole purpose is to lazy import ddtrace for usage in troncos
-"""
-
 from typing import Any
 
 
@@ -28,18 +24,17 @@ class DDLazy:
         if not self._dd_tracer:
             import ddtrace
 
-            self._dd_tracer = ddtrace.tracer
+            self._dd_tracer = ddtrace.tracer  # type: ignore[assignment]
         return self._dd_tracer
 
     def dd_propagator(self) -> Any:
         if not self._dd_propagator:
             import ddtrace.propagation.http
-            self._dd_propagator = ddtrace.propagation.http.HTTPPropagator()
+
+            self._dd_propagator = ddtrace.propagation.http.HTTPPropagator()  # type: ignore[assignment] # noqa: E501
         return self._dd_propagator
 
 
 ddlazy = DDLazy()
 
-__all__ = [
-    "ddlazy"
-]
+__all__ = ["ddlazy"]

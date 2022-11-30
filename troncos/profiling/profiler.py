@@ -1,15 +1,17 @@
 import logging
 import os
-from typing import Tuple
+from typing import Callable, Tuple
 
 from troncos._ddlazy import ddlazy
 
 logger = logging.getLogger(__name__)
 
 
-def init_profiling_basic():
+def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
     if not ddlazy.dd_initialized():
-        logger.warning("YOU SHOULD CALL 'init_tracing_basic' BEFORE YOU INITIALIZE THE PROFILER")
+        logger.warning(
+            "YOU SHOULD CALL 'init_tracing_basic' BEFORE YOU INITIALIZE THE PROFILER"
+        )
 
     import ddtrace
     from ddtrace.profiling.exporter import pprof  # type: ignore
@@ -40,8 +42,6 @@ def init_profiling_basic():
     @staticmethod  # type: ignore
     def _build_default_exporters():  # type: ignore
         return [_endpoint_exporter]
-
-
 
     ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore # noqa: 501
 
