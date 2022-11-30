@@ -9,7 +9,7 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-
+from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 from troncos._ddlazy import ddlazy
 
 logger = logging.getLogger(__name__)
@@ -34,11 +34,12 @@ def init_tracing_basic(
     patch_modules: list[str] | None = None,
     ignored_paths: list[str] | None = None,  # TODO: FIX
 ) -> None:
+    service_env = service_env or "unset"
     service_version = service_version or "unset"
-    # Set variables
+
     os.environ.setdefault("DD_SERVICE", service_name)
-    os.environ.setdefault("DD_ENV", service_env or "unset")
-    os.environ.setdefault("DD_VERSION", service_version or "unset")
+    os.environ.setdefault("DD_ENV", service_env)
+    os.environ.setdefault("DD_VERSION", service_version)
 
     # Setup OTEL exporter
     otel_span_processors: list[SpanProcessor] = []
@@ -63,6 +64,7 @@ def init_tracing_basic(
                 BatchSpanProcessor(trace_exporter.OTLPSpanExporter(endpoint=endpoint))
             )
 
+    # Fallback to InMemorySpanExporter
     if len(otel_span_processors) == 0:
         logger.warning("No OTEL span processor configured")
         otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
@@ -81,36 +83,34 @@ def init_tracing_basic(
             SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
         )
 
-    from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
-
-    # Setup OTEL trace provider
+    # Prepare to initialize ddtrace
     otel_trace_provider = OtelTracerProvider(
         span_processors=otel_span_processors,
         service=service_name,
         env=service_env,
         version=service_version,
     )
-
     dd_span_processor = DDSpanProcessor(
         otel_tracer_provider=otel_trace_provider,
         dd_traces_exported=endpoint_dd is not None,
     )
-
-    if endpoint_dd:
-        os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
-
     os.environ.setdefault(
         "DD_TRACE_PROPAGATION_STYLE_EXTRACT", "datadog,b3,b3 single header"
     )
     os.environ.setdefault("DD_TRACE_PROPAGATION_STYLE_INJECT", "b3 single header")
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
+    if endpoint_dd:
+        os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
 
+    # Initialize ddtrace
     import ddtrace
 
+    # Check if someone imported ddtrace before us
     if len(ddtrace.config._propagation_style_extract) != 3:
         logger.warning(
             "DETECTED THAT ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE 'init_tracing_basic' WAS CALLED. THIS IS BAD!",  # noqa: E501
         )
+        # Try to fix what we can in this situation
         inject_set = set()
         inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
         extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
@@ -118,6 +118,30 @@ def init_tracing_basic(
         ddtrace.config._propagation_style_inject = inject_set
         ddtrace.config.analytics_enabled = False
 
+    # Configure ddtrace
+    ddtrace.config.trace_headers([
+        "accept",
+        "cache-control",
+        "content-security-policy",
+        "content-type",
+        "content-length",
+        "expires",
+        "location",
+        "origin",
+        "range",
+        "referer",
+        "retry-after",
+        "server",
+        "traceparent",
+        "tracestate",
+        "uber-trace-id",
+        "x-b3-traceid",
+        "x-country",
+        "x-language",
+        "x-xss-protection",
+    ])
+
+    # Patch ddtrace span processors
     if not endpoint_dd:
         to_pop = None
         for i, s in enumerate(ddtrace.tracer._span_processors):
@@ -128,14 +152,14 @@ def init_tracing_basic(
         logger.info("DD traces not exported")
     else:
         logger.info(f"DD traces exported to {endpoint_dd}")
-        ddlazy._set_dd_trace_export_enabled(True)
-
     ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore
 
+    # Make ddtrace patch modules
     if patch_modules is None:
         ddtrace.patch_all()
     elif len(patch_modules) > 0:
         kwargs = {m: True for m in patch_modules}
         ddtrace.patch(**kwargs)  # type: ignore[arg-type]
 
-    ddlazy._load_dd_lazy()
+    # Mark ddtrace as initialized in ddlazy
+    ddlazy._on_loaded(endpoint_dd is not None)

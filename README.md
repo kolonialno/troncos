@@ -47,6 +47,7 @@
   * [Profiling](#profiling)
     * [Setup endpoint](#setup-endpoint)
     * [Enable scraping](#enable-scraping)
+  * [Development](#development)
 <!-- TOC -->
 
 ## Etymology
@@ -109,6 +110,7 @@ init_logging_basic(
 )
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
@@ -132,6 +134,7 @@ init_logging_basic(
 )
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
@@ -165,6 +168,7 @@ from troncos.traces import init_tracing_basic, http_endpoint_from_env
 def post_fork(server, worker):
     init_tracing_basic(
         endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
+        # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
         service_name="my_service",
         service_env=environ.get("ENVIRONMENT", "localdev"),
     )
@@ -456,3 +460,7 @@ annotations:
     phlare.oda.com/port: "8080"
     phlare.oda.com/scrape: "true"
 ```
+
+## Development
+
+TODO: Write notes on caveats developing troncos

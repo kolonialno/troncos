@@ -8,6 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
+    """
+    Enables continuous profiling
+    """
+
     if not ddlazy.dd_initialized():
         logger.warning(
             "YOU SHOULD CALL 'init_tracing_basic' BEFORE YOU INITIALIZE THE PROFILER"
@@ -16,6 +20,7 @@ def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
     import ddtrace
     from ddtrace.profiling.exporter import pprof  # type: ignore
 
+    # Define exporter
     class _PprofExporter(pprof.PprofExporter):  # type: ignore
         pprof = ""
 
@@ -31,12 +36,14 @@ def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
     def _build_default_exporters():  # type: ignore
         return [_endpoint_exporter]
 
+    # Monkey patch default exporter func
     ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore # noqa: 501
 
-    # Set this to the phlare scrape interval
+    # Set params and enable
     os.environ.setdefault("DD_PROFILING_UPLOAD_INTERVAL", "14")
     import ddtrace.profiling.auto  # noqa: E402
 
+    # Create function to return
     def python_pprof() -> Tuple[str, dict[str, str]]:
         """
         Returns the pprof content as a string and the headers that should be returned by

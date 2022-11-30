@@ -2,15 +2,18 @@ from typing import Any
 
 
 class DDLazy:
+    """
+    This class exists to make sure that ddtrace is not imported anywhere by troncos before tracing
+    it has been initialized.
+    """
+
     def __init__(self) -> None:
         self._dd_trace_export_enabled = False
         self._dd_tracer = None
         self._dd_propagator = None
 
-    def _set_dd_trace_export_enabled(self, v: bool) -> None:
-        self._dd_trace_export_enabled = v
-
-    def _load_dd_lazy(self) -> None:
+    def _on_loaded(self, export_dd_traces: bool) -> None:
+        self._dd_trace_export_enabled = export_dd_traces
         self.dd_tracer()
         self.dd_propagator()
 

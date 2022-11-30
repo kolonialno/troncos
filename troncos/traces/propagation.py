@@ -13,7 +13,7 @@ def activate_context_from_dict(carrier: dict[str, str]) -> Any:
 
 def get_context_from_dict(carrier: dict[str, str]) -> Any:
     """
-    Gets trace context from a dictionary that contains a 'dd trace' or 'b3' entries.
+    Gets trace context from a dictionary that contains propagation entries.
     """
     return ddlazy.dd_propagator().extract(carrier)
 
@@ -30,7 +30,7 @@ def add_context_to_dict(carrier: dict[str, str]) -> dict[str, str]:
 
 def get_propagation_value() -> str | None:
     """
-    Returns the b3 propagation value
+    Returns a propagation value
     """
 
     d: dict[str, str] = {}

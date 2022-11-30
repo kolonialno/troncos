@@ -40,7 +40,7 @@ def trace_block(
     Trace using a with statement. You can supply a tracer provider, if none is supplied,
     the global tracer provider will be used. Example:
 
-    with trace_block("cool.block", "data!", attributes={"some": "attribute"}):
+    with trace_block("cool.block", resource="data!", attributes={"some": "attribute"}):
         time.sleep(1)
     """
 
@@ -132,16 +132,15 @@ def trace_function(
     attributes: dict[str, str] | None = None,
 ) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
     """
-    This decorator adds tracing to a function. You can supply a tracer provider, if none
-    is supplied, the global tracer provider will be used. Example:
+    This decorator adds tracing to a function. Example:
 
     @trace_function
     def myfunc1()
         return "This will be traced"
 
-    @trace_function(tracer_provider=custom_provider)
+    @trace_function(service=custom_service)
     def myfunc2()
-        return "This will be traced using a custom provider"
+        return "This will be traced as a custom service"
     """
     if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
         assert fn
@@ -186,8 +185,7 @@ def trace_class(
     """
     This decorator adds a tracing decorator to every method of the decorated class. If
     you don't want some methods to be traced, you can add the 'trace_ignore' decorator
-    to them. You can supply a tracer provider, if none is supplied, the global tracer
-    provider will be used. Example:
+    to them. Example:
 
     @trace_class
     class MyClass1:
@@ -245,8 +243,7 @@ def trace_module(
     """
     This function adds a tracing decorator to every function of the calling module. If
     you don't want some functions to be traced, you can add the 'trace_ignore' decorator
-    to them. You can supply a tracer provider, if none is supplied, the global tracer
-    provider will be used. Example:
+    to them. Example:
 
     # Start of module
 

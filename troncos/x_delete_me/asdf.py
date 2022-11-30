@@ -2,7 +2,7 @@
 #
 # from troncos.logs import init_logging_basic
 # from troncos.traces import init_tracing_basic
-# from troncos.profiling.profiler import init_profiling_basic
+# from troncos.profiling import init_profiling_basic
 #
 # init_logging_basic(
 #     level=os.environ.get("LOG_LEVEL", "INFO"),
@@ -17,7 +17,6 @@
 # )
 # init_profiling_basic()
 #
-# import ddtrace
 # import asyncio
 # import logging
 # import time
