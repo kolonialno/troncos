@@ -5,7 +5,7 @@
 
 <p align="center">
     <em>
-        Collection of Python logging and tracing tools
+        Collection of Python logging, tracing and profiling tools
     </em>
     <br>
     <a href="https://github.com/kolonialno/troncos/actions?workflow=CI">
@@ -92,7 +92,7 @@ troncos = {version="?", extras = ["http"]}
 
 ### Import order
 
-It is very important that you do **NOT** import `ddtrace` before you have initialized troncos! Troncos should give you a warning if this is the case.
+It is very important that you do **NOT** import `ddtrace` anywhere before you have initialized troncos! Troncos should give you a warning if this is the case.
 
 ### Plain setup
 
@@ -101,7 +101,7 @@ from os import environ
 
 from troncos.logs import init_logging_basic
 from troncos.traces import init_tracing_basic, http_endpoint_from_env
-from troncos.profiling.profiler import init_profiling_basic
+from troncos.profiling import init_profiling_basic
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
@@ -124,7 +124,7 @@ from os import environ
 
 from troncos.logs import init_logging_basic
 from troncos.traces import init_tracing_basic, http_endpoint_from_env
-from troncos.profiling.profiler import init_profiling_basic
+from troncos.profiling import init_profiling_basic
 
 init_logging_basic(
     level=environ.get("LOG_LEVEL", "INFO"),
@@ -427,7 +427,7 @@ Simply add a `/debug/pprof` endpoint that returns the profile:
 ```python
 from fastapi import FastAPI
 from starlette.responses import Response
-from troncos.profiling.profiler import init_profiling_basic
+from troncos.profiling import init_profiling_basic
 
 profiler = init_profiling_basic()
 
