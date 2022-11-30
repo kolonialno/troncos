@@ -63,7 +63,7 @@ class JsonFormatter(logging.Formatter):
         "asctime": "@timestamp",
     }
 
-    converter = datetime.fromtimestamp  # type: ignore
+    converter = datetime.fromtimestamp  # type: ignore[assignment]
     default_time_format = "%Y-%m-%dT%H:%M:%S.%f"
 
     def __init__(
@@ -292,6 +292,6 @@ class PrettyFormatter(logging.Formatter):
         if hasattr(rc, "trace_id"):
             rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
         if hasattr(rc, "dd_trace_id"):
-            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore
+            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore[attr-defined] # noqa: E501
 
         return super().formatMessage(rc)

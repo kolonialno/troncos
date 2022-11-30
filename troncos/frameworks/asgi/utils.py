@@ -65,7 +65,7 @@ def double_to_single_callable(application: Any) -> Any:
     Transforms a double-callable ASGI application into a single-callable one.
     """
 
-    async def new_application(scope, receive, send):  # type: ignore
+    async def new_application(scope, receive, send):  # type: ignore[no-untyped-def]
         instance = application(scope)
         return await instance(receive, send)
 

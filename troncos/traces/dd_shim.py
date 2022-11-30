@@ -17,8 +17,9 @@ logger = logging.getLogger(__name__)
 
 class _OtelIdGenerator(IdGenerator):
     """
-    Handles generation of trace and span ids for OTEL. It expects that you provide the IDs
-    your self before attempting to create the span. It falls back to random IDs.
+    Handles generation of trace and span ids for OTEL. It expects that you provide
+    the IDs your self before attempting to create the span. It falls back to random
+    IDs.
     """
 
     def __init__(self) -> None:
@@ -82,9 +83,9 @@ class OtelTracerProvider:
         if not p_prov:
             attributes = attributes or {}
             attributes["service.name"] = p_name
-            resource = Resource.create(attributes)  # type: ignore
+            resource = Resource.create(attributes)  # type: ignore[arg-type]
             p_prov = TracerProvider(resource=resource)
-            p_prov.id_generator = self.get_id_generator()  # type: ignore
+            p_prov.id_generator = self.get_id_generator()  # type: ignore[has-type]
             for span_processor in self._span_processors:
                 p_prov.add_span_processor(span_processor)
             self._trace_providers[p_name] = p_prov

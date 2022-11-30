@@ -9,8 +9,9 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
 )
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
-from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
+
 from troncos._ddlazy import ddlazy
+from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
 logger = logging.getLogger(__name__)
 
@@ -52,11 +53,11 @@ def init_tracing_basic(
             logger.info("OTEL using GRPC exporter")
         except ImportError:  # pragma: no cover
             try:
-                from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore # isort: skip # noqa: 501
+                from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore[no-redef] # isort: skip # noqa: 501
 
                 logger.info("OTEL using HTTP exporter")
             except ImportError:  # pragma: no cover
-                trace_exporter = None  # type: ignore
+                trace_exporter = None  # type: ignore[assignment]
 
         if trace_exporter:
             logger.info(f"OTEL traces exported to {endpoint}")
@@ -67,7 +68,7 @@ def init_tracing_basic(
     # Fallback to InMemorySpanExporter
     if len(otel_span_processors) == 0:
         logger.warning("No OTEL span processor configured")
-        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore # noqa: E501
+        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore[no-untyped-call] # noqa: E501
 
     # Setup OTEL debug processor
     otel_trace_debug = os.environ.get("OTEL_TRACE_DEBUG")
@@ -114,32 +115,34 @@ def init_tracing_basic(
         inject_set = set()
         inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
         extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
-        ddtrace.config._propagation_style_extract = extract_set  # type: ignore
+        ddtrace.config._propagation_style_extract = extract_set  # type: ignore[assignment] # noqa: E501
         ddtrace.config._propagation_style_inject = inject_set
         ddtrace.config.analytics_enabled = False
 
     # Configure ddtrace
-    ddtrace.config.trace_headers([
-        "accept",
-        "cache-control",
-        "content-security-policy",
-        "content-type",
-        "content-length",
-        "expires",
-        "location",
-        "origin",
-        "range",
-        "referer",
-        "retry-after",
-        "server",
-        "traceparent",
-        "tracestate",
-        "uber-trace-id",
-        "x-b3-traceid",
-        "x-country",
-        "x-language",
-        "x-xss-protection",
-    ])
+    ddtrace.config.trace_headers(  # type: ignore[no-untyped-call]
+        [
+            "accept",
+            "cache-control",
+            "content-security-policy",
+            "content-type",
+            "content-length",
+            "expires",
+            "location",
+            "origin",
+            "range",
+            "referer",
+            "retry-after",
+            "server",
+            "traceparent",
+            "tracestate",
+            "uber-trace-id",
+            "x-b3-traceid",
+            "x-country",
+            "x-language",
+            "x-xss-protection",
+        ]
+    )
 
     # Patch ddtrace span processors
     if not endpoint_dd:
@@ -152,7 +155,7 @@ def init_tracing_basic(
         logger.info("DD traces not exported")
     else:
         logger.info(f"DD traces exported to {endpoint_dd}")
-    ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore
+    ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore[arg-type]
 
     # Make ddtrace patch modules
     if patch_modules is None:

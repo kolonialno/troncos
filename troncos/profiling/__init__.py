@@ -18,13 +18,13 @@ def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
         )
 
     import ddtrace
-    from ddtrace.profiling.exporter import pprof  # type: ignore
+    from ddtrace.profiling.exporter import pprof  # type: ignore[attr-defined]
 
     # Define exporter
-    class _PprofExporter(pprof.PprofExporter):  # type: ignore
+    class _PprofExporter(pprof.PprofExporter):  # type: ignore[misc]
         pprof = ""
 
-        def export(self, events, start_time_ns, end_time_ns):  # type: ignore
+        def export(self, events, start_time_ns, end_time_ns):  # type: ignore[no-untyped-def] # noqa: E501
             pprof_profile, _ = super(_PprofExporter, self).export(
                 events, start_time_ns, end_time_ns
             )
@@ -32,12 +32,12 @@ def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
 
     _endpoint_exporter = _PprofExporter()
 
-    @staticmethod  # type: ignore
-    def _build_default_exporters():  # type: ignore
+    @staticmethod  # type: ignore[misc]
+    def _build_default_exporters():  # type: ignore[no-untyped-def]
         return [_endpoint_exporter]
 
     # Monkey patch default exporter func
-    ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore # noqa: 501
+    ddtrace.profiling.profiler._ProfilerInstance._build_default_exporters = _build_default_exporters  # type: ignore[assignment] # noqa: 501
 
     # Set params and enable
     os.environ.setdefault("DD_PROFILING_UPLOAD_INTERVAL", "14")
