@@ -72,7 +72,6 @@ minversion = 6.0
 python_files = "test_*.py"
 python_functions = "test_*"
 cache_dir = ".pytest_cache"
-addopts = "--import-mode=importlib"
 # Silence warning by opting in to use pytest 6's new default value
 junit_family = "xunit2"
 # Include captured log messages in system-out in Jenkins report file
