@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 
 from troncos._ddlazy import ddlazy
 
@@ -28,11 +28,14 @@ def add_context_to_dict(carrier: dict[str, str]) -> dict[str, str]:
     return carrier
 
 
-def get_propagation_value() -> str | None:
+def get_propagation_value(fmt: Literal["w3c", "b3"] = "w3c") -> str | None:
     """
-    Returns a propagation value
+    Returns a trace propagation value
     """
 
     d: dict[str, str] = {}
     add_context_to_dict(d)
-    return d.get("b3")
+    if fmt == "b3":
+        return d.get("b3")
+    else:
+        return d.get("traceparent")

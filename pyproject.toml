@@ -22,7 +22,7 @@ opentelemetry-sdk = "1.14.0"
 opentelemetry-exporter-otlp-proto-http = {version = "^1.14.0", optional = true}
 opentelemetry-exporter-otlp-proto-grpc = {version = "^1.14.0", optional = true}
 structlog = {version = "^22.1.0", optional = true}
-ddtrace = "1.6.3"
+ddtrace = {git = "https://github.com/DataDog/dd-trace-py.git", rev = "1.x"}
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.10.1"

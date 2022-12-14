@@ -96,9 +96,12 @@ def init_tracing_basic(
         dd_traces_exported=endpoint_dd is not None,
     )
     os.environ.setdefault(
-        "DD_TRACE_PROPAGATION_STYLE_EXTRACT", "datadog,b3,b3 single header"
+        "DD_TRACE_PROPAGATION_STYLE_EXTRACT",
+        "datadog,b3multi,b3 single header,tracecontext",
     )
-    os.environ.setdefault("DD_TRACE_PROPAGATION_STYLE_INJECT", "b3 single header")
+    os.environ.setdefault(
+        "DD_TRACE_PROPAGATION_STYLE_INJECT", "b3 single header,tracecontext"
+    )
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
@@ -107,16 +110,20 @@ def init_tracing_basic(
     import ddtrace
 
     # Check if someone imported ddtrace before us
-    if len(ddtrace.config._propagation_style_extract) != 3:
+    if (
+        not ddtrace.config._propagation_style_extract
+        or len(ddtrace.config._propagation_style_extract) != 4
+    ):
         logger.warning(
             "DETECTED THAT ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE 'init_tracing_basic' WAS CALLED. THIS IS BAD!",  # noqa: E501
         )
         # Try to fix what we can in this situation
         inject_set = set()
         inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
+        inject_set.add(ddtrace.internal.constants._PROPAGATION_STYLE_W3C_TRACECONTEXT)
         extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
         ddtrace.config._propagation_style_extract = extract_set  # type: ignore[assignment] # noqa: E501
-        ddtrace.config._propagation_style_inject = inject_set
+        ddtrace.config._propagation_style_inject = inject_set  # type: ignore[assignment] # noqa: E501
         ddtrace.config.analytics_enabled = False
 
     # Configure ddtrace

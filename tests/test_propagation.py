@@ -17,8 +17,9 @@ def test_propagation_inject() -> None:
     with trace_block("test"):
         add_context_to_dict(d)
 
-    assert len(d) == 1
+    assert len(d) == 3
     assert d.get("b3", None)
+    assert d.get("traceparent", None)
 
 
 def test_propagation_extract_no_context() -> None:
@@ -40,4 +41,12 @@ def test_get_propagation_value() -> None:
     assert get_propagation_value() is None
 
     with trace_block("test"):
-        assert get_propagation_value()
+        default = get_propagation_value()
+        assert default
+
+        w3c = get_propagation_value("w3c")
+        assert w3c
+        assert default == w3c
+
+        b3 = get_propagation_value("b3")
+        assert b3

@@ -1,12 +1,14 @@
 # import os
 #
+# import requests
+#
 # from troncos.logs import init_logging_basic
-# from troncos.traces import init_tracing_basic
 # from troncos.profiling import init_profiling_basic
+# from troncos.traces import init_tracing_basic
 #
 # init_logging_basic(
 #     level=os.environ.get("LOG_LEVEL", "INFO"),
-#     formatter=os.environ.get("LOG_FORMATTER", "cli")  # Use "logfmt" or "json" in k8s
+#     formatter=os.environ.get("LOG_FORMATTER", "cli"),  # Use "logfmt" or "json" in k8s
 # )
 # init_tracing_basic(
 #     service_name="whatever",
@@ -20,10 +22,10 @@
 # import asyncio
 # import logging
 # import time
-# from troncos.traces.decorate import trace_module, trace_block
-#
 #
 # import ddtrace
+#
+# from troncos.traces.decorate import trace_block, trace_module
 #
 #
 # async def mythang(msg):
@@ -33,6 +35,7 @@
 #
 # async def main():
 #     with trace_block("hello") as span:
+#         requests.get("http://localhost:8083")
 #         span.set_tag("gummier", "bestur")
 #         await asyncio.gather(mythang("einn"), mythang("tveir"))
 #         try:
@@ -42,9 +45,10 @@
 #         except:
 #             pass
 #
+#
 # trace_module()
 #
-# if __name__ == '__main__':
+# if __name__ == "__main__":
 #     asyncio.run(main())
 #
 #
