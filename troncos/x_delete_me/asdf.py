@@ -25,7 +25,7 @@
 #
 # import ddtrace
 #
-# from troncos.traces.decorate import trace_block, trace_module
+# from troncos.traces.decorate import trace_block, trace_module, trace_set_span_attributes # noqa: E501
 #
 #
 # async def mythang(msg):
@@ -37,6 +37,7 @@
 #     with trace_block("hello") as span:
 #         requests.get("http://localhost:8083")
 #         span.set_tag("gummier", "bestur")
+#         trace_set_span_attributes({'a': 'b'})
 #         await asyncio.gather(mythang("einn"), mythang("tveir"))
 #         try:
 #             with trace_block("hello2", resource="someres", service="something"):
@@ -53,6 +54,7 @@
 #
 #
 # # Flush
+# ddtrace.tracer.current_span()
 # ddtrace.tracer.flush()
 # # for s in troncos.newtrace.setup.otel_span_processors:
 # #     s.force_flush(5000)

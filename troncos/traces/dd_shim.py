@@ -7,7 +7,14 @@ from typing import Any, Iterator, Tuple
 
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import IdGenerator, SpanProcessor, TracerProvider
-from opentelemetry.trace import Span, Status, StatusCode, Tracer, set_tracer_provider
+from opentelemetry.trace import (
+    Span,
+    SpanKind,
+    Status,
+    StatusCode,
+    Tracer,
+    set_tracer_provider,
+)
 from opentelemetry.trace.propagation import tracecontext
 
 from troncos import OTEL_LIBRARY_NAME
@@ -135,6 +142,9 @@ class DDSpanProcessor:
             elif k not in dd_span_ignore_attr:
                 otel_span.set_attribute(k, v)
 
+        if "http.route" in dd_span_attr:
+            otel_span.update_name(f"{dd_span.name} {dd_span_attr['http.route']}")
+
         if otel_error_attr_dict:
             otel_span.set_attributes(otel_error_attr_dict)
             otel_span.add_event(name="exception", attributes=otel_error_attr_dict)
@@ -168,8 +178,18 @@ class DDSpanProcessor:
             }
             context = self._propagator.extract(carrier=trace_ctx)
 
+        kind = SpanKind.INTERNAL
+        if dd_span.span_type:
+            # This has to be adjusted
+            if dd_span.span_type in ["web"]:
+                kind = SpanKind.SERVER
+            else:
+                kind = SpanKind.CLIENT
+
         with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
-            otel_ctx = otel_tracer.start_as_current_span(dd_span.name, context=context)
+            otel_ctx = otel_tracer.start_as_current_span(
+                dd_span.name, kind=kind, context=context
+            )
             otel_span = otel_ctx.__enter__()
 
             if self._dd_traces_exported:
@@ -177,6 +197,8 @@ class DDSpanProcessor:
                 otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
             if dd_span.name != dd_span.resource:
                 otel_span.set_attribute("resource", dd_span.resource)
+            if dd_span.span_type:
+                otel_span.set_attribute("dd_type", dd_span.span_type)
 
             self._otel_spans[dd_span.span_id] = (otel_ctx, otel_span)
 

@@ -287,3 +287,13 @@ def trace_ignore(f: Callable[P, R]) -> Callable[P, R]:
 
     setattr(f, _TRACE_IGNORE_ATTR, ())
     return f
+
+
+def trace_set_span_attributes(attr: dict[str, str | bool | int]) -> None:
+    """
+    Add attributes to current span
+    """
+
+    span = ddlazy.dd_tracer().current_span()
+    if span:
+        span.set_tags(attr)

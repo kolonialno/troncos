@@ -18,9 +18,9 @@ keywords = ["logs", "traces", "opentelemetry"]
 python = ">=3.10,<4.0"
 backoff = ">=1.0,<2.0"
 # Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
-opentelemetry-sdk = "1.14.0"
-opentelemetry-exporter-otlp-proto-http = {version = "^1.14.0", optional = true}
-opentelemetry-exporter-otlp-proto-grpc = {version = "^1.14.0", optional = true}
+opentelemetry-sdk = "1.15.0"
+opentelemetry-exporter-otlp-proto-http = {version = "1.15.0", optional = true}
+opentelemetry-exporter-otlp-proto-grpc = {version = "1.15.0", optional = true}
 structlog = {version = "^22.1.0", optional = true}
 ddtrace = {git = "https://github.com/DataDog/dd-trace-py.git", rev = "1.x"}
 
