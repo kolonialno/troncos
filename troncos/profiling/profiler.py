@@ -12,7 +12,19 @@ except ImportError:
 class _PprofExporter(pprof.PprofExporter):  # type: ignore
     pprof = ""
 
+    @staticmethod
+    def _map_frames(events):  # type: ignore
+        for _, e1 in events.items():
+            for e2 in e1:
+                new_frames = []
+                for frame in e2.frames:
+                    file = frame[0].split("/lib/", 1)[-1]
+                    loc = f"{file}:{frame[1]}:{frame[2]}"
+                    new_frames.append((frame[0], frame[1], loc, frame[3]))
+                e2.frames = new_frames
+
     def export(self, events, start_time_ns, end_time_ns):  # type: ignore
+        self._map_frames(events)  # type: ignore
         pprof_profile, _ = super(_PprofExporter, self).export(
             events, start_time_ns, end_time_ns
         )
