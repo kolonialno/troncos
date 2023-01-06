@@ -30,6 +30,7 @@ def init_tracing_basic(
     service_name: str,
     service_env: str | None = None,
     service_version: str | None = None,
+    service_attributes: dict[str, str] | None = None,
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
     patch_modules: list[str] | None = None,
@@ -88,11 +89,13 @@ def init_tracing_basic(
     otel_trace_provider = OtelTracerProvider(
         span_processors=otel_span_processors,
         service=service_name,
+        attributes=service_attributes,
         env=service_env,
         version=service_version,
     )
     dd_span_processor = DDSpanProcessor(
         otel_tracer_provider=otel_trace_provider,
+        tracer_attributes=service_attributes,
         dd_traces_exported=endpoint_dd is not None,
     )
     os.environ.setdefault(
@@ -163,6 +166,9 @@ def init_tracing_basic(
     else:
         logger.info(f"DD traces exported to {endpoint_dd}")
     ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore[arg-type]
+
+    if service_attributes:
+        ddtrace.tracer.set_tags(service_attributes)
 
     # Make ddtrace patch modules
     if patch_modules is None:

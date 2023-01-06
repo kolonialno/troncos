@@ -17,7 +17,7 @@ from opentelemetry.trace import (
 )
 from opentelemetry.trace.propagation import _SPAN_KEY, tracecontext
 
-from troncos import OTEL_LIBRARY_NAME
+from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,7 @@ class OtelTracerProvider:
         service: str,
         env: str | None,
         version: str | None,
+        attributes: dict[str, str] | None,
     ) -> None:
         self._span_processors = span_processors
         self._id_gen = _OtelIdGenerator()
@@ -72,23 +73,28 @@ class OtelTracerProvider:
         self._info_service = service
         self._info_env = env
         self._info_version = version
-        attributes: dict[str, str] = {}
+        self._attributes: dict[str, str] = attributes or {}
+        extra_attributes = {}
         if env:
-            attributes["environment"] = env
+            extra_attributes["environment"] = env
         if version:
-            attributes["version"] = version
-        set_tracer_provider(self._get_tracer_provider(attributes=attributes))
+            extra_attributes["version"] = version
+        set_tracer_provider(
+            self._get_tracer_provider(extra_attributes=extra_attributes)
+        )
 
     def get_id_generator(self) -> _OtelIdGenerator:
         return self._id_gen
 
     def _get_tracer_provider(
-        self, name: str | None = None, attributes: dict[str, str] | None = None
+        self, name: str | None = None, extra_attributes: dict[str, str] | None = None
     ) -> TracerProvider:
         p_name = name or self._info_service
         p_prov = self._trace_providers.get(p_name)
         if not p_prov:
-            attributes = attributes or {}
+            attributes = self._attributes.copy()
+            if extra_attributes:
+                attributes = {**attributes, **extra_attributes}
             attributes["service.name"] = p_name
             resource = Resource.create(attributes)  # type: ignore[arg-type]
             p_prov = TracerProvider(resource=resource)
@@ -99,7 +105,9 @@ class OtelTracerProvider:
         return p_prov
 
     def get_tracer(self, name: str | None = None) -> Tracer:
-        return self._get_tracer_provider(name).get_tracer(OTEL_LIBRARY_NAME)
+        return self._get_tracer_provider(name).get_tracer(
+            OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
+        )
 
 
 class DDSpanProcessor:
@@ -108,20 +116,16 @@ class DDSpanProcessor:
     """
 
     def __init__(
-        self, otel_tracer_provider: OtelTracerProvider, dd_traces_exported: bool
+        self,
+        otel_tracer_provider: OtelTracerProvider,
+        tracer_attributes: dict[str, str] | None,
+        dd_traces_exported: bool,
     ) -> None:
         self._otel = otel_tracer_provider
         self._propagator = tracecontext.TraceContextTextMapPropagator()
         self._otel_spans: dict[int, Tuple[object, Span]] = {}
         self._dd_traces_exported = dd_traces_exported
-
-    @staticmethod
-    def _translate_data(dd_span: Any, otel_span: Span) -> None:
-        dd_span_attr: dict[str, Any] = {
-            **dd_span._meta,
-            **dd_span._metrics,
-        }
-        dd_span_ignore_attr = [
+        self._dd_span_ignore_attr = [
             "runtime-id",
             "_dd.agent_psr",
             "_dd.top_level",
@@ -129,6 +133,15 @@ class DDSpanProcessor:
             "env",
             "version",
         ]
+        if tracer_attributes:
+            for k in tracer_attributes:
+                self._dd_span_ignore_attr.append(k)
+
+    def _translate_data(self, dd_span: Any, otel_span: Span) -> None:
+        dd_span_attr: dict[str, Any] = {
+            **dd_span._meta,
+            **dd_span._metrics,
+        }
         dd_span_err_attr_mapping = {
             "error.msg": "exception.message",
             "error.type": "exception.type",
@@ -139,7 +152,7 @@ class DDSpanProcessor:
             otel_err_attr = dd_span_err_attr_mapping.get(k)
             if otel_err_attr:
                 otel_error_attr_dict[otel_err_attr] = v
-            elif k not in dd_span_ignore_attr:
+            elif k not in self._dd_span_ignore_attr:
                 otel_span.set_attribute(k, v)
 
         if dd_span.name != dd_span.resource:
