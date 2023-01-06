@@ -34,7 +34,6 @@ def init_tracing_basic(
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
     patch_modules: list[str] | None = None,
-    ignored_paths: list[str] | None = None,  # TODO: FIX
 ) -> None:
     service_env = service_env or "unset"
     service_version = service_version or "unset"
