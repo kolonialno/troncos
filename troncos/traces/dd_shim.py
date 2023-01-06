@@ -2,9 +2,9 @@ import contextlib
 import logging
 import random
 import sys
-from contextlib import _GeneratorContextManager
 from typing import Any, Iterator, Tuple
 
+from opentelemetry import context as context_api
 from opentelemetry.sdk.resources import Resource
 from opentelemetry.sdk.trace import IdGenerator, SpanProcessor, TracerProvider
 from opentelemetry.trace import (
@@ -15,7 +15,7 @@ from opentelemetry.trace import (
     Tracer,
     set_tracer_provider,
 )
-from opentelemetry.trace.propagation import tracecontext
+from opentelemetry.trace.propagation import _SPAN_KEY, tracecontext
 
 from troncos import OTEL_LIBRARY_NAME
 
@@ -112,7 +112,7 @@ class DDSpanProcessor:
     ) -> None:
         self._otel = otel_tracer_provider
         self._propagator = tracecontext.TraceContextTextMapPropagator()
-        self._otel_spans: dict[int, Tuple[_GeneratorContextManager[Span], Span]] = {}
+        self._otel_spans: dict[int, Tuple[object, Span]] = {}
         self._dd_traces_exported = dd_traces_exported
 
     @staticmethod
@@ -142,6 +142,9 @@ class DDSpanProcessor:
             elif k not in dd_span_ignore_attr:
                 otel_span.set_attribute(k, v)
 
+        if dd_span.name != dd_span.resource:
+            otel_span.set_attribute("resource", dd_span.resource)
+
         if "http.route" in dd_span_attr:
             otel_span.update_name(f"{dd_span.name} {dd_span_attr['http.route']}")
 
@@ -166,6 +169,7 @@ class DDSpanProcessor:
         return service
 
     def on_span_start(self, dd_span: Any) -> None:
+        logger.debug(f"dd_span start: {dd_span.span_id:x}")
         otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
 
         context = None
@@ -187,22 +191,25 @@ class DDSpanProcessor:
                 kind = SpanKind.CLIENT
 
         with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
-            otel_ctx = otel_tracer.start_as_current_span(
-                dd_span.name, kind=kind, context=context
+            otel_span = otel_tracer.start_span(
+                name=dd_span.name,
+                context=context,
+                kind=kind,
+                start_time=dd_span.start_ns,
             )
-            otel_span = otel_ctx.__enter__()
+            otel_token = context_api.attach(context_api.set_value(_SPAN_KEY, otel_span))
 
             if self._dd_traces_exported:
                 otel_span.set_attribute("dd_trace_id", str(dd_span.trace_id))
                 otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
-            if dd_span.name != dd_span.resource:
-                otel_span.set_attribute("resource", dd_span.resource)
             if dd_span.span_type:
                 otel_span.set_attribute("dd_type", dd_span.span_type)
 
-            self._otel_spans[dd_span.span_id] = (otel_ctx, otel_span)
+            self._otel_spans[dd_span.span_id] = (otel_token, otel_span)
 
     def on_span_finish(self, dd_span: Any) -> None:
-        otel_ctx, otel_span = self._otel_spans.pop(dd_span.span_id)
+        otel_token, otel_span = self._otel_spans.pop(dd_span.span_id)
         self._translate_data(dd_span, otel_span)
-        otel_ctx.__exit__(None, None, None)
+        otel_span.end(dd_span.start_ns + dd_span.duration_ns)
+        # context_api.detach(otel_token)  # this causes issues, and is apparently not needed  # noqa: 501
+        logger.debug(f"dd_span finish: {dd_span.span_id:x}")
