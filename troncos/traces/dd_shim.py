@@ -182,7 +182,6 @@ class DDSpanProcessor:
         return service
 
     def on_span_start(self, dd_span: Any) -> None:
-        logger.debug(f"dd_span start: {dd_span.span_id:x}")
         otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
 
         context = None
@@ -223,6 +222,5 @@ class DDSpanProcessor:
     def on_span_finish(self, dd_span: Any) -> None:
         otel_token, otel_span = self._otel_spans.pop(dd_span.span_id)
         self._translate_data(dd_span, otel_span)
+        context_api.detach(otel_token)
         otel_span.end(dd_span.start_ns + dd_span.duration_ns)
-        # context_api.detach(otel_token)  # this causes issues, and is apparently not needed  # noqa: 501
-        logger.debug(f"dd_span finish: {dd_span.span_id:x}")
