@@ -4,6 +4,8 @@ import opentelemetry.trace as trace
 
 from troncos._ddlazy import ddlazy
 
+logger = logging.getLogger(__name__)
+
 
 class TraceIdFilter(logging.Filter):
     """
@@ -48,4 +50,47 @@ class HttpPathFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         if hasattr(record, "http_path"):
             return getattr(record, "http_path") not in self._ignored_paths
+        return True
+
+
+class ContextDetachErrorDropFilter(logging.Filter):
+    """
+    There is a problem with OTEL where sometimes detaching context fails with an
+    error. This issue is tracked here:
+
+        https://github.com/open-telemetry/opentelemetry-python/issues/2606
+
+    We have observed this in some services. In those cases the first (or parent)
+    span of an incoming starlette request fails to detach the context. This does
+    not seem to affect tracing, nor to cause any memory leaks. It just floods the
+    logs with exceptions. So the "solution" is to suppress those exceptions in the
+    logs using this filter.
+
+    So if you see this exception in your logs, you can consider using this filter:
+
+    Traceback (most recent call last):
+      File "opentelemetry/context/__init__.py", line 157, in detach
+        _RUNTIME_CONTEXT.detach(token)  # type: ignore
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+      File "opentelemetry/context/contextvars_context.py", line 50, in detach
+        self._current_context.reset(token)  # type: ignore
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ValueError: <Token> was created in a different Context
+    """
+
+    def __init__(self, name: str = "ContextDetachErrorDropFilter") -> None:
+        super().__init__(name)
+        self._count = 0
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if (
+            record.name == "opentelemetry.context"
+            and record.msg == "Failed to detach context"
+        ):
+            if self._count == 0:
+                logger.warning("Suppressing context detach exceptions")
+            self._count += 1
+            if self._count > 100:
+                self._count = 0
+            return False
         return True
