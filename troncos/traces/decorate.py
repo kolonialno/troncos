@@ -34,6 +34,7 @@ def trace_block(
     *,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Iterator[Any]:  # This is set to any, because we want to lazy-load ddtrace
     """
@@ -49,6 +50,7 @@ def trace_block(
         name=name,
         resource=resource,
         service=service,
+        span_type=span_type,
     ) as span:
         if attributes:
             span.set_tags(attributes)
@@ -60,6 +62,7 @@ def _trace_function(
     name: str | None = None,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
 
@@ -71,6 +74,7 @@ def _trace_function(
                 name=name or f"{f.__module__}.{f.__qualname__}",
                 resource=resource,
                 service=service,
+                span_type=span_type,
                 attributes=attributes,
             ):
                 awaitable_func = cast(Callable[P, Awaitable[R]], f)
@@ -89,6 +93,7 @@ def _trace_function(
                 name=name or f"{f.__module__}.{f.__qualname__}",
                 resource=resource,
                 service=service,
+                span_type=span_type,
                 attributes=attributes,
             ):
                 return f(*args, **kwargs)
@@ -106,6 +111,7 @@ def trace_function(
     name: str | None = None,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
     ...
@@ -118,6 +124,7 @@ def trace_function(
     name: str | None = None,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]:
     ...
@@ -129,6 +136,7 @@ def trace_function(
     name: str | None = None,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
     """
@@ -144,11 +152,11 @@ def trace_function(
     """
     if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
         assert fn
-        return _trace_function(fn, name, resource, service, attributes)
+        return _trace_function(fn, name, resource, service, span_type, attributes)
     else:
         # No args
         def _inner(f: Callable[P, R]) -> Callable[P, R]:
-            return _trace_function(f, name, resource, service, attributes)
+            return _trace_function(f, name, resource, service, span_type, attributes)
 
         return _inner
 
@@ -159,6 +167,7 @@ def trace_class(
     *,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[[Type[TClass]], Type[TClass]]:
     ...
@@ -170,6 +179,7 @@ def trace_class(
     *,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Type[TClass]:
     ...
@@ -180,6 +190,7 @@ def trace_class(
     *,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Type[TClass] | Callable[[Type[TClass]], Type[TClass]]:
     """
@@ -223,6 +234,7 @@ def trace_class(
                     name=None,
                     resource=resource,
                     service=service,
+                    span_type=span_type,
                     attributes=attributes,
                 ),
             )
@@ -238,6 +250,7 @@ def trace_module(
     *,
     resource: str | None = None,
     service: str | None = None,
+    span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> None:
     """
@@ -275,6 +288,7 @@ def trace_module(
             name=None,
             resource=resource,
             service=service,
+            span_type=span_type,
             attributes=attributes,
         )
 

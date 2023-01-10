@@ -13,7 +13,7 @@ def pre_request_trace(  # type: ignore[no-untyped-def]
         req_headers[str(k).lower()] = str(v)
     activate_context_from_dict(req_headers)
 
-    span = trace_block("gunicorn.request", resource=__name__)
+    span = trace_block("gunicorn.request", resource=__name__, span_type="web")
     setattr(worker, SPAN_ATTR_NAME, span)
 
     # Start span
