@@ -35,15 +35,16 @@
     * [Structlog](#structlog)
   * [Tracing](#tracing)
     * [Tracing your code](#tracing-your-code)
-      * [trace_function](#trace_function)
-      * [trace_block](#trace_block)
-      * [trace_class](#trace_class)
-      * [trace_module](#trace_module)
-      * [trace_ignore](#trace_ignore)
+      * [trace_function](#tracefunction)
+      * [trace_block](#traceblock)
+      * [trace_class](#traceclass)
+      * [trace_module](#tracemodule)
+      * [trace_ignore](#traceignore)
     * [Trace Propagation](#trace-propagation)
       * [Send context](#send-context)
       * [Receive context](#receive-context)
     * [Trace sampling](#trace-sampling)
+    * [Trace debugging](#trace-debugging)
   * [Profiling](#profiling)
     * [Setup endpoint](#setup-endpoint)
     * [Enable scraping](#enable-scraping)
@@ -134,7 +135,7 @@ init_logging_basic(
 )
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
+    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
@@ -168,14 +169,14 @@ from troncos.traces import init_tracing_basic, http_endpoint_from_env
 def post_fork(server, worker):
     init_tracing_basic(
         endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-        # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
+        # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
         service_name="my_service",
         service_env=environ.get("ENVIRONMENT", "localdev"),
     )
 
 
 def pre_request(worker, req):
-    pre_request_trace(worker, req, ignored_uris=["/health/"])
+    pre_request_trace(worker, req)
 
 
 def post_request(worker, req, environ, resp):
@@ -323,7 +324,7 @@ with trace_block(name="action", resource="thing", attributes={"some": "attribute
 
 #### trace_class
 
-This decorator adds a tracing decorator to every method of the decorated class. If you don't want some methods to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
+This decorator adds a tracing decorator to every method of the decorated class. If you don't want some methods to be traced, you can add the [trace_ignore](#traceignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
 ```python
 from troncos.traces.decorate import trace_class, trace_ignore
@@ -348,7 +349,7 @@ class MyClass2:
 
 #### trace_module
 
-This function adds a tracing decorator to every function of the calling module. If you don't want some functions to be traced, you can add the [trace_ignore](#trace_ignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
+This function adds a tracing decorator to every function of the calling module. If you don't want some functions to be traced, you can add the [trace_ignore](#traceignore) decorator to them. You can supply a tracer provider, if none is supplied, the global tracer provider will be used:
 
 ```python
 from troncos.traces.decorate import trace_ignore, trace_module
@@ -365,7 +366,7 @@ trace_module()
 
 #### trace_ignore
 
-A decorator that will make [trace_class](#trace_class) and [trace_module](#trace_module) ignore the decorated function/method.
+A decorator that will make [trace_class](#traceclass) and [trace_module](#tracemodule) ignore the decorated function/method.
 
 ### Trace Propagation
 
@@ -420,11 +421,13 @@ OTEL_TRACES_SAMPLER_ARG=0.05
 DD_TRACE_SAMPLE_RATE=0.05
 ```
 
+### Trace debugging
+
+You can enable trace debugging by setting the environmental variable `OTEL_TRACE_DEBUG=true`. That will print all spans to the console. If you would rather get the spans in a file you can also provide the variable `OTEL_TRACE_DEBUG_FILE=/tmp/traces`.
+
 ## Profiling
 
 ### Setup endpoint
-
-> **Note**: Python 3.11 is [not yet supported](https://github.com/DataDog/dd-trace-py/issues/4149)!
 
 Simply add a `/debug/pprof` endpoint that returns the profile:
 
