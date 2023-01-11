@@ -4,9 +4,7 @@ from troncos.traces.propagation import activate_context_from_dict
 SPAN_ATTR_NAME = "_troncos_gunicorn_trace_span"
 
 
-def pre_request_trace(  # type: ignore[no-untyped-def]
-    worker, req, tracer_provider=None, ignored_uris=None
-):
+def pre_request_trace(worker, req):  # type: ignore[no-untyped-def]
     # Get potential context from headers
     req_headers = {}
     for k, v in req.headers:
