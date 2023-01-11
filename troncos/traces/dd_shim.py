@@ -56,7 +56,7 @@ class _OtelIdGenerator(IdGenerator):
 
 class OtelTracerProvider:
     """
-    Handles creation of OTEL tracer providers
+    Handles dynamic creation of OTEL tracer providers based on names.
     """
 
     def __init__(
@@ -112,7 +112,8 @@ class OtelTracerProvider:
 
 class DDSpanProcessor:
     """
-    Maps DD spans to OTEL spans
+    This is a DD span processor that creates OTEL spans. It maps the DD spans to OTEL
+    spans as closely as possible.
     """
 
     def __init__(
@@ -138,6 +139,7 @@ class DDSpanProcessor:
                 self._dd_span_ignore_attr.append(k)
 
     def _translate_data(self, dd_span: Any, otel_span: Span) -> None:
+        # Collect all "attributes" from the dd span
         dd_span_attr: dict[str, Any] = {
             **dd_span._meta,
             **dd_span._metrics,
@@ -148,6 +150,9 @@ class DDSpanProcessor:
             "error.stack": "exception.stacktrace",
         }
         otel_error_attr_dict = {}
+
+        # Map set OTEL attributes based on DD attributes
+        otel_span.set_attribute("resource", dd_span.resource)
         for k, v in dd_span_attr.items():
             otel_err_attr = dd_span_err_attr_mapping.get(k)
             if otel_err_attr:
@@ -155,12 +160,7 @@ class DDSpanProcessor:
             elif k not in self._dd_span_ignore_attr:
                 otel_span.set_attribute(k, v)
 
-        if dd_span.name != dd_span.resource:
-            otel_span.set_attribute("resource", dd_span.resource)
-
-        if "http.route" in dd_span_attr:
-            otel_span.update_name(f"{dd_span.name} {dd_span_attr['http.route']}")
-
+        # Map exception attributes
         if otel_error_attr_dict:
             otel_span.set_attributes(otel_error_attr_dict)
             otel_span.add_event(name="exception", attributes=otel_error_attr_dict)
@@ -178,12 +178,15 @@ class DDSpanProcessor:
     @staticmethod
     def _get_service_name(service: str | None) -> str | None:
         if service in ["fastapi", "flask", "starlette", "django"]:
+            # In these cases, we want to use the default OTEL tracer, so
+            # we just return None
             return None
         return service
 
     def on_span_start(self, dd_span: Any) -> None:
         otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
 
+        # Set up context
         context = None
         if dd_span.parent_id and not dd_span._parent:
             # This span has an external parent, extract that
@@ -194,14 +197,17 @@ class DDSpanProcessor:
             }
             context = self._propagator.extract(carrier=trace_ctx)
 
+        # Setup span kind
         kind = SpanKind.INTERNAL
         if dd_span.span_type:
-            # This has to be adjusted
+            # This has to be adjusted if we want to use the CONSUMER/PRODUCER
+            # span kinds
             if dd_span.span_type in ["web"]:
                 kind = SpanKind.SERVER
             else:
                 kind = SpanKind.CLIENT
 
+        # Set up the trace and span ids, and create span
         with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
             otel_span = otel_tracer.start_span(
                 name=dd_span.name,
@@ -211,6 +217,7 @@ class DDSpanProcessor:
             )
             otel_token = context_api.attach(context_api.set_value(_SPAN_KEY, otel_span))
 
+            # Set some attributes, mainly for debugging
             if self._dd_traces_exported:
                 otel_span.set_attribute("dd_trace_id", str(dd_span.trace_id))
                 otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
@@ -220,7 +227,10 @@ class DDSpanProcessor:
             self._otel_spans[dd_span.span_id] = (otel_token, otel_span)
 
     def on_span_finish(self, dd_span: Any) -> None:
+        # Get span and translate DD data to OTEL data
         otel_token, otel_span = self._otel_spans.pop(dd_span.span_id)
         self._translate_data(dd_span, otel_span)
+
+        # Detach context and end span
         context_api.detach(otel_token)
         otel_span.end(dd_span.start_ns + dd_span.duration_ns)

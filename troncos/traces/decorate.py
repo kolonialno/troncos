@@ -38,8 +38,7 @@ def trace_block(
     attributes: dict[str, str] | None = None,
 ) -> Iterator[Any]:  # This is set to any, because we want to lazy-load ddtrace
     """
-    Trace using a with statement. You can supply a tracer provider, if none is supplied,
-    the global tracer provider will be used. Example:
+    Trace a code block using a with statement. Example:
 
     with trace_block("cool.block", resource="data!", attributes={"some": "attribute"}):
         time.sleep(1)
@@ -67,7 +66,7 @@ def _trace_function(
 ) -> Callable[P, R]:
 
     if inspect.iscoroutinefunction(f):
-
+        # Async function
         @wraps(f)
         async def traced_func_async(*args: P.args, **kwargs: P.kwargs) -> R:
             with trace_block(
@@ -86,7 +85,7 @@ def _trace_function(
         return cast(Callable[P, R], traced_func_async)
 
     else:
-
+        # "Regular" function
         @wraps(f)
         def traced_func(*args: P.args, **kwargs: P.kwargs) -> R:
             with trace_block(
@@ -146,10 +145,11 @@ def trace_function(
     def myfunc1()
         return "This will be traced"
 
-    @trace_function(service=custom_service)
+    @trace_function(service="custom_service")
     def myfunc2()
         return "This will be traced as a custom service"
     """
+
     if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
         assert fn
         return _trace_function(fn, name, resource, service, span_type, attributes)
@@ -209,11 +209,11 @@ def trace_class(
             return "This will not be traced"
 
 
-    @trace_class(tracer_provider=custom_provider)
+    @trace_class(service="custom_service")
     class MyClass2:
 
         def m3(self):
-            return "This will be traced using a custom provider"
+            return "This will be traced as a custom service"
     """
 
     def _dec(cls: Type[TClass]) -> Type[TClass]:
@@ -271,6 +271,7 @@ def trace_module(
 
     # End of module
     """
+
     frame = inspect.stack()[1].frame
     scope = frame.f_locals
     module_name = scope.get("__name__", "unknown")
@@ -305,7 +306,11 @@ def trace_ignore(f: Callable[P, R]) -> Callable[P, R]:
 
 def trace_set_span_attributes(attr: dict[str, str | bool | int]) -> None:
     """
-    Add attributes to current span
+    Add attributes to current span: Example:
+
+    with trace_block("cool.block", attributes={"some": "attribute"}):
+        result = calculate_something()
+        trace_set_span_attributes({"result": result})
     """
 
     span = ddlazy.dd_tracer().current_span()

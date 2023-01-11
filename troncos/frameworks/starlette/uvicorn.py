@@ -11,8 +11,8 @@ except ImportError:
 
 class _UvicornErrorFilter(logging.Filter):
     """
-    This filter is specifically so exceptions that happen when serving requests, are not
-    logged 2 times. See '_init_uvicorn_logging' below for context.
+    This filter can be added to uvicorn logging so exceptions that happen when serving
+    requests, are not logged 2 times. See 'init_uvicorn_logging' below for context.
     """
 
     def __init__(self, name: str = "UvicornErrorFilter") -> None:
@@ -37,8 +37,8 @@ def init_uvicorn_logging(
     because it logs messages after all middleware has been executed. Meaning that our
     tracing span is gone (like tears in the rain) when that logger logs. So we just
     disable 'uvicorn.access' and add new LoggingMiddleWare (see implementation in
-    middleware.py) that handles logging, because that can see our tracing spans. The new
-    loggers it uses are called 'velodrome.access' and 'velodrome.error'
+    asgi/middleware.py) that handles logging, because that can see our tracing spans.
+    The new loggers it uses are called 'velodrome.access' and 'velodrome.error'
 
     Now using our own middleware for logging poses another problem. Errors are logged
     twice! So, to mitigate that, we filter all exceptions that would be logged my our

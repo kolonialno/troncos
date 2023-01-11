@@ -120,8 +120,8 @@ def init_logging_basic(
       └ HANDLER logging.StreamHandler  LEVEL: 20
         └ FILTER troncos.logs.filters.TraceIdFilter
         └ FORMATTER troncos.logs.formatters.PrettyFormatter
-
     """
+
     # Create handler
     root_handler = logging.StreamHandler()
     root_handler.setLevel(level)

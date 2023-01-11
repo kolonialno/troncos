@@ -39,6 +39,7 @@ def init_logging_structlog(
         "interno")
     :param extra_processors: Optional list of structlog processors to add to the chain
     """
+
     logger = init_logging_basic(
         level=level,
         formatter="structlog",

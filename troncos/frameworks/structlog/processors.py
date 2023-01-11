@@ -49,6 +49,10 @@ class StaticValue:
 def trace_injection_processor(
     _logger: WrappedLogger, _log_method: str, event_dict: EventDict
 ) -> EventDict:
+    """
+    Simple logging processor that adds a trace_id to the log record if available.
+    """
+
     span = trace.get_current_span()
     if not isinstance(span, trace.NonRecordingSpan):
         event_dict["trace_id"] = f"{span.get_span_context().trace_id:x}"

@@ -84,6 +84,7 @@ class JsonFormatter(logging.Formatter):
         param version: version as for @version field in logging, always included.
             Defaults to "1".
         """
+
         super().__init__(*args, **kwargs)
 
         self.fields = (
@@ -102,6 +103,7 @@ class JsonFormatter(logging.Formatter):
         :param datefmt:
         :return:
         """
+
         ct = self.converter(record.created)  # type: ignore[has-type]
         _format = datefmt or self.default_time_format
 

@@ -42,6 +42,7 @@ def is_double_callable(application: Any) -> bool:
     """
     Tests to see if an application is a legacy-style (double-callable) application.
     """
+
     # Look for a hint on the object first
     if getattr(application, "_asgi_single_callable", False):
         return False
@@ -78,6 +79,7 @@ def guarantee_single_callable(application: Any) -> Any:
     in single-callable style. Use this to add backwards compatibility for ASGI
     2.0 applications to your server/test harness/etc.
     """
+
     if is_double_callable(application):
         application = double_to_single_callable(application)
     return application

@@ -4,7 +4,7 @@ from typing import Any
 class DDLazy:
     """
     This class exists to make sure that ddtrace is not imported anywhere by troncos
-    before tracing it has been initialized.
+    before tracing has been initialized.
     """
 
     def __init__(self) -> None:
