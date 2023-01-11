@@ -111,7 +111,7 @@ init_logging_basic(
 )
 init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT", "/v1/traces"),
+    # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
     service_name="my_service",
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
