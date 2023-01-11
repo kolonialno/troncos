@@ -466,4 +466,6 @@ annotations:
 
 ## Development
 
-TODO: Write notes on caveats developing troncos
+When developing troncos you should be constantly aware of the fact that under no circumstances should you import `ddtrace` into your module. That would cause the tracer to initialize with default values that would not change when the user initializes the tracer.
+
+For this reason, if you need to use any parts of `ddtrace` in your code, consider using the `_ddlazy` module, that gives you access lazily. If that does not satisfy your requirements you can always import `ddtrace` in your functions (not at the top of your module).
