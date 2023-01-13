@@ -120,10 +120,10 @@ def init_tracing_basic(
     # Set some config variables before loading ddtrace
     os.environ.setdefault(
         "DD_TRACE_PROPAGATION_STYLE_EXTRACT",
-        "datadog,b3multi,b3 single header,tracecontext",
+        "tracecontext,b3multi,b3 single header,datadog",
     )
     os.environ.setdefault(
-        "DD_TRACE_PROPAGATION_STYLE_INJECT", "b3 single header,tracecontext"
+        "DD_TRACE_PROPAGATION_STYLE_INJECT", "tracecontext,b3 single header"
     )
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
     if endpoint_dd:
@@ -143,8 +143,8 @@ def init_tracing_basic(
         )
         # Try to fix what we can in this situation
         inject_set = set()
-        inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
         inject_set.add(ddtrace.internal.constants._PROPAGATION_STYLE_W3C_TRACECONTEXT)
+        inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
         extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
         ddtrace.config._propagation_style_extract = extract_set  # type: ignore[assignment] # noqa: E501
         ddtrace.config._propagation_style_inject = inject_set  # type: ignore[assignment] # noqa: E501
