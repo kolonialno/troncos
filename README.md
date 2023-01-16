@@ -427,6 +427,8 @@ You can enable trace debugging by setting the environmental variable `OTEL_TRACE
 
 ## Profiling
 
+> **Warning**: There is a [bug in ddtrace](https://github.com/DataDog/dd-trace-py/issues/4899) that causes a memory leak when running the profiler with python 3.11!
+
 ### Setup endpoint
 
 Simply add a `/debug/pprof` endpoint that returns the profile:
