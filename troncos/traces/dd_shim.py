@@ -1,7 +1,9 @@
 import contextlib
 import logging
+import os
 import random
 import sys
+from contextvars import Token
 from typing import Any, Iterator, Tuple
 
 from opentelemetry import context as context_api
@@ -134,6 +136,9 @@ class DDSpanProcessor:
             "env",
             "version",
         ]
+        self._omit_root_context_detach = os.environ.get(
+            "TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false"
+        ).lower() in ["1", "true", "yes"]
         if tracer_attributes:
             for k in tracer_attributes:
                 self._dd_span_ignore_attr.append(k)
@@ -232,5 +237,13 @@ class DDSpanProcessor:
         self._translate_data(dd_span, otel_span)
 
         # Detach context and end span
-        context_api.detach(otel_token)
+        t_missing = otel_token.old_value == Token.MISSING  # type: ignore[attr-defined]
+        if self._omit_root_context_detach and t_missing:
+            logger.debug(
+                "Skipping detaching token for "
+                f"trace:{otel_span.context.trace_id:x} "  # type: ignore[attr-defined]
+                f"span:{otel_span.context.span_id:x}"  # type: ignore[attr-defined]
+            )
+        else:
+            context_api.detach(otel_token)
         otel_span.end(dd_span.start_ns + dd_span.duration_ns)
