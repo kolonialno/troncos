@@ -53,18 +53,18 @@ class HttpPathFilter(logging.Filter):
         return True
 
 
-class ContextDetachErrorDropFilter(logging.Filter):
+class ContextDetachExceptionDropFilter(logging.Filter):
     """
     There is a problem with OTEL where sometimes detaching context fails with an
     error. This issue is tracked here:
 
         https://github.com/open-telemetry/opentelemetry-python/issues/2606
 
-    We have observed this in some services. In those cases the first (or parent)
-    span of an incoming starlette request fails to detach the context. This does
-    not seem to affect tracing, nor to cause any memory leaks. It just floods the
-    logs with exceptions. So the "solution" is to suppress those exceptions in the
-    logs using this filter.
+    We have observed this in some services. In those cases the first (or root)
+    span of an incoming starlette request fails to detach the context when it
+    finishes. This does not seem to affect tracing, nor to cause any memory leaks.
+    It just floods the logs with exceptions. So a "solution" can be to suppress
+    those exceptions in the logs using this filter.
 
     So if you see this exception in your logs, you can consider using this filter:
 
@@ -78,7 +78,7 @@ class ContextDetachErrorDropFilter(logging.Filter):
     ValueError: <Token> was created in a different Context
     """
 
-    def __init__(self, name: str = "ContextDetachErrorDropFilter") -> None:
+    def __init__(self, name: str = "ContextDetachExceptionDropFilter") -> None:
         super().__init__(name)
         self._count = 0
 

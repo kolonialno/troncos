@@ -441,9 +441,9 @@ Traceback (most recent call last):
 ValueError: <Token> was created in a different Context
 ```
 
-This is caused by a [bug in OTEL](https://github.com/open-telemetry/opentelemetry-python/issues/2606). In these cases the first (or parent) span of an incoming starlette request fails to detach the context. This does not seem to affect tracing, nor to cause any memory leaks. It just floods the logs with exceptions.
+This is caused by a [bug in OTEL](https://github.com/open-telemetry/opentelemetry-python/issues/2606). In these cases the first (or root) span of an incoming starlette request fails to detach its context when it finishes. This does not seem to affect tracing, nor to cause any memory leaks. It just floods the logs with exceptions.
 
-The solution is to set the environmental variable `TRONCOS_OMIT_ROOT_CONTEXT_DETACH=true`. You can also set up the logging filter `ContextDetachErrorDropFilter` to suppress those exceptions in the logs using this filter.
+The solution is to set the environmental variable `TRONCOS_OMIT_ROOT_CONTEXT_DETACH=true`. You can also set up the logging filter `ContextDetachExceptionDropFilter` to suppress those exceptions in the logs.
 
 ## Profiling
 
