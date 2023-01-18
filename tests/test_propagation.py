@@ -3,6 +3,7 @@ from troncos.traces.propagation import (
     add_context_to_dict,
     get_context_from_dict,
     get_propagation_value,
+    get_trace_and_span_id,
 )
 
 
@@ -50,3 +51,14 @@ def test_get_propagation_value() -> None:
 
         b3 = get_propagation_value("b3")
         assert b3
+
+
+def test_get_trace_and_span_id() -> None:
+    trace_id, span_id = get_trace_and_span_id()
+    assert trace_id is None
+    assert span_id is None
+
+    with trace_block("Now I'm tracing"):
+        trace_id, span_id = get_trace_and_span_id()
+        assert trace_id
+        assert span_id
