@@ -62,6 +62,6 @@ def trace_injection_processor(
         dd_context = ddlazy.dd_tracer().current_trace_context()
         if dd_context:
             event_dict["dd_trace_id"] = dd_context.trace_id
-            event_dict["dd_trace_id"] = dd_context.span_id
+            event_dict["dd_span_id"] = dd_context.span_id
 
     return event_dict
