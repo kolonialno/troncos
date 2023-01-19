@@ -129,6 +129,8 @@ def init_tracing_basic(
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
 
+    os.environ.setdefault("DD_TRACE_STARTUP_LOGS", "false")
+
     # Initialize ddtrace
     import ddtrace
 
