@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+from typing import Any
 
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import (
@@ -14,6 +15,27 @@ from troncos._ddlazy import ddlazy
 from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
 
 logger = logging.getLogger(__name__)
+TRACE_HEADERS = [
+    "accept",
+    "cache-control",
+    "content-security-policy",
+    "content-type",
+    "content-length",
+    "expires",
+    "location",
+    "origin",
+    "range",
+    "referer",
+    "retry-after",
+    "server",
+    "traceparent",
+    "tracestate",
+    "uber-trace-id",
+    "x-b3-traceid",
+    "x-country",
+    "x-language",
+    "x-xss-protection",
+]
 
 
 def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str | None:
@@ -30,40 +52,21 @@ def http_endpoint_from_env(host_var: str, port_var: str, path: str = "") -> str 
     return f"http://{host}:{port}{path}"
 
 
-def init_tracing_basic(
+def _create_span_processor(
     service_name: str,
     service_env: str | None = None,
     service_version: str | None = None,
     service_attributes: dict[str, str] | None = None,
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
-    patch_modules: list[str] | None = None,
-) -> None:
+) -> DDSpanProcessor:
     """
-    This function initializes tracing. It is important that it is call as early as
-    possible in the execution of the program. It should be called before ddtrace
-    is imported anywhere else.
-
-    :param service_name:    Name of service ("myapi")
-    :param service_env:     Optional service environment ("staging")
-    :param service_version: Optional service version ("1.2.3")
-    :param service_attributes: Optional service attributes
-    :param endpoint:    Set this endpoint if you want to ship to Tempo
-    :param endpoint_dd: Set this endpoint if you want to ship to DD
-    :param patch_modules:   Optional list of modules that you want DD to patch, it
-                            defaults to all modules
+    Creates a DD span processor that converts DD spans into OTEL spans
     """
 
-    service_env = service_env or "unset"
-    service_version = service_version or "unset"
-
-    os.environ.setdefault("DD_SERVICE", service_name)
-    os.environ.setdefault("DD_ENV", service_env)
-    os.environ.setdefault("DD_VERSION", service_version)
-
-    # Setup OTEL exporter
     otel_span_processors: list[SpanProcessor] = []
     if endpoint:
+        # Create an exporter
         try:
             from opentelemetry.exporter.otlp.proto.grpc import (  # isort: skip # noqa: 501
                 trace_exporter,
@@ -103,7 +106,7 @@ def init_tracing_basic(
             SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
         )
 
-    # Prepare to initialize ddtrace by initializing the DD shim
+    # Set up a dynamic tracer provider
     otel_trace_provider = OtelTracerProvider(
         span_processors=otel_span_processors,
         service=service_name,
@@ -111,13 +114,64 @@ def init_tracing_basic(
         env=service_env,
         version=service_version,
     )
-    dd_span_processor = DDSpanProcessor(
+
+    # Return the span processor
+    return DDSpanProcessor(
         otel_tracer_provider=otel_trace_provider,
         tracer_attributes=service_attributes,
         dd_traces_exported=endpoint_dd is not None,
     )
 
-    # Set some config variables before loading ddtrace
+
+def _class_index(some_list: list[Any], k: Any) -> int | None:
+    for index, thing in enumerate(some_list):
+        if isinstance(thing, k):
+            return index
+    return None
+
+
+def init_tracing_basic(
+    service_name: str,
+    service_env: str | None = None,
+    service_version: str | None = None,
+    service_attributes: dict[str, str] | None = None,
+    endpoint: str | None = None,
+    endpoint_dd: str | None = None,
+    patch_modules: list[str] | None = None,
+) -> None:
+    """
+    This function initializes tracing. It is important that it is call as early as
+    possible in the execution of the program. It should be called before ddtrace
+    is imported anywhere else.
+
+    :param service_name:    Name of service ("myapi")
+    :param service_env:     Optional service environment ("staging")
+    :param service_version: Optional service version ("1.2.3")
+    :param service_attributes: Optional service attributes
+    :param endpoint:    Set this endpoint if you want to ship to Tempo
+    :param endpoint_dd: Set this endpoint if you want to ship to DD
+    :param patch_modules:   Optional list of modules that you want DD to patch, it
+                            defaults to all modules
+    """
+
+    # Create custom span processor
+    custom_dd_span_processor = _create_span_processor(
+        service_name=service_name,
+        service_env=service_env,
+        service_version=service_version,
+        service_attributes=service_attributes,
+        endpoint=endpoint,
+        endpoint_dd=endpoint_dd,
+    )
+
+    # Set service info
+    service_env = service_env or "unset"
+    service_version = service_version or "unset"
+    os.environ.setdefault("DD_SERVICE", service_name)
+    os.environ.setdefault("DD_ENV", service_env)
+    os.environ.setdefault("DD_VERSION", service_version)
+
+    # Set propagation info
     os.environ.setdefault(
         "DD_TRACE_PROPAGATION_STYLE_EXTRACT",
         "tracecontext,b3multi,b3 single header,datadog",
@@ -125,14 +179,41 @@ def init_tracing_basic(
     os.environ.setdefault(
         "DD_TRACE_PROPAGATION_STYLE_INJECT", "tracecontext,b3 single header"
     )
+
+    # Disable telemetry and startup logs
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
+    os.environ.setdefault("DD_TRACE_STARTUP_LOGS", "false")
+
+    # Setup dd endpoint
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
 
-    os.environ.setdefault("DD_TRACE_STARTUP_LOGS", "false")
-
     # Initialize ddtrace
     import ddtrace
+
+    old_configure = ddtrace.tracer.configure
+
+    def _configure_patched(*args: Any, **kwargs: Any):  # type: (...) -> None
+        old_configure(*args, **kwargs)
+        processors = ddtrace.tracer._span_processors
+
+        # Remove dd span aggregator if need
+        dd_span_aggregator = _class_index(
+            processors, ddtrace.internal.processor.trace.SpanAggregator
+        )
+        if dd_span_aggregator and not endpoint_dd:
+            logger.info("DD traces not exported")
+            processors.pop(dd_span_aggregator)
+        else:
+            logger.info(f"DD traces exported to {endpoint_dd}")
+
+        # Add custom processor
+        if not _class_index(processors, DDSpanProcessor):
+            processors.append(custom_dd_span_processor)  # type: ignore[arg-type]
+
+    # Patch dd tracer and trigger patch
+    ddtrace.tracer.configure = _configure_patched  # type: ignore[assignment]
+    ddtrace.tracer.configure()  # Just to trigger patching
 
     # Check if someone imported ddtrace before us. We do this by checking if the
     # variables we set above were in fact used
@@ -153,46 +234,7 @@ def init_tracing_basic(
         ddtrace.config.analytics_enabled = False
 
     # Configure what headers to trace
-    ddtrace.config.trace_headers(  # type: ignore[no-untyped-call]
-        [
-            "accept",
-            "cache-control",
-            "content-security-policy",
-            "content-type",
-            "content-length",
-            "expires",
-            "location",
-            "origin",
-            "range",
-            "referer",
-            "retry-after",
-            "server",
-            "traceparent",
-            "tracestate",
-            "uber-trace-id",
-            "x-b3-traceid",
-            "x-country",
-            "x-language",
-            "x-xss-protection",
-        ]
-    )
-
-    # Patch ddtrace span processors
-    if not endpoint_dd:
-        # Here we do not want to ship traces to DD, so we have to remove the
-        # span processor that handles that operation.
-        to_pop = None
-        for i, s in enumerate(ddtrace.tracer._span_processors):
-            if isinstance(s, ddtrace.internal.processor.trace.SpanAggregator):
-                to_pop = i
-        if to_pop:
-            ddtrace.tracer._span_processors.pop(to_pop)
-        logger.info("DD traces not exported")
-    else:
-        logger.info(f"DD traces exported to {endpoint_dd}")
-
-    # Add out custom DD span processor
-    ddtrace.tracer._span_processors.append(dd_span_processor)  # type: ignore[arg-type]
+    ddtrace.config.trace_headers(TRACE_HEADERS)  # type: ignore[no-untyped-call]
 
     # Set dd tracer tags if attributes are set
     if service_attributes:
