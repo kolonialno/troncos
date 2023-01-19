@@ -133,6 +133,9 @@ class DDSpanProcessor:
             "_dd.agent_psr",
             "_dd.top_level",
             "_dd.measured",
+            "_dd.p.dm",
+            "_dd.tracer_kr",
+            "_sampling_priority_v1",
             "env",
             "version",
         ]
