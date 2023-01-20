@@ -1,6 +1,5 @@
 import contextlib
 import logging
-import os
 import random
 import sys
 from contextvars import Token
@@ -123,6 +122,7 @@ class DDSpanProcessor:
         otel_tracer_provider: OtelTracerProvider,
         tracer_attributes: dict[str, str] | None,
         dd_traces_exported: bool,
+        omit_root_context_detach: bool,
     ) -> None:
         self._otel = otel_tracer_provider
         self._propagator = tracecontext.TraceContextTextMapPropagator()
@@ -139,9 +139,7 @@ class DDSpanProcessor:
             "env",
             "version",
         ]
-        self._omit_root_context_detach = os.environ.get(
-            "TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false"
-        ).lower() in ["1", "true", "yes"]
+        self._omit_root_context_detach = omit_root_context_detach
         if tracer_attributes:
             for k in tracer_attributes:
                 self._dd_span_ignore_attr.append(k)

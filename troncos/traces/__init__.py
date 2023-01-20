@@ -59,6 +59,7 @@ def _create_span_processor(
     service_attributes: dict[str, str] | None = None,
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
+    otel_omit_root_context_detach: bool | None = None,
 ) -> DDSpanProcessor:
     """
     Creates a DD span processor that converts DD spans into OTEL spans
@@ -120,7 +121,12 @@ def _create_span_processor(
         otel_tracer_provider=otel_trace_provider,
         tracer_attributes=service_attributes,
         dd_traces_exported=endpoint_dd is not None,
+        omit_root_context_detach=otel_omit_root_context_detach or False,
     )
+
+
+def _bool_from_string(s: str) -> bool:
+    return s.lower() in ["1", "true", "yes"]
 
 
 def _class_index(some_list: list[Any], k: Any) -> int | None:
@@ -154,6 +160,10 @@ def init_tracing_basic(
                             defaults to all modules
     """
 
+    otel_omit_root_context_detach = _bool_from_string(
+        os.environ.get("TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false")
+    )
+
     # Create custom span processor
     custom_dd_span_processor = _create_span_processor(
         service_name=service_name,
@@ -162,6 +172,7 @@ def init_tracing_basic(
         service_attributes=service_attributes,
         endpoint=endpoint,
         endpoint_dd=endpoint_dd,
+        otel_omit_root_context_detach=otel_omit_root_context_detach,
     )
 
     # Set service info
