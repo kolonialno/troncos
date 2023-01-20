@@ -10,8 +10,8 @@ authors = [
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/kolonialno/troncos"
-repository = "https://github.com/kolonialno/tronos"
-documentation = "https://github.com/kolonialno/tronos"
+repository = "https://github.com/kolonialno/troncos"
+documentation = "https://github.com/kolonialno/troncos"
 keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
