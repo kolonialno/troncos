@@ -46,6 +46,8 @@ class JsonFormatter(logging.Formatter):
         "threadName",
         "trace_id",
         "span_id",
+        "dd_trace_id",
+        "dd_span_id",
     )
 
     DEFAULT_FIELDS = (
@@ -61,7 +63,7 @@ class JsonFormatter(logging.Formatter):
         "asctime": "@timestamp",
     }
 
-    converter = datetime.fromtimestamp  # type: ignore
+    converter = datetime.fromtimestamp  # type: ignore[assignment]
     default_time_format = "%Y-%m-%dT%H:%M:%S.%f"
 
     def __init__(
@@ -82,6 +84,7 @@ class JsonFormatter(logging.Formatter):
         param version: version as for @version field in logging, always included.
             Defaults to "1".
         """
+
         super().__init__(*args, **kwargs)
 
         self.fields = (
@@ -100,6 +103,7 @@ class JsonFormatter(logging.Formatter):
         :param datefmt:
         :return:
         """
+
         ct = self.converter(record.created)  # type: ignore[has-type]
         _format = datefmt or self.default_time_format
 
@@ -176,6 +180,8 @@ class LogfmtFormatter(logging.Formatter):
                 ("duration", "duration"),
                 ("trace_id", "trace_id"),
                 ("span_id", "span_id"),
+                ("dd_trace_id", "dd_trace_id"),
+                ("dd_span_id", "dd_span_id"),
                 ("msg", "msg"),
             ]
 
@@ -287,5 +293,7 @@ class PrettyFormatter(logging.Formatter):
             rc.message += f" {rc.duration}"  # type: ignore[attr-defined]
         if hasattr(rc, "trace_id"):
             rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
+        if hasattr(rc, "dd_trace_id"):
+            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore[attr-defined] # noqa: E501
 
         return super().formatMessage(rc)

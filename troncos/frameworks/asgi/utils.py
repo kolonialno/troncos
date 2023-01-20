@@ -42,6 +42,7 @@ def is_double_callable(application: Any) -> bool:
     """
     Tests to see if an application is a legacy-style (double-callable) application.
     """
+
     # Look for a hint on the object first
     if getattr(application, "_asgi_single_callable", False):
         return False
@@ -65,7 +66,7 @@ def double_to_single_callable(application: Any) -> Any:
     Transforms a double-callable ASGI application into a single-callable one.
     """
 
-    async def new_application(scope, receive, send):  # type: ignore
+    async def new_application(scope, receive, send):  # type: ignore[no-untyped-def]
         instance = application(scope)
         return await instance(receive, send)
 
@@ -78,6 +79,7 @@ def guarantee_single_callable(application: Any) -> Any:
     in single-callable style. Use this to add backwards compatibility for ASGI
     2.0 applications to your server/test harness/etc.
     """
+
     if is_double_callable(application):
         application = double_to_single_callable(application)
     return application

@@ -1,69 +1,56 @@
-from typing import Dict, Literal
+from typing import Any, Literal, Tuple
 
-from opentelemetry.context import Context
-from opentelemetry.propagators import b3, jaeger
-from opentelemetry.propagators.textmap import (
-    CarrierT,
-    DefaultGetter,
-    Getter,
-    TextMapPropagator,
-)
-from opentelemetry.trace.propagation import tracecontext
+from troncos._ddlazy import ddlazy
 
 
-def get_context_from_dict(carrier: CarrierT) -> Context:
+def activate_context_from_dict(carrier: dict[str, str]) -> Any:
     """
-    Gets trace context from a dictionary that contains a 'traceparent', 'uber-trace-id'
-    or 'b3' entries.
+    Extracts trace context from dict and activates it
     """
 
-    getter: Getter[CarrierT] = DefaultGetter()  # type: ignore[assignment]
-    propagator: TextMapPropagator
-
-    if getter.get(carrier, "traceparent"):  # w3c
-        propagator = tracecontext.TraceContextTextMapPropagator()
-    elif getter.get(carrier, "uber-trace-id"):  # jaeger
-        propagator = jaeger.JaegerPropagator()
-    else:  # b3
-        # The reason this is default is that multiple headers can be used for
-        # propagation.
-        propagator = b3.B3MultiFormat()
-
-    return propagator.extract(carrier=carrier)
+    context = get_context_from_dict(carrier)
+    ddlazy.dd_tracer().context_provider.activate(context)
 
 
-def add_context_to_dict(
-    carrier: CarrierT, fmt: Literal["w3c", "jaeger", "b3"] = "w3c"
-) -> CarrierT:
+def get_context_from_dict(carrier: dict[str, str]) -> Any:
     """
-    Adds a trace "parent" entry to a dictionary. This can be in jaeger, b3 or the
-    default w3c format.
+    Gets trace context from a dictionary that contains propagation entries.
     """
 
-    propagator: TextMapPropagator
-    if fmt == "jaeger":
-        propagator = jaeger.JaegerPropagator()
-    elif fmt == "b3":
-        propagator = b3.B3SingleFormat()
-    else:
-        propagator = tracecontext.TraceContextTextMapPropagator()
+    return ddlazy.dd_propagator().extract(carrier)
 
-    propagator.inject(carrier)
 
+def add_context_to_dict(carrier: dict[str, str]) -> dict[str, str]:
+    """
+    Adds a trace "parent" entry to a dictionary. This injects all available formats
+    """
+
+    context = ddlazy.dd_tracer().current_trace_context()
+    if context:
+        ddlazy.dd_propagator().inject(context, carrier)
     return carrier
 
 
-def get_propagation_value(fmt: Literal["w3c", "jaeger", "b3"] = "w3c") -> str | None:
+def get_propagation_value(fmt: Literal["w3c", "b3"] = "w3c") -> str | None:
     """
-    Returns the value of the context propagation header
+    Returns a trace propagation value
     """
 
-    d: Dict[str, str] = {}
-    add_context_to_dict(d, fmt=fmt)
-
-    if fmt == "jaeger":
-        return d.get("uber-trace-id")
-    elif fmt == "b3":
+    d: dict[str, str] = {}
+    add_context_to_dict(d)
+    if fmt == "b3":
         return d.get("b3")
     else:
         return d.get("traceparent")
+
+
+def get_trace_and_span_id() -> Tuple[int | None, int | None]:
+    """
+    Returns either a tuple of (trace_id, span_id) of tuple of (None, None)
+    """
+
+    try:
+        dd_context = ddlazy.dd_tracer().current_trace_context()
+        return (dd_context.trace_id, dd_context.span_id)
+    except:  # noqa: E722
+        return (None, None)

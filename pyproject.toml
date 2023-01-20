@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "troncos"
-version = "2.2.1"
+version = "3.0.0"
 description = "Collection of Python logging and tracing tools"
 authors = [
     "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
@@ -10,20 +10,17 @@ authors = [
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/kolonialno/troncos"
-repository = "https://github.com/kolonialno/tronos"
-documentation = "https://github.com/kolonialno/tronos"
+repository = "https://github.com/kolonialno/troncos"
+documentation = "https://github.com/kolonialno/troncos"
 keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-opentelemetry-propagator-b3 = "^1.12.0"
-opentelemetry-propagator-jaeger = "^1.12.0"
-opentelemetry-exporter-otlp-proto-http = "^1.13.0"
-backoff = ">=1.0,<2.0"
-# Above: backoff is pinned to <2.0 because https://github.com/open-telemetry/opentelemetry-python/issues/2829
-opentelemetry-exporter-otlp-proto-grpc = {version = "^1.13.0", optional = true}
-structlog = {version = "^22.1.0", optional = true}
-ddtrace = {version="^1.6", optional = true}
+ddtrace = "1.7.2"
+opentelemetry-sdk = "1.15.0"
+opentelemetry-exporter-otlp-proto-http = {version = "1.15.0", optional = true}
+opentelemetry-exporter-otlp-proto-grpc = {version = "1.15.0", optional = true}
+structlog = {version = "^22.3.0", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.10.1"
@@ -33,15 +30,15 @@ mypy = "^0.971"
 pytest = "^7.1.3"
 pytest_codeblocks = "^0.16.1"
 fastapi = "^0.85.0"
-opentelemetry-instrumentation-requests = "^0.34b0"
 requests = "^2.28.1"
 pytest-cov = "^4.0.0"
 types-requests = "^2.28.11.2"
 pytest-asyncio = "^0.19.0"
 
 [tool.poetry.extras]
+http = ["opentelemetry-exporter-otlp-proto-http"]
+grpc = ["opentelemetry-exporter-otlp-proto-grpc"]
 structlog = ["structlog"]
-profiling = ["ddtrace"]
 
 [tool.black]
 target-version = ['py310']
@@ -59,6 +56,7 @@ python_version = "3.10"
 strict = true
 files = ["./troncos", "./tests",]
 namespace_packages = true
+show_error_codes = true
 
 [[tool.mypy.overrides]]
 module = [

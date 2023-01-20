@@ -4,7 +4,13 @@ from typing import Literal, Tuple
 from troncos.logs.filters import TraceIdFilter
 from troncos.logs.formatters import JsonFormatter, LogfmtFormatter, PrettyFormatter
 
-__all__ = ["JsonFormatter", "LogfmtFormatter", "PrettyFormatter"]
+__all__ = [
+    "JsonFormatter",
+    "LogfmtFormatter",
+    "PrettyFormatter",
+    "init_logging_basic",
+    "print_loggers",
+]
 
 
 def print_loggers(verbose: bool = True) -> None:
@@ -114,8 +120,8 @@ def init_logging_basic(
       └ HANDLER logging.StreamHandler  LEVEL: 20
         └ FILTER troncos.logs.filters.TraceIdFilter
         └ FORMATTER troncos.logs.formatters.PrettyFormatter
-
     """
+
     # Create handler
     root_handler = logging.StreamHandler()
     root_handler.setLevel(level)
