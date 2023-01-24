@@ -316,3 +316,7 @@ def trace_set_span_attributes(attr: dict[str, str | bool | int]) -> None:
     span = ddlazy.dd_tracer().current_span()
     if span:
         span.set_tags(attr)
+
+
+def trace_set_traceback() -> None:
+    ddlazy.dd_tracer().current_span().set_traceback()
