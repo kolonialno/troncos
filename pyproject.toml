@@ -1,10 +1,9 @@
 [tool.poetry]
 name = "troncos"
-version = "3.0.1"
-description = "Collection of Python logging and tracing tools"
+version = "3.0.2"
+description = "Collection of Python logging, tracing and profiling tools"
 authors = [
     "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
-    "Roald Matthias Storm <roald.storm@oda.com>",
     "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
 ]
 license = "MIT"
@@ -16,7 +15,7 @@ keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-ddtrace = "1.7.2"
+ddtrace = "1.7.3"
 opentelemetry-sdk = "1.15.0"
 opentelemetry-exporter-otlp-proto-http = {version = "1.15.0", optional = true}
 opentelemetry-exporter-otlp-proto-grpc = {version = "1.15.0", optional = true}
