@@ -1,6 +1,5 @@
 import logging
 import os
-import sys
 from typing import Callable, Tuple
 
 from troncos._ddlazy import ddlazy
@@ -15,12 +14,6 @@ def init_profiling_basic() -> Callable[[], Tuple[str, dict[str, str]]]:
     :return: A callable that returns the profile data and http headers that
              phlare is happy with.
     """
-
-    if sys.version_info[0] == 3 and sys.version_info[1] == 11:
-        logger.warning(
-            "Profiling with python 3.11 will cause memory leaks: "
-            "https://github.com/DataDog/dd-trace-py/issues/4899"
-        )
 
     if not ddlazy.dd_initialized():
         logger.warning(
