@@ -24,14 +24,16 @@
   * [Etymology](#etymology)
   * [Installation](#installation)
   * [Setup](#setup)
-    * [Choosing an exporter](#choosing-an-exporter)
+    * [Choosing a trace exporter](#choosing-a-trace-exporter)
       * [gRPC](#grpc)
       * [http](#http)
     * [Import order](#import-order)
     * [Plain setup](#plain-setup)
     * [Starlette with uvicorn](#starlette-with-uvicorn)
-    * [Django with gunicorn](#django-with-gunicorn)
+    * [Django](#django)
   * [Logging](#logging)
+    * [Thoughts on logging](#thoughts-on-logging)
+    * [Log trace_id with Gunicorn](#log-traceid-with-gunicorn)
     * [Structlog](#structlog)
   * [Tracing](#tracing)
     * [Tracing your code](#tracing-your-code)
@@ -73,7 +75,7 @@ $ poetry add troncos -E http
 
 > **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level, etc). In this README we use `os.environ` for the sake of clarity.
 
-### Choosing an exporter
+### Choosing a trace exporter
 
 To export your traces, you have to pick either `grpc` or `http`. Using `grpc` gives you significant performance gains. If you are running a critical service with high load in production, we recommend using `grpc`.
 
@@ -114,6 +116,7 @@ init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
     service_name="my_service",
+    service_version=environ.get("VERSION", "unknown"),
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
 profiler = init_profiling_basic()
@@ -138,6 +141,7 @@ init_tracing_basic(
     endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
     # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
     service_name="my_service",
+    service_version=environ.get("VERSION", "unknown"),
     service_env=environ.get("ENVIRONMENT", "localdev"),
 )
 profiler = init_profiling_basic()
@@ -156,47 +160,26 @@ init_uvicorn_logging(
 
 > **Note**: If you are running starlette but not calling `init_uvicorn_logging`, trace ids might not be logged.
 
-### Django with gunicorn
+### Django
 
-To set up tracing you have to set up some gunicorn hooks. Create a `gunicorn/config.py` file in your project:
-
-```python
-from os import environ
-
-from troncos.frameworks.gunicorn import post_request_trace, pre_request_trace
-from troncos.traces import init_tracing_basic, http_endpoint_from_env
-
-
-def post_fork(server, worker):
-    init_tracing_basic(
-        endpoint=http_endpoint_from_env("TRACE_HOST", "TRACE_PORT", "/v1/traces"),
-        # endpoint_dd=http_endpoint_from_env("TRACE_DD_HOST", "TRACE_DD_PORT"),
-        service_name="my_service",
-        service_env=environ.get("ENVIRONMENT", "localdev"),
-    )
-
-
-def pre_request(worker, req):
-    pre_request_trace(worker, req)
-
-
-def post_request(worker, req, environ, resp):
-    post_request_trace(worker, req, environ, resp)
-```
-
-Then when running gunicorn, specify what config file to use:
-
-```console
-gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
-```
-
-You have to manually configure logging in your `settings.py`. You should adhere to the principle described in [the logging section](#logging).
-
-Make sure that you add the `TraceIdFilter` to all handlers. Your logging configuration should look roughly like this:
+Add this logging and trace initialization to your `settings.py` file:
 
 ```python
-from os import environ
+import environ
+from troncos.traces import init_tracing_basic
 
+env = environ.Env()
+
+APP_NAME = "my_service"
+ENVIRONMENT = env.str("ENVIRONMENT", default="localhost")
+VERSION = env.str("VERSION", default="unknown")
+
+# ... All your settings here ...
+
+# Configure logging
+
+LOG_FORMATTER = env.str("LOG_FORMATTER", "logfmt")
+LOG_LEVEL = env.str("LOG_LEVEL", "INFO")
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": True,
@@ -211,27 +194,49 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "formatter": environ.get("LOG_FORMATTER", "logfmt"),
+            "formatter": LOG_FORMATTER,
             "filters": ["trace_id"],
         }
     },
     "loggers": {
-        "interno": {"handlers": ["console"], "level": environ.get("LOG_LEVEL", "INFO")},
-        "django": {"handlers": ["console"], "level": environ.get("LOG_LEVEL", "INFO")},
+        APP_NAME: {"handlers": ["console"], "level": LOG_LEVEL},
+        "django": {"handlers": ["console"], "level": LOG_LEVEL},
         "django.server": {
             "handlers": ["console"],
-            "level": environ.get("LOG_LEVEL", "INFO"),
+            "level": LOG_LEVEL,
             "propagate": False,
         },
         "gunicorn.error": {
-            "handlers": ["console"], 
-            "level": environ.get("LOG_LEVEL", "INFO")
+            "handlers": ["console"],
+            "level": LOG_LEVEL,
         },
     },
 }
+
+# Configure tracing
+
+TRACING_ENABLED = env.bool("OPENTELEMETRY_TRACING_ENABLED", default=False)
+TRACING_HOST = env.str("OPENTELEMETRY_TRACING_HOST", default="localhost")
+TRACING_PORT = env.int("OPENTELEMETRY_TRACING_PORT", default=4318)
+
+init_tracing_basic(
+    service_name=APP_NAME,
+    service_env=ENVIRONMENT,
+    service_version=VERSION,
+    endpoint=f"http://{TRACING_HOST}:{TRACING_PORT}/v1/traces"
+    if TRACING_ENABLED
+    else None,
+    # endpoint_dd=f"http://{TRACING_DD_HOST}:{TRACING_DD_PORT}"
+    # if TRACING_DD_ENABLED
+    # else None,
+)
 ```
 
+> **Note**: This will not log trace ids of all incoming requests. See [log trace_id with Gunicorn](#log-traceid-with-gunicorn) section on how to do that.
+
 ## Logging
+
+### Thoughts on logging
 
 More often then not, you want all loggers to propagate their records to the `root` logger and make the `root` logger handle everything. Depending on your project, this might require some additional configuration. Looking at the [python logging flow](https://docs.python.org/3/howto/logging.html#logging-flow) can help you understand how child loggers can propagate records to the `root` logger. Note that propagating to `root` is the default behaviour.
 
@@ -261,6 +266,40 @@ import logging
 logging.getLogger("my.random.logger").info("Root will handle this record")
 ```
 
+### Log trace_id with Gunicorn
+
+Create a `gunicorn/config.py` file in your project:
+
+```python
+import time
+
+def post_fork(server, worker):
+    pass
+
+def pre_request(worker, req):
+    req._gunicorn_start_time = time.time()
+    worker.log.info("[begin] %s %s", req.method, req.path)
+    pass
+
+def post_request(worker, req, environ, resp):
+    duration = time.time() - req._gunicorn_start_time
+    trace_id = next(iter([v for k, v in req.headers if k == "X-B3-TRACEID"]), None)
+    worker.log.info(
+        "[status=%s] %s %s duration=%s traceID=%s",
+        resp.status,
+        req.method,
+        req.path,
+        duration,
+        trace_id,
+    )
+```
+
+Then when running gunicorn, specify what config file to use:
+
+```console
+gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
+```
+
 ### Structlog
 
 You can substitute `init_logging_basic` with `init_logging_structlog` to setup structlog:
@@ -287,8 +326,6 @@ structlog.configure(
     ],
 )
 ```
-
-> **NOTE**: This only adds trace information to your logs if you have set up tracing in your project.
 
 ## Tracing
 
@@ -446,6 +483,8 @@ This is caused by a [bug in OTEL](https://github.com/open-telemetry/opentelemetr
 The solution is to set the environmental variable `TRONCOS_OMIT_ROOT_CONTEXT_DETACH=true`. You can also set up the logging filter `ContextDetachExceptionDropFilter` to suppress those exceptions in the logs.
 
 ## Profiling
+
+> **Warning**: Profiling while using Python 3.11 is [not yet fully supported](https://github.com/DataDog/dd-trace-py/issues/4149).
 
 ### Setup endpoint
 
