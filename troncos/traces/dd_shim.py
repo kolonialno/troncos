@@ -130,11 +130,6 @@ class DDSpanProcessor:
         self._dd_traces_exported = dd_traces_exported
         self._dd_span_ignore_attr = [
             "runtime-id",
-            "_dd.agent_psr",
-            "_dd.top_level",
-            "_dd.measured",
-            "_dd.p.dm",
-            "_dd.tracer_kr",
             "_sampling_priority_v1",
             "env",
             "version",
@@ -161,7 +156,9 @@ class DDSpanProcessor:
         otel_span.set_attribute("resource", dd_span.resource)
         for k, v in dd_span_attr.items():
             otel_err_attr = dd_span_err_attr_mapping.get(k)
-            if otel_err_attr:
+            if k.startswith("_dd"):
+                continue
+            elif otel_err_attr:
                 otel_error_attr_dict[otel_err_attr] = v
             elif k not in self._dd_span_ignore_attr:
                 otel_span.set_attribute(k, v)
