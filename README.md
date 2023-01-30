@@ -33,7 +33,7 @@
     * [Django](#django)
   * [Logging](#logging)
     * [Thoughts on logging](#thoughts-on-logging)
-    * [Log trace_id with Gunicorn](#log-traceid-with-gunicorn)
+    * [Log traces with Gunicorn](#log-traces-with-gunicorn)
     * [Structlog](#structlog)
   * [Tracing](#tracing)
     * [Tracing your code](#tracing-your-code)
@@ -158,7 +158,7 @@ init_uvicorn_logging(
 )
 ```
 
-> **Note**: If you are running starlette but not calling `init_uvicorn_logging`, trace ids might not be logged.
+> **Note**: If you are running starlette but not calling `init_uvicorn_logging`, traces might not be logged.
 
 ### Django
 
@@ -232,7 +232,7 @@ init_tracing_basic(
 )
 ```
 
-> **Note**: This will not log trace ids of all incoming requests. See [log trace_id with Gunicorn](#log-traceid-with-gunicorn) section on how to do that.
+> **Note**: This will not log traces of all incoming requests. See [log traces with Gunicorn](#log-traces-with-gunicorn) section on how to do that.
 
 ## Logging
 
@@ -266,7 +266,7 @@ import logging
 logging.getLogger("my.random.logger").info("Root will handle this record")
 ```
 
-### Log trace_id with Gunicorn
+### Log traces with Gunicorn
 
 Create a `gunicorn/config.py` file in your project:
 
