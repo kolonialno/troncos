@@ -73,7 +73,7 @@ $ poetry add troncos -E http
 
 ## Setup
 
-> **NOTE**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level, etc). In this README we use `os.environ` for the sake of clarity.
+> **Note**: It is a good idea to use a `settings.py`-file (or similar) as an authoritative source of variables (service name, environment, whether tracing is enabled or not, log level, etc). In this README we mostly use `os.environ` for the sake of clarity.
 
 ### Choosing a trace exporter
 
@@ -171,8 +171,8 @@ from troncos.traces import init_tracing_basic
 env = environ.Env()
 
 APP_NAME = "my_service"
-ENVIRONMENT = env.str("ENVIRONMENT", default="localhost")
 VERSION = env.str("VERSION", default="unknown")
+ENVIRONMENT = env.str("ENVIRONMENT", default="localhost")
 
 # ... All your settings here ...
 
@@ -221,8 +221,8 @@ TRACING_PORT = env.int("OPENTELEMETRY_TRACING_PORT", default=4318)
 
 init_tracing_basic(
     service_name=APP_NAME,
-    service_env=ENVIRONMENT,
     service_version=VERSION,
+    service_env=ENVIRONMENT,
     endpoint=f"http://{TRACING_HOST}:{TRACING_PORT}/v1/traces"
     if TRACING_ENABLED
     else None,
