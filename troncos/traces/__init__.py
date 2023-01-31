@@ -160,6 +160,10 @@ def init_tracing_basic(
                             defaults to all modules
     """
 
+    if ddlazy.dd_initialized():
+        logger.warning("Function 'init_tracing_basic' called multiple times!")
+        return
+
     otel_omit_root_context_detach = _bool_from_string(
         os.environ.get("TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false")
     )
@@ -183,13 +187,13 @@ def init_tracing_basic(
     os.environ.setdefault("DD_VERSION", service_version)
 
     # Set propagation info
-    os.environ.setdefault(
-        "DD_TRACE_PROPAGATION_STYLE_EXTRACT",
-        "tracecontext,b3multi,b3 single header,datadog",
-    )
-    os.environ.setdefault(
-        "DD_TRACE_PROPAGATION_STYLE_INJECT", "tracecontext,b3 single header"
-    )
+    prop_extract_key = "DD_TRACE_PROPAGATION_STYLE_EXTRACT"
+    prop_extract_val = "tracecontext,b3multi,b3 single header,datadog"
+    os.environ.setdefault(prop_extract_key, prop_extract_val)
+
+    prop_inject_key = "DD_TRACE_PROPAGATION_STYLE_INJECT"
+    prop_inject_val = "tracecontext,b3 single header"
+    os.environ.setdefault(prop_inject_key, prop_inject_val)
 
     # Disable telemetry and startup logs
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
@@ -198,6 +202,8 @@ def init_tracing_basic(
     # Setup dd endpoint
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
+
+    ddtrace_already_imported = "ddtrace" in sys.modules
 
     # Initialize ddtrace
     import ddtrace
@@ -228,21 +234,26 @@ def init_tracing_basic(
 
     # Check if someone imported ddtrace before us. We do this by checking if the
     # variables we set above were in fact used
-    if (
-        not ddtrace.config._propagation_style_extract
-        or len(ddtrace.config._propagation_style_extract) != 4
-    ):
+    if ddtrace_already_imported:
         logger.warning(
             "DETECTED THAT ddtrace WAS IMPORTED BY ANOTHER MODULE BEFORE 'init_tracing_basic' WAS CALLED. THIS IS BAD!",  # noqa: E501
         )
+
         # Try to fix what we can in this situation
-        inject_set = set()
-        inject_set.add(ddtrace.internal.constants._PROPAGATION_STYLE_W3C_TRACECONTEXT)
-        inject_set.add(ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER)
-        extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
-        ddtrace.config._propagation_style_extract = extract_set  # type: ignore[assignment] # noqa: E501
-        ddtrace.config._propagation_style_inject = inject_set  # type: ignore[assignment] # noqa: E501
-        ddtrace.config.analytics_enabled = False
+
+        if os.environ.get(prop_inject_key) == prop_inject_val:
+            inject_set = set()
+            inject_set.add(
+                ddtrace.internal.constants._PROPAGATION_STYLE_W3C_TRACECONTEXT
+            )
+            inject_set.add(
+                ddtrace.internal.constants.PROPAGATION_STYLE_B3_SINGLE_HEADER
+            )
+            ddtrace.config._propagation_style_inject = inject_set  # type: ignore[assignment] # noqa: E501
+
+        if os.environ.get(prop_extract_key) == prop_extract_val:
+            extract_set = ddtrace.internal.constants.PROPAGATION_STYLE_ALL
+            ddtrace.config._propagation_style_extract = extract_set  # type: ignore[assignment] # noqa: E501
 
     # Configure what headers to trace
     ddtrace.config.trace_headers(TRACE_HEADERS)  # type: ignore[no-untyped-call]
