@@ -202,35 +202,54 @@ def init_tracing_basic(
     # Setup dd endpoint
     if endpoint_dd:
         os.environ.setdefault("DD_TRACE_AGENT_URL", endpoint_dd)
+        logger.info(f"DD traces exported to {endpoint_dd}")
+    else:
+        logger.info("DD traces not exported")
 
     ddtrace_already_imported = "ddtrace" in sys.modules
 
     # Initialize ddtrace
     import ddtrace
 
-    old_configure = ddtrace.tracer.configure
+    # Shutdown default tracer immediately
+    try:
+        ddtrace.tracer.shutdown()
+    except ValueError:
+        pass
 
-    def _configure_patched(*args: Any, **kwargs: Any):  # type: (...) -> None
-        old_configure(*args, **kwargs)
-        processors = ddtrace.tracer._span_processors
+    class _PatchedDDTracer(ddtrace.Tracer):
 
-        # Remove dd span aggregator if need
-        dd_span_aggregator = _class_index(
-            processors, ddtrace.internal.processor.trace.SpanAggregator
-        )
-        if dd_span_aggregator and not endpoint_dd:
-            logger.info("DD traces not exported")
-            processors.pop(dd_span_aggregator)
-        else:
-            logger.info(f"DD traces exported to {endpoint_dd}")
+        # Since we cannot patch _default_span_processors_factory,
+        # we patch all functions that call it
+        def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            super().__init__(*args, **kwargs)
+            self._fix_span_processors()
 
-        # Add custom processor
-        if not _class_index(processors, DDSpanProcessor):
-            processors.append(custom_dd_span_processor)  # type: ignore[arg-type]
+        def configure(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            super().configure(*args, **kwargs)
+            self._fix_span_processors()
 
-    # Patch dd tracer and trigger patch
-    ddtrace.tracer.configure = _configure_patched  # type: ignore[assignment]
-    ddtrace.tracer.configure()  # Just to trigger patching
+        def _child_after_fork(self):  # type: ignore[no-untyped-def]
+            super()._child_after_fork()  # type: ignore[no-untyped-call]
+            self._fix_span_processors()
+
+        def _fix_span_processors(self) -> None:
+            processors = self._span_processors
+
+            # Remove dd span aggregator if needed
+            dd_span_aggregator = _class_index(
+                processors, ddtrace.internal.processor.trace.SpanAggregator
+            )
+            if dd_span_aggregator and not endpoint_dd:
+                processors.pop(dd_span_aggregator)
+
+            # Add custom processor
+            if not _class_index(processors, DDSpanProcessor):
+                processors.append(custom_dd_span_processor)  # type: ignore[arg-type]
+
+    # Patch dd tracer and create new tracer
+    ddtrace.Tracer = _PatchedDDTracer  # type: ignore[misc]
+    ddtrace.tracer = ddtrace.Tracer()  # type: ignore[no-untyped-call]
 
     # Check if someone imported ddtrace before us. We do this by checking if the
     # variables we set above were in fact used
