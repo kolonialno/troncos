@@ -205,10 +205,16 @@ class DDSpanProcessor:
         if dd_span.span_type:
             # This has to be adjusted if we want to use the CONSUMER/PRODUCER
             # span kinds
-            if dd_span.span_type in ["web"]:
+            if dd_span.span_type in ["template"]:
+                kind = SpanKind.INTERNAL
+            elif dd_span.span_type in ["web"]:
                 kind = SpanKind.SERVER
+            elif dd_span.span_type in ["worker"]:
+                kind = SpanKind.CONSUMER
             else:
                 kind = SpanKind.CLIENT
+        elif dd_span.name in ["celery.apply"]:
+            kind = SpanKind.PRODUCER
 
         # Set up the trace and span ids, and create span
         with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
