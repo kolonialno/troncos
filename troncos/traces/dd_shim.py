@@ -243,11 +243,7 @@ class DDSpanProcessor:
         # Detach context and end span
         t_missing = otel_token.old_value == Token.MISSING  # type: ignore[attr-defined]
         if self._omit_root_context_detach and t_missing:
-            logger.debug(
-                "Skipping detaching token for "
-                f"trace:{otel_span.context.trace_id:x} "  # type: ignore[attr-defined]
-                f"span:{otel_span.context.span_id:x}"  # type: ignore[attr-defined]
-            )
+            logger.debug("Skipping detaching token")
         else:
             context_api.detach(otel_token)
         otel_span.end(dd_span.start_ns + dd_span.duration_ns)
