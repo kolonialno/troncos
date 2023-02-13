@@ -408,7 +408,7 @@ A decorator that will make [trace_class](#traceclass) and [trace_module](#tracem
 
 ### Trace Propagation
 
-> **Warning**: Traces that have IDs that are bigger than `64` bits are not propagated correctly because [ddtrace truncates bigger IDs](https://github.com/DataDog/dd-trace-py/blob/1e1de001d3fd694d3bcf0fff604a927ef891b19e/ddtrace/propagation/http.py#L102-L108). Default trace ID size for OTEL is `128` bits.
+> **Warning**: Traces with IDs bigger than `64` bits are not propagated correctly because of limitations of [ddtrace](https://github.com/DataDog/dd-trace-py/blob/1e1de001d3fd694d3bcf0fff604a927ef891b19e/ddtrace/propagation/http.py#L102-L108). Default trace ID size for OTEL is `128` bits.
 
 If you want to propagate your trace to the next service, you need to send/receive special headers with your request/message. If you are using plain `requests` that should be handled automatically by troncos. Here is how you do this manually:
 
