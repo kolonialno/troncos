@@ -127,6 +127,7 @@ class DDSpanProcessor:
         service_attributes: dict[str, str] | None,
         otel_span_processors: list[SpanProcessor],
         dd_traces_exported: bool = False,
+        flush_on_shutdown: bool = True,
     ) -> None:
         self._otel_procs = otel_span_processors
         self._base_resources = {
@@ -134,6 +135,7 @@ class DDSpanProcessor:
             **{"service.name": service_name},
         }
         self._dd_traces_exported = dd_traces_exported
+        self._flush_on_shutdown = flush_on_shutdown
         self._dd_span_ignore_attr = [
             "runtime-id",
             "_sampling_priority_v1",
@@ -159,6 +161,7 @@ class DDSpanProcessor:
             p.on_end(span)
 
     def shutdown(self, timeout: int) -> None:
-        for p in self._otel_procs:
-            p.force_flush(timeout_millis=timeout)
-            p.shutdown()
+        if self._flush_on_shutdown:
+            for p in self._otel_procs:
+                p.force_flush(timeout_millis=timeout)
+                p.shutdown()

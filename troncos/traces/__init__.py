@@ -3,6 +3,7 @@ import os
 import sys
 from typing import Any
 
+import opentelemetry
 from opentelemetry.sdk.trace import SpanProcessor
 from opentelemetry.sdk.trace.export import (
     BatchSpanProcessor,
@@ -64,6 +65,7 @@ def _create_span_processor(
     Creates a DD span processor that converts DD spans into OTEL spans
     """
 
+    flush_on_shutdown = True
     otel_span_processors: list[SpanProcessor] = []
     if endpoint:
         # Create an exporter
@@ -86,6 +88,13 @@ def _create_span_processor(
             otel_span_processors.append(
                 BatchSpanProcessor(trace_exporter.OTLPSpanExporter(endpoint=endpoint))
             )
+    else:
+        if _bool_from_string(os.environ.get("TRONCOS_REUSE_OTEL_PROCESSOR", "false")):
+            tp = opentelemetry.trace.get_tracer_provider()
+            if hasattr(tp, "_active_span_processor"):
+                logger.info("Reusing OTEL span processor")
+                otel_span_processors.append(tp._active_span_processor)  # type: ignore[attr-defined] # noqa: E501
+                flush_on_shutdown = False
 
     # Fallback to InMemorySpanExporter
     if len(otel_span_processors) == 0:
@@ -119,6 +128,7 @@ def _create_span_processor(
         service_attributes,
         otel_span_processors,
         dd_traces_exported=endpoint_dd is not None,
+        flush_on_shutdown=flush_on_shutdown,
     )
 
 
