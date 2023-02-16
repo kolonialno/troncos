@@ -12,7 +12,7 @@ from opentelemetry.sdk.trace.export import (
 from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from troncos._ddlazy import ddlazy
-from troncos.traces.dd_shim import DDSpanProcessor, OtelTracerProvider
+from troncos.traces.dd_shim import DDSpanProcessor
 
 logger = logging.getLogger(__name__)
 TRACE_HEADERS = [
@@ -59,7 +59,6 @@ def _create_span_processor(
     service_attributes: dict[str, str] | None = None,
     endpoint: str | None = None,
     endpoint_dd: str | None = None,
-    otel_omit_root_context_detach: bool | None = None,
 ) -> DDSpanProcessor:
     """
     Creates a DD span processor that converts DD spans into OTEL spans
@@ -107,21 +106,19 @@ def _create_span_processor(
             SimpleSpanProcessor(ConsoleSpanExporter(out=debug_out))
         )
 
-    # Set up a dynamic tracer provider
-    otel_trace_provider = OtelTracerProvider(
-        span_processors=otel_span_processors,
-        service=service_name,
-        attributes=service_attributes,
-        env=service_env,
-        version=service_version,
-    )
+    service_attributes = service_attributes or {}
 
-    # Return the span processor
+    if service_env:
+        service_attributes["environment"] = service_env
+
+    if service_version:
+        service_attributes["version"] = service_version
+
     return DDSpanProcessor(
-        otel_tracer_provider=otel_trace_provider,
-        tracer_attributes=service_attributes,
+        service_name,
+        service_attributes,
+        otel_span_processors,
         dd_traces_exported=endpoint_dd is not None,
-        omit_root_context_detach=otel_omit_root_context_detach or False,
     )
 
 
@@ -164,9 +161,8 @@ def init_tracing_basic(
         logger.warning("Function 'init_tracing_basic' called multiple times!")
         return
 
-    otel_omit_root_context_detach = _bool_from_string(
-        os.environ.get("TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false")
-    )
+    if _bool_from_string(os.environ.get("TRONCOS_OMIT_ROOT_CONTEXT_DETACH", "false")):
+        logger.warning("TRONCOS_OMIT_ROOT_CONTEXT_DETACH is no longer needed!")
 
     # Create custom span processor
     custom_dd_span_processor = _create_span_processor(
@@ -176,7 +172,6 @@ def init_tracing_basic(
         service_attributes=service_attributes,
         endpoint=endpoint,
         endpoint_dd=endpoint_dd,
-        otel_omit_root_context_detach=otel_omit_root_context_detach,
     )
 
     # Set service info

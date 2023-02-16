@@ -81,6 +81,7 @@ class ContextDetachExceptionDropFilter(logging.Filter):
     def __init__(self, name: str = "ContextDetachExceptionDropFilter") -> None:
         super().__init__(name)
         self._count = 0
+        logger.warning("ContextDetachExceptionDropFilter is no longer needed!")
 
     def filter(self, record: logging.LogRecord) -> bool:
         if (
