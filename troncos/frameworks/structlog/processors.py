@@ -4,8 +4,6 @@ how the stdlib logging uses logging filters. This is currently implemented along
 the filters to allow for parallel feature parity while we finish the current troncos
 adoption.
 """
-import opentelemetry.trace as trace
-
 from troncos._ddlazy import ddlazy
 
 try:
@@ -53,14 +51,15 @@ def trace_injection_processor(
     Simple logging processor that adds a trace_id to the log record if available.
     """
 
-    span = trace.get_current_span()
-    if not isinstance(span, trace.NonRecordingSpan):
-        event_dict["trace_id"] = f"{span.get_span_context().trace_id:x}"
-        event_dict["span_id"] = f"{span.get_span_context().span_id:x}"
+    if not ddlazy.dd_initialized():
+        return event_dict
 
-    if ddlazy.dd_trace_export_enabled():
-        dd_context = ddlazy.dd_tracer().current_trace_context()
-        if dd_context:
+    dd_context = ddlazy.dd_tracer().current_trace_context()
+    if dd_context:
+        event_dict["trace_id"] = f"{dd_context.trace_id:x}".zfill(32)
+        event_dict["span_id"] = f"{dd_context.span_id:x}"
+
+        if ddlazy.dd_trace_export_enabled():
             event_dict["dd_trace_id"] = dd_context.trace_id
             event_dict["dd_span_id"] = dd_context.span_id
 

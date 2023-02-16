@@ -101,7 +101,7 @@ class _TranslatedSpan(Span):
 
         # Map exception attributes
         if otel_error_attr_dict:
-            self.set_attributes(otel_error_attr_dict)  # Is this needed?
+            # self.set_attributes(otel_error_attr_dict)  # Is this needed?
             self.add_event(name="exception", attributes=otel_error_attr_dict)
 
             status_exp_type = otel_error_attr_dict.get("exception.type", None)
