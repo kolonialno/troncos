@@ -10,7 +10,6 @@ from opentelemetry.sdk.trace.export import (
     ConsoleSpanExporter,
     SimpleSpanProcessor,
 )
-from opentelemetry.sdk.trace.export.in_memory_span_exporter import InMemorySpanExporter
 
 from troncos._ddlazy import ddlazy
 from troncos.traces.dd_shim import DDSpanProcessor
