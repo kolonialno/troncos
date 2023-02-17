@@ -99,10 +99,9 @@ def _create_span_processor(
     # Fallback to InMemorySpanExporter
     if len(otel_span_processors) == 0:
         logger.warning("No OTEL span processor configured")
-        otel_span_processors.append(SimpleSpanProcessor(InMemorySpanExporter()))  # type: ignore[no-untyped-call] # noqa: E501
 
     # Setup OTEL debug processor
-    otel_trace_debug = os.environ.get("OTEL_TRACE_DEBUG")
+    otel_trace_debug = _bool_from_string(os.environ.get("OTEL_TRACE_DEBUG", "false"))
     otel_trace_debug_file = os.environ.get("OTEL_TRACE_DEBUG_FILE")
     if otel_trace_debug:
         logger.info(f"OTEL debug processor to {otel_trace_debug_file or 'stdout'}")
