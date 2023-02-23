@@ -218,7 +218,6 @@ def init_tracing_basic(
         pass
 
     class _PatchedDDTracer(ddtrace.Tracer):
-
         # Since we cannot patch _default_span_processors_factory,
         # we patch all functions that call it
         def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
