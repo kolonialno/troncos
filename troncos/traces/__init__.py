@@ -92,7 +92,7 @@ def _create_span_processor(
             tp = opentelemetry.trace.get_tracer_provider()
             if hasattr(tp, "_active_span_processor"):
                 logger.info("Reusing OTEL span processor")
-                otel_span_processors.append(tp._active_span_processor)  # type: ignore[attr-defined] # noqa: E501
+                otel_span_processors.append(tp._active_span_processor)
                 flush_on_shutdown = False
 
     # Fallback to InMemorySpanExporter
