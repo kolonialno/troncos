@@ -64,7 +64,6 @@ def _trace_function(
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
 ) -> Callable[P, R]:
-
     if inspect.iscoroutinefunction(f):
         # Async function
         @wraps(f)
@@ -80,7 +79,7 @@ def _trace_function(
                 return await awaitable_func(*args, **kwargs)
 
         if hasattr(f, _TRACE_IGNORE_ATTR):
-            return f
+            return f  # type: ignore[return-value]
 
         return cast(Callable[P, R], traced_func_async)
 
@@ -137,7 +136,7 @@ def trace_function(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> (Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]):
+) -> Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]:
     """
     This decorator adds tracing to a function. Example:
 
@@ -151,7 +150,7 @@ def trace_function(
     """
 
     if fn and (callable(fn) or asyncio.iscoroutinefunction(fn)):
-        assert fn
+        assert fn  # type: ignore[truthy-function]
         return _trace_function(fn, name, resource, service, span_type, attributes)
     else:
         # No args

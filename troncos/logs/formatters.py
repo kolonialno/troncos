@@ -120,7 +120,7 @@ class JsonFormatter(logging.Formatter):
         if isinstance(_msg, dict):
             msg_dict = _msg
         else:
-            msg_dict = {}  # type: ignore[var-annotated]
+            msg_dict = {}  # type: ignore[assignment]
             record.message = record.getMessage()
 
         extra_dict = {
@@ -285,15 +285,15 @@ class PrettyFormatter(logging.Formatter):
             and hasattr(rc, "http_status_code")
             and hasattr(rc, "duration")
         ):
-            rc.message = f"{rc.http_client_addr}"  # type: ignore[attr-defined]
+            rc.message = f"{rc.http_client_addr}"
             rc.message += " - "
-            rc.message += f"{rc.http_method}"  # type: ignore[attr-defined]
-            rc.message += f" {rc.http_path}"  # type: ignore[attr-defined]
-            rc.message += f" {rc.http_status_code}"  # type: ignore[attr-defined]
-            rc.message += f" {rc.duration}"  # type: ignore[attr-defined]
+            rc.message += f"{rc.http_method}"
+            rc.message += f" {rc.http_path}"
+            rc.message += f" {rc.http_status_code}"
+            rc.message += f" {rc.duration}"
         if hasattr(rc, "trace_id"):
-            rc.message += f" [trace_id: {rc.trace_id}]"  # type: ignore[attr-defined]
+            rc.message += f" [trace_id: {rc.trace_id}]"
         if hasattr(rc, "dd_trace_id"):
-            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"  # type: ignore[attr-defined] # noqa: E501
+            rc.message += f" [dd_trace_id: {rc.dd_trace_id}]"
 
         return super().formatMessage(rc)

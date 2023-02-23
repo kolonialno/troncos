@@ -75,8 +75,7 @@ def print_loggers(verbose: bool = True) -> None:
             internal(curr, rest)
 
     all_but_root = []
-    for (name, logger) in logging.Logger.manager.loggerDict.items():
-
+    for name, logger in logging.Logger.manager.loggerDict.items():
         if not verbose:
             # Ignore placeholders
             if isinstance(logger, logging.PlaceHolder):
