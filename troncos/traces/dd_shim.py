@@ -9,17 +9,22 @@ from opentelemetry.trace.span import TraceFlags
 from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 _instrumentation_scope = InstrumentationScope(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+_default_trace_flags = TraceFlags(1)
 
 
 def _internal_span_context(dd_span: Any) -> SpanContext:
     return SpanContext(
-        dd_span.trace_id, dd_span.span_id, False, trace_flags=TraceFlags(1)
+        dd_span.trace_id, dd_span.span_id, False, trace_flags=_default_trace_flags
     )
 
 
 class _TranslatedSpan(Span):
     def __init__(
-        self, dd_span: Any, base_resources: Attributes, ignore_attrs: list[str]
+        self,
+        dd_span: Any,
+        base_resources: Attributes,
+        default_resource: Resource,
+        ignore_attrs: list[str],
     ) -> None:
         super().__init__(
             dd_span.name,
@@ -27,7 +32,7 @@ class _TranslatedSpan(Span):
             parent=self._create_parent_context(dd_span),
             sampler=None,
             trace_config=None,
-            resource=self._create_resource(dd_span, base_resources),
+            resource=self._create_resource(dd_span, base_resources, default_resource),
             kind=self._create_span_kind(dd_span),
             instrumentation_scope=_instrumentation_scope,
         )
@@ -46,10 +51,21 @@ class _TranslatedSpan(Span):
         return None
 
     @staticmethod
-    def _create_resource(dd_span: Any, base_attributes: Attributes) -> Resource:
-        if dd_span.service in ["fastapi", "flask", "starlette", "django"]:
-            return Resource.create(base_attributes)
-        return Resource.create({**base_attributes, **{"service.name": dd_span.service}})
+    def _create_resource(
+        dd_span: Any, base_attributes: Attributes, default_resource: Resource
+    ) -> Resource:
+        if default_resource.attributes["service.name"] == dd_span.service:
+            return default_resource
+        elif dd_span.service in ["fastapi", "flask", "starlette", "django"]:
+            return default_resource
+
+        # The resource constructor copies everything, so we just
+        # set the service.name temporarily
+        old_service = base_attributes["service.name"]
+        base_attributes["service.name"] = dd_span.service
+        res = Resource(base_attributes)
+        base_attributes["service.name"] = old_service
+        return res
 
     @staticmethod
     def _create_span_kind(dd_span: Any) -> SpanKind:
@@ -134,6 +150,7 @@ class DDSpanProcessor:
             **(service_attributes or {}),
             **{"service.name": service_name},
         }
+        self._default_resource = Resource(self._base_resources)  # type: ignore[arg-type] # noqa: 501
         self._dd_traces_exported = dd_traces_exported
         self._flush_on_shutdown = flush_on_shutdown
         self._dd_span_ignore_attr = [
@@ -152,6 +169,7 @@ class DDSpanProcessor:
         span = _TranslatedSpan(
             dd_span,
             base_resources=self._base_resources,  # type: ignore[arg-type]
+            default_resource=self._default_resource,
             ignore_attrs=self._dd_span_ignore_attr,
         )
         if self._dd_traces_exported:
