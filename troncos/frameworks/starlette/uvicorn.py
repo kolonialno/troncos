@@ -1,5 +1,7 @@
 import logging
 
+from starlette.middleware import Middleware
+
 from troncos.frameworks.asgi.middleware import AsgiLoggingMiddleware
 from troncos.logs.filters import HttpPathFilter
 
@@ -100,7 +102,6 @@ def init_uvicorn_logging(
     app_logger_error.setLevel(logging.ERROR)
 
     # Add our middleware to starlette
-    app.add_middleware(
-        AsgiLoggingMiddleware,
-        logger_name=logger_name,
+    app.user_middleware.append(
+        Middleware(AsgiLoggingMiddleware, logger_name=logger_name)
     )

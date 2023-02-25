@@ -1,210 +1,76 @@
-import contextlib
-import logging
-import random
-import sys
-from contextvars import Token
-from typing import Any, Iterator, Tuple
+from typing import Any
 
-from opentelemetry import context as context_api
-from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import IdGenerator, SpanProcessor, TracerProvider
-from opentelemetry.trace import (
-    Span,
-    SpanKind,
-    Status,
-    StatusCode,
-    Tracer,
-    set_tracer_provider,
-)
-from opentelemetry.trace.propagation import _SPAN_KEY, tracecontext
+from opentelemetry.sdk.resources import Attributes, Resource
+from opentelemetry.sdk.trace import Span, SpanContext, SpanProcessor
+from opentelemetry.sdk.util.instrumentation import InstrumentationScope
+from opentelemetry.trace import SpanKind, Status, StatusCode
+from opentelemetry.trace.span import TraceFlags
 
 from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
-logger = logging.getLogger(__name__)
+_instrumentation_scope = InstrumentationScope(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
+_default_trace_flags = TraceFlags(1)
 
 
-class _OtelIdGenerator(IdGenerator):
-    """
-    Handles generation of trace and span ids for OTEL. It expects that you provide
-    the IDs your self before attempting to create the span. It falls back to random
-    IDs.
-    """
-
-    def __init__(self) -> None:
-        self._trace_id: int | None = None
-        self._span_id: int | None = None
-
-    def generate_span_id(self) -> int:
-        if not self._span_id:
-            logger.warning("No span_id set in generator")
-            return random.randint(0, sys.maxsize)
-        return self._span_id
-
-    def generate_trace_id(self) -> int:
-        if not self._trace_id:
-            logger.warning("No trace_id set in generator")
-            return random.randint(0, sys.maxsize)
-        return self._trace_id
-
-    @contextlib.contextmanager
-    def with_ids(self, trace_id: int, span_id: int) -> Iterator[None]:
-        self._trace_id = trace_id
-        self._span_id = span_id
-        yield
-        self._trace_id = None
-        self._span_id = None
+def _internal_span_context(dd_span: Any) -> SpanContext:
+    return SpanContext(
+        dd_span.trace_id, dd_span.span_id, False, trace_flags=_default_trace_flags
+    )
 
 
-class OtelTracerProvider:
-    """
-    Handles dynamic creation of OTEL tracer providers based on names.
-    """
-
+class _TranslatedSpan(Span):
     def __init__(
         self,
-        span_processors: list[SpanProcessor],
-        service: str,
-        env: str | None,
-        version: str | None,
-        attributes: dict[str, str] | None,
+        dd_span: Any,
+        base_resources: Attributes,
+        default_resource: Resource,
+        ignore_attrs: list[str],
     ) -> None:
-        self._span_processors = span_processors
-        self._id_gen = _OtelIdGenerator()
-        self._trace_providers: dict[str, TracerProvider] = {}
-        self._info_service = service
-        self._info_env = env
-        self._info_version = version
-        self._attributes: dict[str, str] = attributes or {}
-        extra_attributes = {}
-        if env:
-            extra_attributes["environment"] = env
-        if version:
-            extra_attributes["version"] = version
-        set_tracer_provider(
-            self._get_tracer_provider(extra_attributes=extra_attributes)
+        super().__init__(
+            dd_span.name,
+            _internal_span_context(dd_span),
+            parent=self._create_parent_context(dd_span),
+            sampler=None,
+            trace_config=None,
+            resource=self._create_resource(dd_span, base_resources, default_resource),
+            kind=self._create_span_kind(dd_span),
+            instrumentation_scope=_instrumentation_scope,
         )
-
-    def get_id_generator(self) -> _OtelIdGenerator:
-        return self._id_gen
-
-    def _get_tracer_provider(
-        self, name: str | None = None, extra_attributes: dict[str, str] | None = None
-    ) -> TracerProvider:
-        p_name = name or self._info_service
-        p_prov = self._trace_providers.get(p_name)
-        if not p_prov:
-            attributes = self._attributes.copy()
-            if extra_attributes:
-                attributes = {**attributes, **extra_attributes}
-            attributes["service.name"] = p_name
-            resource = Resource.create(attributes)  # type: ignore[arg-type]
-            p_prov = TracerProvider(resource=resource)
-            p_prov.id_generator = self.get_id_generator()  # type: ignore[has-type]
-            for span_processor in self._span_processors:
-                p_prov.add_span_processor(span_processor)
-            self._trace_providers[p_name] = p_prov
-        return p_prov
-
-    def get_tracer(self, name: str | None = None) -> Tracer:
-        return self._get_tracer_provider(name).get_tracer(
-            OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
-        )
-
-
-class DDSpanProcessor:
-    """
-    This is a DD span processor that creates OTEL spans. It maps the DD spans to OTEL
-    spans as closely as possible.
-    """
-
-    def __init__(
-        self,
-        otel_tracer_provider: OtelTracerProvider,
-        tracer_attributes: dict[str, str] | None,
-        dd_traces_exported: bool,
-        omit_root_context_detach: bool,
-    ) -> None:
-        self._otel = otel_tracer_provider
-        self._propagator = tracecontext.TraceContextTextMapPropagator()
-        self._otel_spans: dict[int, Tuple[object, Span]] = {}
-        self._dd_traces_exported = dd_traces_exported
-        self._dd_span_ignore_attr = [
-            "runtime-id",
-            "_sampling_priority_v1",
-            "env",
-            "version",
-        ]
-        self._omit_root_context_detach = omit_root_context_detach
-        if tracer_attributes:
-            for k in tracer_attributes:
-                self._dd_span_ignore_attr.append(k)
-
-    def _translate_data(self, dd_span: Any, otel_span: Span) -> None:
-        # Collect all "attributes" from the dd span
-        dd_span_attr: dict[str, Any] = {
-            **dd_span._meta,
-            **dd_span._metrics,
-        }
-        dd_span_err_attr_mapping = {
-            "error.msg": "exception.message",
-            "error.type": "exception.type",
-            "error.stack": "exception.stacktrace",
-        }
-        otel_error_attr_dict = {}
-
-        # Map set OTEL attributes based on DD attributes
-        otel_span.set_attribute("resource", dd_span.resource)
-        for k, v in dd_span_attr.items():
-            otel_err_attr = dd_span_err_attr_mapping.get(k)
-            if k.startswith("_dd"):
-                continue
-            elif otel_err_attr:
-                otel_error_attr_dict[otel_err_attr] = v
-            elif k not in self._dd_span_ignore_attr:
-                otel_span.set_attribute(k, v)
-
-        # Map exception attributes
-        if otel_error_attr_dict:
-            otel_span.set_attributes(otel_error_attr_dict)
-            otel_span.add_event(name="exception", attributes=otel_error_attr_dict)
-
-            status_exp_type = otel_error_attr_dict.get("exception.type", None)
-            status_exp_msg = otel_error_attr_dict.get("exception.message", None)
-
-            otel_span.set_status(
-                Status(
-                    status_code=StatusCode.ERROR,
-                    description=f"{status_exp_type}: {status_exp_msg}",
-                )
-            )
+        self.start(dd_span.start_ns)
+        self._apply_translation(dd_span, ignore_attrs)
+        self.end(dd_span.start_ns + dd_span.duration_ns)
 
     @staticmethod
-    def _get_service_name(service: str | None) -> str | None:
-        if service in ["fastapi", "flask", "starlette", "django"]:
-            # In these cases, we want to use the default OTEL tracer, so
-            # we just return None
-            return None
-        return service
+    def _create_parent_context(dd_span: Any) -> SpanContext | None:
+        if dd_span.parent_id:
+            if not dd_span._parent:
+                # External trace parent
+                return SpanContext(dd_span.trace_id, dd_span.parent_id, True)
+            else:
+                return _internal_span_context(dd_span._parent)
+        return None
 
-    def on_span_start(self, dd_span: Any) -> None:
-        otel_tracer = self._otel.get_tracer(self._get_service_name(dd_span.service))
+    @staticmethod
+    def _create_resource(
+        dd_span: Any, base_attributes: Attributes, default_resource: Resource
+    ) -> Resource:
+        if default_resource.attributes["service.name"] == dd_span.service:
+            return default_resource
+        elif dd_span.service in ["fastapi", "flask", "starlette", "django"]:
+            return default_resource
 
-        # Set up context
-        context = None
-        if dd_span.parent_id and not dd_span._parent:
-            # This span has an external parent, extract that
-            parent_trace_id = f"{dd_span.trace_id:x}".zfill(32)
-            parent_span_id = f"{dd_span.parent_id:x}".zfill(16)
-            trace_ctx = {
-                "traceparent": f"00-{parent_trace_id}-{parent_span_id}-01",
-            }
-            context = self._propagator.extract(carrier=trace_ctx)
+        # The resource constructor copies everything, so we just
+        # set the service.name temporarily
+        old_service = base_attributes["service.name"]
+        base_attributes["service.name"] = dd_span.service
+        res = Resource(base_attributes)
+        base_attributes["service.name"] = old_service
+        return res
 
-        # Setup span kind
+    @staticmethod
+    def _create_span_kind(dd_span: Any) -> SpanKind:
         kind = SpanKind.INTERNAL
         if dd_span.span_type:
-            # This has to be adjusted if we want to use the CONSUMER/PRODUCER
-            # span kinds
             if dd_span.span_type in ["template"]:
                 kind = SpanKind.INTERNAL
             elif dd_span.span_type in ["web"]:
@@ -215,35 +81,105 @@ class DDSpanProcessor:
                 kind = SpanKind.CLIENT
         elif dd_span.name in ["celery.apply"]:
             kind = SpanKind.PRODUCER
+        return kind
 
-        # Set up the trace and span ids, and create span
-        with self._otel.get_id_generator().with_ids(dd_span.trace_id, dd_span.span_id):
-            otel_span = otel_tracer.start_span(
-                name=dd_span.name,
-                context=context,
-                kind=kind,
-                start_time=dd_span.start_ns,
+    def _apply_translation(self, dd_span: Any, ignore_attrs: list[str]) -> None:
+        otel_error_attr_dict = {}
+        otel_span_attr = {
+            "resource": dd_span.resource,
+        }
+
+        if dd_span.span_type:
+            otel_span_attr["dd_type"] = dd_span.span_type
+
+        # Collect all "attributes" from the dd span
+        dd_span_attr: dict[str, Any] = {
+            **dd_span._meta,
+            **dd_span._metrics,
+        }
+        dd_span_err_attr_mapping = {
+            "error.msg": "exception.message",
+            "error.type": "exception.type",
+            "error.stack": "exception.stacktrace",
+        }
+
+        # Map set OTEL attributes based on DD attributes
+        for k, v in dd_span_attr.items():
+            otel_err_attr = dd_span_err_attr_mapping.get(k)
+            if k.startswith("_dd"):
+                continue
+            elif otel_err_attr:
+                otel_error_attr_dict[otel_err_attr] = v
+            elif k not in ignore_attrs:
+                otel_span_attr[k] = v
+
+        self.set_attributes(otel_span_attr)
+
+        # Map exception attributes
+        if otel_error_attr_dict:
+            # self.set_attributes(otel_error_attr_dict)  # Is this needed?
+            self.add_event(name="exception", attributes=otel_error_attr_dict)
+
+            status_exp_type = otel_error_attr_dict.get("exception.type", None)
+            status_exp_msg = otel_error_attr_dict.get("exception.message", None)
+
+            self.set_status(
+                Status(
+                    status_code=StatusCode.ERROR,
+                    description=f"{status_exp_type}: {status_exp_msg}",
+                )
             )
-            otel_token = context_api.attach(context_api.set_value(_SPAN_KEY, otel_span))
 
-            # Set some attributes, mainly for debugging
-            if self._dd_traces_exported:
-                otel_span.set_attribute("dd_trace_id", str(dd_span.trace_id))
-                otel_span.set_attribute("dd_span_id", str(dd_span.span_id))
-            if dd_span.span_type:
-                otel_span.set_attribute("dd_type", dd_span.span_type)
 
-            self._otel_spans[dd_span.span_id] = (otel_token, otel_span)
+class DDSpanProcessor:
+    """
+    A ddtrace span processor that translates dd spans into otel span and
+    sends them to otel span processors
+    """
+
+    def __init__(
+        self,
+        service_name: str,
+        service_attributes: dict[str, str] | None,
+        otel_span_processors: list[SpanProcessor],
+        dd_traces_exported: bool = False,
+        flush_on_shutdown: bool = True,
+    ) -> None:
+        self._otel_procs = otel_span_processors
+        self._base_resources = {
+            **(service_attributes or {}),
+            **{"service.name": service_name},
+        }
+        self._default_resource = Resource(self._base_resources)  # type: ignore[arg-type] # noqa: 501
+        self._dd_traces_exported = dd_traces_exported
+        self._flush_on_shutdown = flush_on_shutdown
+        self._dd_span_ignore_attr = [
+            "runtime-id",
+            "_sampling_priority_v1",
+            "env",
+            "version",
+        ]
+        for k in self._base_resources:
+            self._dd_span_ignore_attr.append(k)
+
+    def on_span_start(self, dd_span: Any) -> None:
+        pass
 
     def on_span_finish(self, dd_span: Any) -> None:
-        # Get span and translate DD data to OTEL data
-        otel_token, otel_span = self._otel_spans.pop(dd_span.span_id)
-        self._translate_data(dd_span, otel_span)
+        span = _TranslatedSpan(
+            dd_span,
+            base_resources=self._base_resources,  # type: ignore[arg-type]
+            default_resource=self._default_resource,
+            ignore_attrs=self._dd_span_ignore_attr,
+        )
+        if self._dd_traces_exported:
+            span.set_attribute("dd_trace_id", str(dd_span.trace_id))
+            span.set_attribute("dd_span_id", str(dd_span.span_id))
+        for p in self._otel_procs:
+            p.on_end(span)
 
-        # Detach context and end span
-        t_missing = otel_token.old_value == Token.MISSING  # type: ignore[attr-defined]
-        if self._omit_root_context_detach and t_missing:
-            logger.debug("Skipping detaching token")
-        else:
-            context_api.detach(otel_token)
-        otel_span.end(dd_span.start_ns + dd_span.duration_ns)
+    def shutdown(self, timeout: int) -> None:
+        if self._flush_on_shutdown:
+            for p in self._otel_procs:
+                p.force_flush(timeout_millis=timeout)
+                p.shutdown()

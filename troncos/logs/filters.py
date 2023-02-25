@@ -1,7 +1,5 @@
 import logging
 
-import opentelemetry.trace as trace
-
 from troncos._ddlazy import ddlazy
 
 logger = logging.getLogger(__name__)
@@ -21,14 +19,15 @@ class TraceIdFilter(logging.Filter):
         super().__init__(name)
 
     def filter(self, record: logging.LogRecord) -> bool:
-        otel_span = trace.get_current_span()
-        if not isinstance(otel_span, trace.NonRecordingSpan):
-            record.trace_id = f"{otel_span.get_span_context().trace_id:x}"
-            record.span_id = f"{otel_span.get_span_context().span_id:x}"
+        if not ddlazy.dd_initialized():
+            return True
 
-        if ddlazy.dd_trace_export_enabled():
-            dd_context = ddlazy.dd_tracer().current_trace_context()
-            if dd_context:
+        dd_context = ddlazy.dd_tracer().current_trace_context()
+        if dd_context:
+            record.trace_id = f"{dd_context.trace_id:x}".zfill(32)
+            record.span_id = f"{dd_context.span_id:x}"
+
+            if ddlazy.dd_trace_export_enabled():
                 record.dd_trace_id = dd_context.trace_id
                 record.dd_span_id = dd_context.span_id
 
@@ -81,6 +80,7 @@ class ContextDetachExceptionDropFilter(logging.Filter):
     def __init__(self, name: str = "ContextDetachExceptionDropFilter") -> None:
         super().__init__(name)
         self._count = 0
+        logger.warning("ContextDetachExceptionDropFilter is no longer needed!")
 
     def filter(self, record: logging.LogRecord) -> bool:
         if (
