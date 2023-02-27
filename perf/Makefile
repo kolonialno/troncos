@@ -92,7 +92,6 @@ _run:
 ${OUTPUT_FOLDER}: ## Run test
 	mkdir -p ${OUTPUT_FOLDER}
 	${HYPERFINE} \
-		--show-output \
 		--warmup 3 \
 		--time-unit millisecond \
 		--command-name "{test}" \

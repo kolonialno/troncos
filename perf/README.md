@@ -14,8 +14,8 @@ We will spawn processes that recursively calculate a number in the fibonacci seq
 Additionally, the latter two groups have 3 sub categories:
 
 - `*_base`: Setup tracing and create `1` span
-- `*_medium`: Setup tracing and create `69` spans
-- `*_slow`: Setup tracing and create `8729` spans
+- `*_medium`: Setup tracing and create `27` spans
+- `*_slow`: Setup tracing and create `8687` spans
 
 We will use [hyperfine](https://github.com/sharkdp/hyperfine) to do `50` rounds (+ `3` warmup rounds) of tests to compare different methods.
 
