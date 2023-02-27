@@ -83,3 +83,10 @@ The input file has to contain exactly two benchmarks
 
 > **Note**: You can change the `TO_RUN` variable in the [Makefile](./Makefile) to run different tests!
 
+## Run a single test
+
+```console
+$ export TEST=test_troncos_medium
+$ make _setup
+$ make _run
+```
