@@ -57,7 +57,7 @@ def _create_span_processor(
     service_env: str | None = None,
     service_version: str | None = None,
     service_attributes: dict[str, str] | None = None,
-    endpoint: str | None = None,
+    endpoint: str | SpanProcessor | None = None,
     endpoint_dd: str | None = None,
 ) -> DDSpanProcessor:
     """
@@ -67,26 +67,31 @@ def _create_span_processor(
     flush_on_shutdown = True
     otel_span_processors: list[SpanProcessor] = []
     if endpoint:
-        # Create an exporter
-        try:
-            from opentelemetry.exporter.otlp.proto.grpc import (  # isort: skip # noqa: 501
-                trace_exporter,
-            )
-
-            logger.info("OTEL using GRPC exporter")
-        except ImportError:  # pragma: no cover
+        if isinstance(endpoint, SpanProcessor):
+            otel_span_processors.append(endpoint)
+        else:
+            # Create an exporter
             try:
-                from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore[no-redef] # isort: skip # noqa: 501
+                from opentelemetry.exporter.otlp.proto.grpc import (  # isort: skip # noqa: 501
+                    trace_exporter,
+                )
 
-                logger.info("OTEL using HTTP exporter")
+                logger.info("OTEL using GRPC exporter")
             except ImportError:  # pragma: no cover
-                trace_exporter = None  # type: ignore[assignment]
+                try:
+                    from opentelemetry.exporter.otlp.proto.http import trace_exporter  # type: ignore[no-redef] # isort: skip # noqa: 501
 
-        if trace_exporter:
-            logger.info(f"OTEL traces exported to {endpoint}")
-            otel_span_processors.append(
-                BatchSpanProcessor(trace_exporter.OTLPSpanExporter(endpoint=endpoint))
-            )
+                    logger.info("OTEL using HTTP exporter")
+                except ImportError:  # pragma: no cover
+                    trace_exporter = None  # type: ignore[assignment]
+
+            if trace_exporter:
+                logger.info(f"OTEL traces exported to {endpoint}")
+                otel_span_processors.append(
+                    BatchSpanProcessor(
+                        trace_exporter.OTLPSpanExporter(endpoint=endpoint)
+                    )
+                )
     else:
         if _bool_from_string(os.environ.get("TRONCOS_REUSE_OTEL_PROCESSOR", "false")):
             tp = opentelemetry.trace.get_tracer_provider()
