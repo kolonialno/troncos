@@ -24,6 +24,7 @@ class _TranslatedSpan(Span):
         dd_span: Any,
         base_resources: Attributes,
         default_resource: Resource,
+        dd_traces_exported: bool,
         ignore_attrs: list[str],
     ) -> None:
         super().__init__(
@@ -38,6 +39,13 @@ class _TranslatedSpan(Span):
         )
         self.start(dd_span.start_ns)
         self._apply_translation(dd_span, ignore_attrs)
+        if dd_traces_exported:
+            self.set_attributes(
+                {
+                    "dd_trace_id": str(dd_span.trace_id),
+                    "dd_span_id": str(dd_span.span_id),
+                }
+            )
         self.end(dd_span.start_ns + dd_span.duration_ns)
 
     @staticmethod
@@ -169,12 +177,10 @@ class DDSpanProcessor:
         span = _TranslatedSpan(
             dd_span,
             base_resources=self._base_resources,  # type: ignore[arg-type]
+            dd_traces_exported=self._dd_traces_exported,
             default_resource=self._default_resource,
             ignore_attrs=self._dd_span_ignore_attr,
         )
-        if self._dd_traces_exported:
-            span.set_attribute("dd_trace_id", str(dd_span.trace_id))
-            span.set_attribute("dd_span_id", str(dd_span.span_id))
         for p in self._otel_procs:
             p.on_end(span)
 
