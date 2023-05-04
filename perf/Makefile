@@ -8,17 +8,17 @@ STATS_SCRIPTS:=.stats
 TEST_BASE:=test_base
 TEST_NOOP:=test_noop
 
-OTEL_VERSION:=1.16.0
+OTEL_VERSION:=1.17.0
 TEST_OTEL_BASE:=test_otel_base
 TEST_OTEL_MEDIUM:=test_otel_medium
 TEST_OTEL_SLOW:=test_otel_slow
 
-DDTRACE_VERSION:=1.8.0
+DDTRACE_VERSION:=1.12.4
 TEST_DD_BASE:=test_dd_base
 TEST_DD_MEDIUM:=test_dd_medium
 TEST_DD_SLOW:=test_dd_slow
 
-TRONCOLD_VERSION:=3.0.5
+TRONCOLD_VERSION:=3.1.2
 TEST_TRONCOLD_BASE:=test_troncold_base
 TEST_TRONCOLD_MEDIUM:=test_troncold_medium
 TEST_TRONCOLD_SLOW:=test_troncold_slow
