@@ -203,9 +203,14 @@ def init_tracing_basic(
     prop_inject_val = "tracecontext,b3 single header"
     os.environ.setdefault(prop_inject_key, prop_inject_val)
 
+    os.environ.setdefault("DD_TRACE_128_BIT_TRACEID_GENERATION_ENABLED", "true")
+
     # Disable telemetry and startup logs
     os.environ.setdefault("DD_INSTRUMENTATION_TELEMETRY_ENABLED", "false")
     os.environ.setdefault("DD_TRACE_STARTUP_LOGS", "false")
+
+    # Disable remote configuration
+    os.environ.setdefault("DD_REMOTE_CONFIGURATION_ENABLED", "false")
 
     # Setup dd endpoint
     if endpoint_dd:
