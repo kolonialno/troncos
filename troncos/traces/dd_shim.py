@@ -10,6 +10,13 @@ from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
 _instrumentation_scope = InstrumentationScope(OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION)
 _default_trace_flags = TraceFlags(1)
+_span_kind_map = {
+    "server": SpanKind.SERVER,
+    "client": SpanKind.CLIENT,
+    "producer": SpanKind.PRODUCER,
+    "consumer": SpanKind.CONSUMER,
+    "internal": SpanKind.INTERNAL,
+}
 
 
 def _internal_span_context(dd_span: Any) -> SpanContext:
@@ -77,19 +84,8 @@ class _TranslatedSpan(Span):
 
     @staticmethod
     def _create_span_kind(dd_span: Any) -> SpanKind:
-        kind = SpanKind.INTERNAL
-        if dd_span.span_type:
-            if dd_span.span_type in ["template"]:
-                kind = SpanKind.INTERNAL
-            elif dd_span.span_type in ["web"]:
-                kind = SpanKind.SERVER
-            elif dd_span.span_type in ["worker"]:
-                kind = SpanKind.CONSUMER
-            else:
-                kind = SpanKind.CLIENT
-        elif dd_span.name in ["celery.apply"]:
-            kind = SpanKind.PRODUCER
-        return kind
+        dd_kind = dd_span._meta.get("span.kind", "none")
+        return _span_kind_map.get(dd_kind, SpanKind.INTERNAL)
 
     def _apply_translation(self, dd_span: Any, ignore_attrs: list[str]) -> None:
         otel_error_attr_dict = {}
@@ -166,6 +162,7 @@ class DDSpanProcessor:
             "_sampling_priority_v1",
             "env",
             "version",
+            "span.kind",
         ]
         for k in self._base_resources:
             self._dd_span_ignore_attr.append(k)
