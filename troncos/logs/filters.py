@@ -21,15 +21,16 @@ class TraceIdFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         dd_context = None
 
-        # A trace_id and span_id has already been added to the record
+        # Try to get context from log record
         if hasattr(record, "dd_context"):
             dd_context = record.dd_context
             del record.dd_context
         else:
+            # Try to get context from tracer
             if ddlazy.dd_initialized():
                 dd_context = ddlazy.dd_tracer().current_trace_context()
 
-        # Try to add trace_id and span_id to record
+        # Add context to log record if exists
         if dd_context:
             record.trace_id = f"{dd_context.trace_id:x}".zfill(32)
             record.span_id = f"{dd_context.span_id:x}"

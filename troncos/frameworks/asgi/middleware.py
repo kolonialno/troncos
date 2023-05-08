@@ -30,11 +30,14 @@ class AsgiLoggingMiddleware:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
 
+        # Extract tracing context now, because it is not available
+        # when we create the log records!
         dd_context = (
             ddlazy.dd_tracer().current_trace_context()
             if ddlazy.dd_initialized()
             else None
         )
+
         client_ip, client_port = scope.get("client", ("NO_IP", -1))
         method = scope.get("method")
         path = scope.get("path")
