@@ -51,10 +51,15 @@ def trace_injection_processor(
     Simple logging processor that adds a trace_id to the log record if available.
     """
 
-    if not ddlazy.dd_initialized():
-        return event_dict
+    # Try to get context from log record
+    dd_context = event_dict.pop("dd_context", None)
 
-    dd_context = ddlazy.dd_tracer().current_trace_context()
+    # Try to get context from tracer
+    if not dd_context:
+        if ddlazy.dd_initialized():
+            dd_context = ddlazy.dd_tracer().current_trace_context()
+
+    # Add context to log record if exists
     if dd_context:
         event_dict["trace_id"] = f"{dd_context.trace_id:x}".zfill(32)
         event_dict["span_id"] = f"{dd_context.span_id:x}"

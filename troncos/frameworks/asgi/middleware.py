@@ -2,6 +2,7 @@ import logging
 import time
 from typing import Any, Awaitable, Callable
 
+from troncos._ddlazy import ddlazy
 from troncos.frameworks.asgi.utils import guarantee_single_callable
 
 
@@ -29,6 +30,14 @@ class AsgiLoggingMiddleware:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
 
+        # Extract tracing context now, because it is not available
+        # when we create the log records!
+        dd_context = (
+            ddlazy.dd_tracer().current_trace_context()
+            if ddlazy.dd_initialized()
+            else None
+        )
+
         client_ip, client_port = scope.get("client", ("NO_IP", -1))
         method = scope.get("method")
         path = scope.get("path")
@@ -47,31 +56,37 @@ class AsgiLoggingMiddleware:
             if message.get("type") == "http.response.body" and not message.get(
                 "more_body", False
             ):
+                extra = {
+                    "http_client_addr": f"{client_ip}:{client_port}",
+                    "http_method": method,
+                    "http_path": path,
+                    "http_version": http_version,
+                    "http_status_code": status[0],
+                    "duration": f"{time.time()-start_time:.6f}",
+                }
+                if dd_context:
+                    extra["dd_context"] = dd_context
                 self._access.info(
                     "",
-                    extra={
-                        "http_client_addr": f"{client_ip}:{client_port}",
-                        "http_method": method,
-                        "http_path": path,
-                        "http_version": http_version,
-                        "http_status_code": status[0],
-                        "duration": f"{time.time()-start_time:.6f}",
-                    },
+                    extra=extra,
                 )
 
         try:
             return await self._app(scope, receive, wrapped_send)
         except Exception as e:
+            extra = {
+                "http_client_addr": f"{client_ip}:{client_port}",
+                "http_method": method,
+                "http_path": path,
+                "http_version": http_version,
+                "http_status_code": 500,
+                "duration": f"{time.time()-start_time:.6f}",
+            }
+            if dd_context:
+                extra["dd_context"] = dd_context
             self._error.error(
                 "",
                 exc_info=e,
-                extra={
-                    "http_client_addr": f"{client_ip}:{client_port}",
-                    "http_method": method,
-                    "http_path": path,
-                    "http_version": http_version,
-                    "http_status_code": 500,
-                    "duration": f"{time.time()-start_time:.6f}",
-                },
+                extra=extra,
             )
             raise e

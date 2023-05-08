@@ -19,10 +19,18 @@ class TraceIdFilter(logging.Filter):
         super().__init__(name)
 
     def filter(self, record: logging.LogRecord) -> bool:
-        if not ddlazy.dd_initialized():
-            return True
+        dd_context = None
 
-        dd_context = ddlazy.dd_tracer().current_trace_context()
+        # Try to get context from log record
+        if hasattr(record, "dd_context"):
+            dd_context = record.dd_context
+            del record.dd_context
+        else:
+            # Try to get context from tracer
+            if ddlazy.dd_initialized():
+                dd_context = ddlazy.dd_tracer().current_trace_context()
+
+        # Add context to log record if exists
         if dd_context:
             record.trace_id = f"{dd_context.trace_id:x}".zfill(32)
             record.span_id = f"{dd_context.span_id:x}"
