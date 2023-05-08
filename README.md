@@ -304,6 +304,7 @@ gunicorn myapp.wsgi:application --config python:myapp.gunicorn.config ...
 You can substitute `init_logging_basic` with `init_logging_structlog` to setup structlog:
 
 ```python
+import structlog
 from os import environ
 from troncos.frameworks.structlog.setup import init_logging_structlog
 
@@ -311,19 +312,28 @@ init_logging_structlog(
     level=environ.get("LOG_LEVEL", "INFO"),
     formatter=environ.get("LOG_FORMATTER", "cli"),  # Use "logfmt" in production
 )
+
+log = structlog.get_logger()
+log.info("Some Message")
 ```
 
 Alternatively you can add trace injection into your own structlog setup:
 
 ```python
 import structlog
+from structlog.dev import ConsoleRenderer
+
 from troncos.frameworks.structlog.processors import trace_injection_processor
 
 structlog.configure(
     processors=[
-       trace_injection_processor,
+        trace_injection_processor,
+        ConsoleRenderer(),
     ],
 )
+
+log = structlog.get_logger()
+log.info("Some Message")
 ```
 
 ## Tracing
