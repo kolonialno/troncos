@@ -146,6 +146,50 @@ def _class_index(some_list: list[Any], k: Any) -> int | None:
     return None
 
 
+def _patch_dd_tracer(*, dd_span_processor: DDSpanProcessor, enable_dd: bool) -> None:
+    import ddtrace
+
+    # Shutdown default tracer immediately
+    try:
+        ddtrace.tracer.shutdown()
+    except ValueError:
+        pass
+
+    class _PatchedDDTracer(ddtrace.Tracer):
+        # Since we cannot patch _default_span_processors_factory,
+        # we patch all functions that call it
+        def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            super().__init__(*args, **kwargs)
+            self._fix_span_processors()
+
+        def configure(self, *args, **kwargs):  # type: ignore[no-untyped-def]
+            super().configure(*args, **kwargs)
+            self._fix_span_processors()
+
+        def _child_after_fork(self):  # type: ignore[no-untyped-def]
+            super()._child_after_fork()  # type: ignore[no-untyped-call]
+            self._fix_span_processors()
+
+        def _fix_span_processors(self) -> None:
+            processors = self._span_processors
+
+            # Remove dd span aggregator if needed
+            dd_span_aggregator = _class_index(
+                processors, ddtrace.internal.processor.trace.SpanAggregator
+            )
+            if dd_span_aggregator and not enable_dd:
+                processors.pop(dd_span_aggregator)
+
+            # Add the custom processor
+            if not _class_index(processors, DDSpanProcessor):
+                processors.append(dd_span_processor)  # type: ignore[arg-type]
+
+    # Patch dd tracer and create new tracer
+    ddtrace.Tracer = _PatchedDDTracer  # type: ignore[misc]
+    ddtrace.tracer = ddtrace.Tracer()  # type: ignore[no-untyped-call]
+    ddlazy._dd_tracer = ddtrace.tracer  # type: ignore[assignment]
+
+
 def init_tracing_basic(
     service_name: str,
     service_env: str | None = None,
@@ -222,46 +266,12 @@ def init_tracing_basic(
     ddtrace_already_imported = "ddtrace" in sys.modules
 
     # Initialize ddtrace
+    _patch_dd_tracer(
+        dd_span_processor=custom_dd_span_processor,
+        enable_dd=endpoint_dd is not None,
+    )
+
     import ddtrace
-
-    # Shutdown default tracer immediately
-    try:
-        ddtrace.tracer.shutdown()
-    except ValueError:
-        pass
-
-    class _PatchedDDTracer(ddtrace.Tracer):
-        # Since we cannot patch _default_span_processors_factory,
-        # we patch all functions that call it
-        def __init__(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-            super().__init__(*args, **kwargs)
-            self._fix_span_processors()
-
-        def configure(self, *args, **kwargs):  # type: ignore[no-untyped-def]
-            super().configure(*args, **kwargs)
-            self._fix_span_processors()
-
-        def _child_after_fork(self):  # type: ignore[no-untyped-def]
-            super()._child_after_fork()  # type: ignore[no-untyped-call]
-            self._fix_span_processors()
-
-        def _fix_span_processors(self) -> None:
-            processors = self._span_processors
-
-            # Remove dd span aggregator if needed
-            dd_span_aggregator = _class_index(
-                processors, ddtrace.internal.processor.trace.SpanAggregator
-            )
-            if dd_span_aggregator and not endpoint_dd:
-                processors.pop(dd_span_aggregator)
-
-            # Add custom processor
-            if not _class_index(processors, DDSpanProcessor):
-                processors.append(custom_dd_span_processor)  # type: ignore[arg-type]
-
-    # Patch dd tracer and create new tracer
-    ddtrace.Tracer = _PatchedDDTracer  # type: ignore[misc]
-    ddtrace.tracer = ddtrace.Tracer()  # type: ignore[no-untyped-call]
 
     # Check if someone imported ddtrace before us. We do this by checking if the
     # variables we set above were in fact used
