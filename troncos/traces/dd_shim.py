@@ -1,10 +1,19 @@
-from typing import Any
+from typing import Any, Dict, Optional, Union
 
+from opentelemetry.attributes import BoundedAttributes  # type: ignore[attr-defined]
 from opentelemetry.sdk.resources import Attributes, Resource
-from opentelemetry.sdk.trace import Span, SpanContext, SpanProcessor
+from opentelemetry.sdk.trace import (
+    EventBase,
+    ReadableSpan,
+    Span,
+    SpanContext,
+    SpanProcessor,
+    _UnsetLimits,
+)
 from opentelemetry.sdk.util.instrumentation import InstrumentationScope
 from opentelemetry.trace import SpanKind, Status, StatusCode
 from opentelemetry.trace.span import TraceFlags
+from opentelemetry.util.types import AttributeValue
 
 from troncos import OTEL_LIBRARY_NAME, OTEL_LIBRARY_VERSION
 
@@ -34,26 +43,32 @@ class _TranslatedSpan(Span):
         dd_traces_exported: bool,
         ignore_attrs: list[str],
     ) -> None:
-        super().__init__(
+        ReadableSpan.__init__(
+            self,
             dd_span.name,
             _internal_span_context(dd_span),
             parent=self._create_parent_context(dd_span),
-            sampler=None,
-            trace_config=None,
             resource=self._create_resource(dd_span, base_resources, default_resource),
             kind=self._create_span_kind(dd_span),
             instrumentation_scope=_instrumentation_scope,
         )
-        self.start(dd_span.start_ns)
+        self._limits = _UnsetLimits
+        self._events = self._new_events()  # type: ignore[no-untyped-call]
+        self._raw_attributes: Attributes = {}
+
+        self._start_time = dd_span.start_ns
         self._apply_translation(dd_span, ignore_attrs)
         if dd_traces_exported:
-            self.set_attributes(
-                {
-                    "dd_trace_id": str(dd_span.trace_id),
-                    "dd_span_id": str(dd_span.span_id),
-                }
-            )
-        self.end(dd_span.start_ns + dd_span.duration_ns)
+            self._raw_attributes["dd_trace_id"] = str(dd_span.trace_id)
+            self._raw_attributes["dd_span_id"] = str(dd_span.span_id)
+
+        self._end_time = dd_span.start_ns + dd_span.duration_ns
+        self._attributes = BoundedAttributes(
+            _UnsetLimits.max_span_attributes,
+            self._raw_attributes,
+            immutable=True,
+            max_value_len=_UnsetLimits.max_span_attribute_length,
+        )
 
     @staticmethod
     def _create_parent_context(dd_span: Any) -> SpanContext | None:
@@ -89,12 +104,10 @@ class _TranslatedSpan(Span):
 
     def _apply_translation(self, dd_span: Any, ignore_attrs: list[str]) -> None:
         otel_error_attr_dict = {}
-        otel_span_attr = {
-            "resource": dd_span.resource,
-        }
+        self._raw_attributes["resource"] = dd_span.resource
 
         if dd_span.span_type:
-            otel_span_attr["dd_type"] = dd_span.span_type
+            self._raw_attributes["dd_type"] = dd_span.span_type
 
         # Collect all "attributes" from the dd span
         dd_span_attr: dict[str, Any] = {
@@ -115,24 +128,35 @@ class _TranslatedSpan(Span):
             elif otel_err_attr:
                 otel_error_attr_dict[otel_err_attr] = v
             elif k not in ignore_attrs:
-                otel_span_attr[k] = v
-
-        self.set_attributes(otel_span_attr)
+                self._raw_attributes[k] = v
 
         # Map exception attributes
         if otel_error_attr_dict:
-            # self.set_attributes(otel_error_attr_dict)  # Is this needed?
             self.add_event(name="exception", attributes=otel_error_attr_dict)
 
             status_exp_type = otel_error_attr_dict.get("exception.type", None)
             status_exp_msg = otel_error_attr_dict.get("exception.message", None)
 
-            self.set_status(
-                Status(
-                    status_code=StatusCode.ERROR,
-                    description=f"{status_exp_type}: {status_exp_msg}",
-                )
+            self._status = Status(
+                status_code=StatusCode.ERROR,
+                description=f"{status_exp_type}: {status_exp_msg}",
             )
+
+    def _add_event(self, event: EventBase) -> None:
+        self._events.append(event)  # type: ignore[attr-defined]
+
+    def set_attribute(self, key: str, value: AttributeValue) -> None:
+        assert False, "Use 'self._raw_attributes[key] = value' instead"
+
+    def set_attributes(self, attributes: Dict[str, AttributeValue]) -> None:
+        assert False, "Use 'self._raw_attributes[key] = value' instead"
+
+    def set_status(
+        self,
+        status: Union[Status, StatusCode],
+        description: Optional[str] = None,
+    ) -> None:
+        assert False, "Use 'self._status = status' instead"
 
 
 class DDSpanProcessor:
