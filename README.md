@@ -336,6 +336,8 @@ log = structlog.get_logger()
 log.info("Some Message")
 ```
 
+> **Warning**: It is important that the `trace_injection_processor` is not the last processor in your list. That is because [the last processor has extra duties](https://www.structlog.org/en/stable/processors.html#adapting-and-rendering) that the `trace_injection_processor` does not support.
+
 ## Tracing
 
 ### Tracing your code

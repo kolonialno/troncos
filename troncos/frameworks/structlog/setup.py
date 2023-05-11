@@ -94,6 +94,7 @@ def configure_structlog(
     # Python logger, and entries that are created through structlog (
     # `structlog.get_logger()`)
     shared_processors: list[Processor] = [
+        trace_injection_processor,
         merge_contextvars,
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
@@ -105,7 +106,6 @@ def configure_structlog(
                 structlog.processors.CallsiteParameter.LINENO,
             }
         ),
-        trace_injection_processor,
     ]
 
     # Append release string if that has been supplied in instantiation
