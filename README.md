@@ -476,8 +476,6 @@ You can enable trace debugging by setting the environmental variable `OTEL_TRACE
 
 ## Profiling
 
-> **Warning**: Profiling while using Python 3.11 is [not yet fully supported](https://github.com/DataDog/dd-trace-py/issues/4149).
-
 ### Setup endpoint
 
 Simply add a `/debug/pprof` endpoint that returns the profile:
