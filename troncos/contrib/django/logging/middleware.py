@@ -23,10 +23,11 @@ def DjangoLoggingMiddleware(get_response):  # type: ignore
     access = get_logger("django.access")
     error = get_logger("django.error")
 
+    ipware = IpWare()
+
     def extract_request_data(request: HttpRequest) -> tuple[dict[str, Any], float]:
         start_time = time.perf_counter()
 
-        ipware = IpWare()
         client_ip, _ = ipware.get_client_ip(request.META)
 
         request_data = {

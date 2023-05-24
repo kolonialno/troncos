@@ -23,6 +23,11 @@ class Headers(Mapping[str, str]):
         self._list: list[tuple[bytes, bytes]] = list(scope["headers"])
 
     def add_client(self, client: tuple[str, int]) -> None:
+        """
+        The client IP is not stored in the ASGI headers by default.
+        Add the client ip to make sure we use it as a fallback if no
+        proxy headers are set.
+        """
         self._list.append(
             (
                 "REMOTE_ADDR".encode("latin-1"),

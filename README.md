@@ -136,6 +136,18 @@ from troncos.contrib.asgi.logging.middleware import AsgiLoggingMiddleware
 application = AsgiLoggingMiddleware(Starlette())
 ```
 
+#### Django middleware
+
+Log Django requests. This is not needed if you run Django with ASGI and use the
+ASGI middleware.
+
+```python
+MIDDLEWARE = [
+    "troncos.contrib.django.logging.middleware.DjangoLoggingMiddleware",
+    ...
+]
+```
+
 ## Profiling
 
 ### Enabling the profiler
