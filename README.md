@@ -244,11 +244,26 @@ annotations:
 Troncos is not designed to take control over your logger. But, we do include logging
 related tools to make instrumenting your code easer.
 
+### Configure Structlog
+
+Troncos contains a helper method that lets you configure Structlog.
+
+First, run `poetry add structlog` to install structlog in your project.
+
+You can now replace your existing logger config with
+
+```python
+from troncos.contrib.structlog import configure_structlog
+
+configure_structlog(format="json", level="INFO")
+```
+
 ### Adding tracing context to your log
 
 Troncos has a Structlog processor that can be used to add the `span_id` and `trace_id`
 properties to your log. More infomation can be found in the [Tracing](#tracing)
-section in this document.
+section in this document. This is used by the `configure_structlog` helper method
+by default.
 
 ### Request logging middleware
 
