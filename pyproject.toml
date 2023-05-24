@@ -19,6 +19,7 @@ python = ">=3.10,<4.0"
 ddtrace = "1.13.3"
 opentelemetry-sdk = "1.17.0"
 opentelemetry-exporter-otlp-proto-http = "1.17.0"
+python-ipware = "^0.9.0"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
