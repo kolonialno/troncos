@@ -39,6 +39,7 @@ snakeviz = "^2.2.0"
 django = "^4.2.1"
 starlette = "^0.27.0"
 structlog = "^23.1.0"
+celery = "^5.2.7"
 
 
 [tool.black]
