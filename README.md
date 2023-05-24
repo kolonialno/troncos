@@ -148,6 +148,19 @@ MIDDLEWARE = [
 ]
 ```
 
+#### Celery signals
+
+`
+Log Celery tasks. Run the code bellow when you configure Celery.
+
+```python
+from troncos.contrib.celery.logging.signals import (
+    connect_troncos_logging_celery_signals,
+)
+
+connect_troncos_logging_celery_signals()
+```
+
 ## Profiling
 
 ### Enabling the profiler

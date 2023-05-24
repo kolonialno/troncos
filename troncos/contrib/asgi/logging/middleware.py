@@ -93,8 +93,8 @@ class AsgiLoggingMiddleware:
     ) -> None:
         self._app = app
         ln = logger_name or "asgi"
-        self._access = get_logger(f"{ln}.access")
-        self._error = get_logger(f"{ln}.error")
+        self._access = get_logger(f"troncos.{ln}.access")
+        self._error = get_logger(f"troncos.{ln}.error")
 
     async def __call__(
         self,

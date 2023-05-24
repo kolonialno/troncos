@@ -20,8 +20,8 @@ def DjangoLoggingMiddleware(get_response):  # type: ignore
     Django middleware that logs requests.
     """
 
-    access = get_logger("django.access")
-    error = get_logger("django.error")
+    access = get_logger("troncos.django.access")
+    error = get_logger("troncos.django.error")
 
     ipware = IpWare()
 
