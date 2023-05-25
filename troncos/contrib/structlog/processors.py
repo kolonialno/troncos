@@ -1,4 +1,5 @@
 from ddtrace import tracer
+from structlog.processors import LogfmtRenderer as LogFmt
 from structlog.types import EventDict, WrappedLogger
 
 
@@ -22,3 +23,12 @@ def trace_injection_processor(
         event_dict["span_id"] = f"{dd_context.span_id:x}"
 
     return event_dict
+
+
+class LogfmtRenderer(LogFmt):
+    """
+    A structlog Logfmt renderer that does not produce new lines
+    """
+
+    def __call__(self, _: WrappedLogger, __: str, event_dict: EventDict) -> str:
+        return super().__call__(_, __, event_dict).replace("\n", " ")

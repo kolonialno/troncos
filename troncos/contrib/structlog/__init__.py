@@ -3,7 +3,10 @@ import logging.config
 
 import structlog
 
-from troncos.contrib.structlog.processors import trace_injection_processor
+from troncos.contrib.structlog.processors import (
+    LogfmtRenderer,
+    trace_injection_processor,
+)
 
 try:
     from structlog_sentry import SentryProcessor
@@ -49,6 +52,8 @@ def configure_structlog(
         processor = structlog.dev.ConsoleRenderer(colors=True)
     elif format == "json":
         processor = structlog.processors.JSONRenderer()
+    elif format == "logfmt":
+        processor = LogfmtRenderer()
     else:
         raise RuntimeError(f"Invalid log format {format}")
 
