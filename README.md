@@ -76,7 +76,7 @@ ddtrace.patch_all()
 TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
 TRACE_PORT = "4318"
 configure_tracer(
-    enabled=True,
+    enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
     endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}/v1/traces",
 )
@@ -93,6 +93,40 @@ DD_VERSION="{{ version }}"
 # b3 is usually used to propagate distributed traces across services.
 DD_TRACE_PROPAGATION_STYLE_EXTRACT="b3"
 DD_TRACE_PROPAGATION_STYLE_INJECT="b3"
+```
+
+### Using the GRPC span exporter
+
+Using the GRPC span exporter gives you significant performance gains.
+If you are running a critical service with high load in production,
+we recommend using GRPC.
+
+`TRACE_PORT` is usually 4317 when the Grafana agent is used to collect
+spans using GRPC.
+
+```console
+poetry add troncos -E grpc
+```
+
+or
+
+```toml
+[tool.poetry.dependencies]
+troncos = {version="?", extras = ["grpc"]}
+```
+
+```python
+from troncos.tracing import configure_tracer, Exporter
+
+TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
+TRACE_PORT = "4317"
+
+configure_tracer(
+    enabled=False, # Set to True when TRACE_HOST is configured.
+    service_name='SERVICE_NAME',
+    endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}",
+    exporter=Exporter.GRPC
+)
 ```
 
 ### Instrument your code
