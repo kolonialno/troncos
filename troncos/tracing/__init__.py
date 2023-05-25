@@ -2,7 +2,10 @@ from typing import Any
 
 import ddtrace
 
+from ._enums import Exporter
 from ._writer import OTELWriter
+
+__all__ = ["Exporter"]
 
 
 def configure_tracer(
@@ -11,6 +14,7 @@ def configure_tracer(
     endpoint: str,
     service_name: str,
     service_attributes: dict[str, Any] | None = None,
+    exporter: Exporter = Exporter.HTTP,
 ) -> None:
     """Configure ddtrace to write traces to the otel tracing backend."""
 
@@ -19,6 +23,7 @@ def configure_tracer(
         service_name=service_name,
         service_attributes=service_attributes,
         endpoint=endpoint,
+        exporter=exporter,
     )
 
     ddtrace.tracer.configure(writer=writer, enabled=enabled)
