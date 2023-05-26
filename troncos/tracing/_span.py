@@ -82,7 +82,9 @@ def _span_status_and_attributes(
             otel_attrs[k] = v
 
     if otel_error_attrs:
-        events.append(Event("exception", otel_error_attrs))
+        events.append(
+            Event("exception", BoundedAttributes(attributes=otel_error_attrs))
+        )
 
         status_exp_type = otel_error_attrs.get("exception.type", None)
         status_exp_msg = otel_error_attrs.get("exception.message", None)
