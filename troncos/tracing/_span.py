@@ -2,8 +2,16 @@ from typing import Any
 
 from ddtrace import constants, ext
 from ddtrace.span import Span as DDSpan
+from opentelemetry.attributes import BoundedAttributes  # type: ignore
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import Event, ReadableSpan, Span
+from opentelemetry.sdk.trace import (
+    _DEFAULT_OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT,
+    _DEFAULT_OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT,
+    _DEFAULT_OTEL_SPAN_EVENT_COUNT_LIMIT,
+    Event,
+    ReadableSpan,
+)
+from opentelemetry.sdk.util import BoundedList
 from opentelemetry.trace import SpanContext, SpanKind, Status, StatusCode
 from opentelemetry.trace.span import TraceFlags
 
@@ -14,12 +22,6 @@ _dd_span_ignore_attr = [
     "version",
     "span.kind",
 ]
-
-
-class _Span(Span):
-    """Class needed to allow us to make a Span outside of a tracer."""
-
-    pass
 
 
 def _span_context(span: DDSpan) -> SpanContext:
@@ -86,7 +88,15 @@ def _span_status_and_attributes(
             otel_attrs[k] = v
 
     if otel_error_attrs:
-        events.append(Event("exception", attributes=otel_error_attrs))
+        events.append(
+            Event(
+                "exception",
+                BoundedAttributes(
+                    _DEFAULT_OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT,
+                    attributes=otel_error_attrs,
+                ),
+            )
+        )
 
         status_exp_type = otel_error_attrs.get("exception.type", None)
         status_exp_msg = otel_error_attrs.get("exception.message", None)
@@ -114,7 +124,7 @@ def _span_resource(dd_span: DDSpan, default_resource: Resource) -> Resource:
     return Resource.create(base_attributes)
 
 
-def transalate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan:
+def translate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan:
     """Transelate a ddtrace span to an OTEL span."""
     assert dd_span.duration_ns, "Span not finished."
 
@@ -123,18 +133,19 @@ def transalate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan
         ignore_attrs=_dd_span_ignore_attr + list(default_resource.attributes.keys()),
     )
 
-    otel_span = _Span(
+    otel_span = ReadableSpan(
         name=dd_span.name,
         context=_span_context(dd_span),
         parent=_parent_span_context(dd_span),
         resource=_span_resource(dd_span, default_resource),
-        attributes=attributes,
-        events=events,
+        attributes=BoundedAttributes(
+            _DEFAULT_OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT, attributes=attributes
+        ),
+        events=BoundedList.from_seq(_DEFAULT_OTEL_SPAN_EVENT_COUNT_LIMIT, events),
         kind=_span_kind(dd_span),
+        status=status,
+        start_time=dd_span.start_ns,
+        end_time=dd_span.start_ns + dd_span.duration_ns,
     )
-
-    otel_span.set_status(status=status)
-    otel_span.start(dd_span.start_ns)
-    otel_span.end(dd_span.start_ns + dd_span.duration_ns)
 
     return otel_span

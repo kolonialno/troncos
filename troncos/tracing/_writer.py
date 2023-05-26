@@ -6,7 +6,7 @@ from opentelemetry.sdk.resources import Resource
 
 from ._enums import Exporter
 from ._otel import get_otel_span_processors
-from ._span import transalate_span
+from ._span import translate_span
 
 
 class OTELWriter(TraceWriter):
@@ -38,13 +38,13 @@ class OTELWriter(TraceWriter):
         )
 
     def write(self, spans: list[Span] | None = None) -> None:
-        transalated_spans = [
-            transalate_span(span, default_resource=self.otel_default_resource)
+        transelated_spans = [
+            translate_span(span, default_resource=self.otel_default_resource)
             for span in spans or []
         ]
 
         for span_processor in self.otel_span_processors:
-            for span in transalated_spans:
+            for span in transelated_spans:
                 span_processor.on_end(span)
 
     def stop(self, timeout: float | None = None) -> None:
