@@ -2,12 +2,10 @@ from typing import Any
 
 from ddtrace import constants, ext
 from ddtrace.span import Span as DDSpan
-from opentelemetry.attributes import BoundedAttributes  # type: ignore
 from opentelemetry.sdk.resources import Resource
-from opentelemetry.sdk.trace import Event, ReadableSpan
+from opentelemetry.sdk.trace import Event, ReadableSpan, Span
 from opentelemetry.trace import SpanContext, SpanKind, Status, StatusCode
 from opentelemetry.trace.span import TraceFlags
-from opentelemetry.util import types
 
 _dd_span_ignore_attr = [
     "runtime-id",
@@ -16,6 +14,12 @@ _dd_span_ignore_attr = [
     "version",
     "span.kind",
 ]
+
+
+class _Span(Span):
+    """Class needed to allow us to make a Span outside of a tracer."""
+
+    pass
 
 
 def _span_context(span: DDSpan) -> SpanContext:
@@ -53,7 +57,7 @@ def _span_kind(dd_span: DDSpan) -> SpanKind:
 
 def _span_status_and_attributes(
     dd_span: DDSpan, ignore_attrs: list[str]
-) -> tuple[Status, list[Event], types.Attributes]:
+) -> tuple[Status, list[Event], dict[str, Any]]:
     dd_span_err_attr_mapping = {
         "error.msg": "exception.message",
         "error.type": "exception.type",
@@ -82,9 +86,7 @@ def _span_status_and_attributes(
             otel_attrs[k] = v
 
     if otel_error_attrs:
-        events.append(
-            Event("exception", BoundedAttributes(attributes=otel_error_attrs))
-        )
+        events.append(Event("exception", attributes=otel_error_attrs))
 
         status_exp_type = otel_error_attrs.get("exception.type", None)
         status_exp_msg = otel_error_attrs.get("exception.message", None)
@@ -121,17 +123,18 @@ def transalate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan
         ignore_attrs=_dd_span_ignore_attr + list(default_resource.attributes.keys()),
     )
 
-    otel_span = ReadableSpan(
+    otel_span = _Span(
         name=dd_span.name,
         context=_span_context(dd_span),
         parent=_parent_span_context(dd_span),
         resource=_span_resource(dd_span, default_resource),
-        attributes=BoundedAttributes(attributes=attributes),
+        attributes=attributes,
         events=events,
         kind=_span_kind(dd_span),
-        status=status,
-        start_time=dd_span.start_ns,
-        end_time=dd_span.start_ns + dd_span.duration_ns,
     )
+
+    otel_span.set_status(status=status)
+    otel_span.start(dd_span.start_ns)
+    otel_span.end(dd_span.start_ns + dd_span.duration_ns)
 
     return otel_span
