@@ -3,7 +3,7 @@ from typing import Any
 from ddtrace import constants, ext
 from ddtrace.span import Span as DDSpan
 from opentelemetry.attributes import BoundedAttributes  # type: ignore
-from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import (
     _DEFAULT_OTEL_EVENT_ATTRIBUTE_COUNT_LIMIT,
     _DEFAULT_OTEL_SPAN_ATTRIBUTE_COUNT_LIMIT,
@@ -112,16 +112,16 @@ def _span_status_and_attributes(
 
 
 def _span_resource(dd_span: DDSpan, default_resource: Resource) -> Resource:
-    if default_resource.attributes["service.name"] == dd_span.service:
+    if default_resource.attributes[SERVICE_NAME] == dd_span.service:
         return default_resource
 
     if not dd_span.service:
         return default_resource
 
     base_attributes = dict(default_resource.attributes)
-    base_attributes["service.name"] = dd_span.service
+    base_attributes[SERVICE_NAME] = dd_span.service
 
-    return Resource.create(base_attributes)
+    return Resource(base_attributes)
 
 
 def translate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan:
