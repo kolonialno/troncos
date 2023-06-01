@@ -1,6 +1,7 @@
 import time
 from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping
 
+import ddtrace
 from ipware import IpWare
 
 try:
@@ -121,41 +122,39 @@ class AsgiLoggingMiddleware:
         async def wrapped_send(message: dict[str, Any]) -> None:
             if "status" in message:
                 status[0] = message.get("status", 0)
-
             await send(message)
 
-            # "more_body" is used if there is still data to send. Log the request
-            # when "http.response.body" has no more data left to send in the response.
-            if message.get("type") == "http.response.body" and not message.get(
-                "more_body", False
-            ):
-                extra = {
-                    "http_client_addr": str(client_ip) if client_ip else "NO_IP",
-                    "http_method": method,
-                    "http_path": path,
-                    "http_version": http_version,
-                    "http_status_code": status[0],
-                    "duration": time.perf_counter() - start_time,
-                }
-                self._access.info(
-                    "",
-                    **extra,
-                )
+        log_fn = self._access.info
+        extra = {}
+
+        # Earlier implementations of this middleware logged calls in the 'wrapped_send'
+        # function above, and made it the responsibility of the trace injection log
+        # processor to add the trace/span id to the log entry. The problem is that the
+        # ASGI TraceMiddleware defined in ddtrace, sometimes ends the span during the
+        # 'send(message)' call, and so the trace injection processor would not see the
+        # trace context, and therefore not log the trace/span id.
+        #
+        # To ensure that the trace information is always logged, we simply inject that
+        # information in here, and by doing so we do not have to care about the
+        # internals of the ASGI TraceMiddleware in ddtrace.
+        if dd_context := ddtrace.tracer.current_trace_context():
+            extra["trace_id"] = f"{dd_context.trace_id:x}"
+            extra["span_id"] = f"{dd_context.span_id:x}"
 
         try:
             return await self._app(scope, receive, wrapped_send)
         except Exception as e:
-            extra = {
-                "http_client_addr": str(client_ip) if client_ip else "NO_IP",
-                "http_method": method,
-                "http_path": path,
-                "http_version": http_version,
-                "http_status_code": 500,
-                "duration": time.perf_counter() - start_time,
-            }
-
-            self._error.exception(
+            status[0] = 500
+            log_fn = self._error.exception
+            raise e
+        finally:
+            log_fn(
                 "",
+                http_client_addr=str(client_ip) if client_ip else "NO_IP",
+                http_method=method,
+                http_path=path,
+                http_version=http_version,
+                http_status_code=status[0],
+                duration=time.perf_counter() - start_time,
                 **extra,
             )
-            raise e
