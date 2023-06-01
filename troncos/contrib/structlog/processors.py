@@ -10,12 +10,8 @@ def trace_injection_processor(
     Simple logging processor that adds a trace_id to the log record if available.
     """
 
-    # Try to get context from log record
-    dd_context = event_dict.pop("dd_context", None)
-
     # Try to get context from tracer
-    if not dd_context:
-        dd_context = tracer.current_trace_context()
+    dd_context = tracer.current_trace_context()
 
     # Add context to log record if exists
     if dd_context:
