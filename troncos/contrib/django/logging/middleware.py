@@ -46,7 +46,7 @@ def DjangoLoggingMiddleware(get_response):  # type: ignore
         logger_method = access.info if http_status_code < 500 else error.error
 
         logger_method(
-            "",
+            "Django HTTP response",
             http_status_code=http_status_code,
             duration=time.perf_counter() - start_time,
             **request_data,

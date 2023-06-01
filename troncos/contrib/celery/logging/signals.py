@@ -32,4 +32,4 @@ def _postrun(sender: Any, task_id: Any, task: Any, *args: Any, **kwargs: Any) ->
     if started_time:
         extra["duration"] = time.perf_counter() - started_time
 
-    logger.info("", task=task.name, state=kwargs["state"], **extra)
+    logger.info("Celery task post-run", task=task.name, state=kwargs["state"], **extra)

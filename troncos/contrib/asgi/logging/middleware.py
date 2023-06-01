@@ -149,7 +149,7 @@ class AsgiLoggingMiddleware:
             raise e
         finally:
             log_fn(
-                "",
+                "ASGI HTTP response",
                 http_client_addr=str(client_ip) if client_ip else "NO_IP",
                 http_method=method,
                 http_path=path,
