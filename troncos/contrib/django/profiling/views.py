@@ -3,7 +3,7 @@ from django.http import HttpRequest, HttpResponse
 from troncos.profiling.bootstrap.profile import get_profile
 
 
-async def profiling_view(request: HttpRequest) -> HttpResponse:
+def profiling_view(request: HttpRequest) -> HttpResponse:
     profile, headers = get_profile()
 
     return HttpResponse(profile, headers=headers)
