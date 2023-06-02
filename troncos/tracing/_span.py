@@ -15,13 +15,13 @@ from opentelemetry.sdk.util import BoundedList
 from opentelemetry.trace import SpanContext, SpanKind, Status, StatusCode
 from opentelemetry.trace.span import TraceFlags
 
-_dd_span_ignore_attr = [
+_dd_span_ignore_attr = {
     "runtime-id",
     "_sampling_priority_v1",
     "env",
     "version",
     "span.kind",
-]
+}
 
 
 def _span_context(span: DDSpan) -> SpanContext:
@@ -58,7 +58,7 @@ def _span_kind(dd_span: DDSpan) -> SpanKind:
 
 
 def _span_status_and_attributes(
-    dd_span: DDSpan, ignore_attrs: list[str]
+    dd_span: DDSpan, ignore_attrs: set[str]
 ) -> tuple[Status, list[Event], dict[str, Any]]:
     dd_span_err_attr_mapping = {
         "error.msg": "exception.message",
@@ -124,13 +124,18 @@ def _span_resource(dd_span: DDSpan, default_resource: Resource) -> Resource:
     return Resource(base_attributes)
 
 
-def translate_span(dd_span: DDSpan, default_resource: Resource) -> ReadableSpan:
+def default_ignore_attrs() -> set[str]:
+    return _dd_span_ignore_attr
+
+
+def translate_span(
+    dd_span: DDSpan, default_resource: Resource, ignore_attrs: set[str]
+) -> ReadableSpan:
     """Transelate a ddtrace span to an OTEL span."""
     assert dd_span.duration_ns, "Span not finished."
 
     status, events, attributes = _span_status_and_attributes(
-        dd_span,
-        ignore_attrs=_dd_span_ignore_attr + list(default_resource.attributes.keys()),
+        dd_span, ignore_attrs=ignore_attrs
     )
 
     otel_span = ReadableSpan(
