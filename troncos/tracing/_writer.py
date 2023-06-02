@@ -6,7 +6,7 @@ from opentelemetry.sdk.resources import Resource
 
 from ._enums import Exporter
 from ._otel import get_otel_span_processors
-from ._span import translate_span, default_ignore_attrs
+from ._span import default_ignore_attrs, translate_span
 
 
 class OTELWriter(TraceWriter):
