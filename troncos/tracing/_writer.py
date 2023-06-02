@@ -41,13 +41,28 @@ class OTELWriter(TraceWriter):
         )
 
     def write(self, spans: list[Span] | None = None) -> None:
+        if not spans:
+            return
+
+        filtered_spans = [
+            span
+            for span in spans
+            # ddtrace uses sampling_priority > 0 to indicate that we
+            # want to ingest the span.
+            if span.context.sampling_priority is None
+            or span.context.sampling_priority > 0
+        ]
+
+        if not filtered_spans:
+            return
+
         transelated_spans = [
             translate_span(
                 span,
                 default_resource=self.otel_default_resource,
                 ignore_attrs=self.otel_ignore_attrs,
             )
-            for span in spans or []
+            for span in filtered_spans
         ]
 
         for span_processor in self.otel_span_processors:
