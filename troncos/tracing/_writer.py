@@ -6,7 +6,7 @@ from opentelemetry.sdk.resources import Resource
 
 from ._enums import Exporter
 from ._otel import get_otel_span_processors
-from ._span import translate_span
+from ._span import translate_span, default_ignore_attrs
 
 
 class OTELWriter(TraceWriter):
@@ -28,6 +28,9 @@ class OTELWriter(TraceWriter):
         self.otel_default_resource = Resource.create(
             {"service.name": service_name, **(service_attributes or {})}
         )
+        self.otel_ignore_attrs = (
+            set(self.otel_default_resource.attributes.keys()) | default_ignore_attrs()
+        )
 
     def recreate(self) -> "OTELWriter":
         return self.__class__(
@@ -39,7 +42,11 @@ class OTELWriter(TraceWriter):
 
     def write(self, spans: list[Span] | None = None) -> None:
         transelated_spans = [
-            translate_span(span, default_resource=self.otel_default_resource)
+            translate_span(
+                span,
+                default_resource=self.otel_default_resource,
+                ignore_attrs=self.otel_ignore_attrs,
+            )
             for span in spans or []
         ]
 
