@@ -23,13 +23,15 @@ _dd_span_ignore_attr = {
     "span.kind",
 }
 
+_trace_flags_sampled = TraceFlags(1)
+
 
 def _span_context(span: DDSpan) -> SpanContext:
     return SpanContext(
         trace_id=span.trace_id,
         span_id=span.span_id,
         is_remote=False,
-        trace_flags=TraceFlags(1),
+        trace_flags=_trace_flags_sampled,
     )
 
 
@@ -57,15 +59,16 @@ def _span_kind(dd_span: DDSpan) -> SpanKind:
     return _span_kind_map.get(dd_kind, SpanKind.INTERNAL)
 
 
+_dd_span_err_attr_mapping = {
+    "error.msg": "exception.message",
+    "error.type": "exception.type",
+    "error.stack": "exception.stacktrace",
+}
+
+
 def _span_status_and_attributes(
     dd_span: DDSpan, ignore_attrs: set[str]
 ) -> tuple[Status, list[Event], dict[str, Any]]:
-    dd_span_err_attr_mapping = {
-        "error.msg": "exception.message",
-        "error.type": "exception.type",
-        "error.stack": "exception.stacktrace",
-    }
-
     # Collect all "attributes" from the dd span
     dd_span_attr: dict[str, Any] = {
         **dd_span._meta,  # type: ignore
@@ -79,10 +82,10 @@ def _span_status_and_attributes(
 
     # Map set OTEL attributes based on DD attributes
     for k, v in dd_span_attr.items():
-        otel_err_attr = dd_span_err_attr_mapping.get(k)
         if k.startswith("_dd"):
             continue
-        elif otel_err_attr:
+        otel_err_attr = _dd_span_err_attr_mapping.get(k)
+        if otel_err_attr:
             otel_error_attrs[otel_err_attr] = v
         elif k not in ignore_attrs:
             otel_attrs[k] = v
