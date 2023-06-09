@@ -197,7 +197,19 @@ connect_troncos_logging_celery_signals()
 
 ## Profiling
 
-### Enabling the profiler
+### Enabling the continuous py-spy profiler
+
+Start the profiler by running the `start_py_spy_profiler` method early in your application. This is
+typically done in `settings.py` of you want to profile a Django application, or in `__init__.py`
+in the root project package.
+
+```python
+from troncos.profiling import start_py_spy_profiler
+
+start_py_spy_profiler(server_address="http://127.0.0.1:4100")
+```
+
+### Enabling the ddtrace profiler
 
 Start the profiler by importing the profiler module early in your application. This is
 typically done in `settings.py` of you want to profile a Django application, or in `__init__.py`
@@ -207,11 +219,11 @@ in the root project package.
 import troncos.profiling.auto
 ```
 
-### Setup profile endpoint
+#### Setup profile endpoint
 
 Use one of the methods bellow based on your selected framework.
 
-#### Django
+##### Django
 
 Add the profile view to the url config.
 
@@ -225,7 +237,7 @@ urlpatterns = [
 ]
 ```
 
-#### Starlette
+##### Starlette
 
 Add the profile view to your router.
 
@@ -239,7 +251,7 @@ routes = [
 ]
 ```
 
-#### ASGI
+##### ASGI
 
 Mount the generic ASGI profiling application. There is no generic way to do this,
 please check the relevant ASGI framework documentation.
@@ -255,7 +267,7 @@ app = FastAPI()
 app.mount("/debug/pprof", profiling_asgi_app)
 ```
 
-### Verify setup
+#### Verify setup
 
 You can verify that your setup works with the [pprof](https://github.com/google/pprof) cli:
 
@@ -263,7 +275,7 @@ You can verify that your setup works with the [pprof](https://github.com/google/
 $ pprof -http :6060 "http://localhost:8080/debug/pprof"
 ```
 
-### Enable scraping
+#### Enable scraping
 
 When you deploy your application, be sure to use the custom oda annotation for scraping:
 
