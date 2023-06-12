@@ -7,6 +7,9 @@ def start_py_spy_profiler(
     server_address: str,
     tags: dict[str, str] | None = None,
     enable_logging: bool = False,
+    auth_token: str = "",
+    basic_auth_username: str = "",
+    basic_auth_password: str = "",
 ) -> None:
     """Start the py-spy continuous profiler."""
 
@@ -30,4 +33,7 @@ def start_py_spy_profiler(
         oncpu=False,
         gil_only=False,
         enable_logging=enable_logging,
+        auth_token=auth_token,
+        basic_auth_username=basic_auth_username,
+        basic_auth_password=basic_auth_password,
     )
