@@ -1,5 +1,5 @@
 import pyroscope
-from ddtrace import config
+from ddtrace import config, tracer
 from ddtrace.internal.hostname import get_hostname
 
 
@@ -14,13 +14,16 @@ def start_py_spy_profiler(
 ) -> None:
     """Start the py-spy continuous profiler."""
 
+    # Use the default ddtrace service name.
     app_name = config.service or "unknown-service"
+
     profiler_tags = {
         "app": app_name,
         "env": config.env,
         "version": config.version,
         "instance": get_hostname(),
-        **config.tags,
+        # Use tags from the global tracer.
+        **tracer._tags,
     }
 
     if tags:
