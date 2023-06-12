@@ -1,5 +1,6 @@
 import pyroscope
 from ddtrace import config
+from ddtrace.internal.hostname import get_hostname
 
 
 def start_py_spy_profiler(
@@ -18,6 +19,7 @@ def start_py_spy_profiler(
         "app": app_name,
         "env": config.env,
         "version": config.version,
+        "instance": get_hostname(),
         **config.tags,
     }
 
