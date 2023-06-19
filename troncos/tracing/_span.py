@@ -71,8 +71,8 @@ def _span_status_and_attributes(
 ) -> tuple[Status, list[Event], dict[str, Any]]:
     # Collect all "attributes" from the dd span
     dd_span_attr: dict[str, Any] = {
-        **dd_span._meta,  # type: ignore
-        **dd_span._metrics,  # type: ignore
+        **dd_span._meta,
+        **dd_span._metrics,
         "resource": dd_span.resource,
     }
 

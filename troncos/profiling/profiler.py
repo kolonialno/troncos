@@ -1,7 +1,7 @@
 from typing import Any
 
 from ddtrace.profiling import exporter
-from ddtrace.profiling.exporter import pprof  # type: ignore
+from ddtrace.profiling.exporter import pprof
 from ddtrace.profiling.profiler import (
     Profiler as DDProfiler,
     _ProfilerInstance as DDProfilerInstance,
@@ -36,7 +36,7 @@ class _PprofExporter(pprof.PprofExporter):  # type: ignore[misc]
         self.pprof = pprof_profile.SerializeToString()
 
 
-class _ProfilerInstance(DDProfilerInstance):
+class _ProfilerInstance(DDProfilerInstance):  # type: ignore
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.exporter = _PprofExporter()
 
@@ -46,9 +46,9 @@ class _ProfilerInstance(DDProfilerInstance):
         return [self.exporter]
 
 
-class Profiler(DDProfiler):
+class Profiler(DDProfiler):  # type: ignore
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self._profiler = _ProfilerInstance(*args, **kwargs)
 
     def get_profile(self) -> str:
-        return self._profiler.exporter.pprof  # type: ignore
+        return self._profiler.exporter.pprof
