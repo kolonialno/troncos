@@ -90,9 +90,9 @@ Add the following environment variables to your application.
 DD_ENV="{{ environment }}"
 DD_SERVICE="{{ app }}"
 DD_VERSION="{{ version }}"
-# b3 is usually used to propagate distributed traces across services.
-DD_TRACE_PROPAGATION_STYLE_EXTRACT="b3"
-DD_TRACE_PROPAGATION_STYLE_INJECT="b3"
+# tracecontext/w3c is usually used to propagate distributed traces across services.
+DD_TRACE_PROPAGATION_STYLE_EXTRACT="tracecontext"
+DD_TRACE_PROPAGATION_STYLE_INJECT="tracecontext"
 ```
 
 ### Using the GRPC span exporter
