@@ -1,7 +1,0 @@
-.idea
-.venv
-__pycache__/
-
-test
-pyproject.toml
-poetry.lock

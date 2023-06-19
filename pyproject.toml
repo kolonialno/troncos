@@ -1,10 +1,11 @@
 [tool.poetry]
 name = "troncos"
-version = "3.3.0"
+version = "4.0.0"
 description = "Collection of Python logging, tracing and profiling tools"
 authors = [
     "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
     "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
+    "Eirik Martiniussen Sylliaas <eirik.sylliaas@oda.com>",
 ]
 license = "MIT"
 readme = "README.md"
@@ -15,11 +16,15 @@ keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
 python = ">=3.10,<4.0"
-ddtrace = "1.13.0"
-opentelemetry-sdk = "1.17.0"
-opentelemetry-exporter-otlp-proto-http = {version = "1.17.0", optional = true}
-opentelemetry-exporter-otlp-proto-grpc = {version = "1.17.0", optional = true}
-structlog = {version = ">=22.3,<24.0", optional = true}
+ddtrace = "1.15.0"
+opentelemetry-sdk = "1.18.0"
+opentelemetry-exporter-otlp-proto-http = "1.18.0"
+opentelemetry-exporter-otlp-proto-grpc = {version = "1.18.0", optional = true}
+python-ipware = "^0.9.0"
+pyroscope-io = "^0.8.3"
+
+[tool.poetry.extras]
+grpc = ["opentelemetry-exporter-otlp-proto-grpc"]
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.12.0"
@@ -36,11 +41,11 @@ pytest-asyncio = ">=0.20.3,<0.22.0"
 django-environ = "^0.9.0"
 pytest-benchmark = "^4.0.0"
 snakeviz = "^2.2.0"
+django = "^4.2.1"
+starlette = "^0.27.0"
+structlog = "^23.1.0"
+celery = "^5.2.7"
 
-[tool.poetry.extras]
-http = ["opentelemetry-exporter-otlp-proto-http"]
-grpc = ["opentelemetry-exporter-otlp-proto-grpc"]
-structlog = ["structlog"]
 
 [tool.black]
 target-version = ['py311']
@@ -55,10 +60,12 @@ combine_as_imports = true
 
 [tool.mypy]
 python_version = "3.11"
-strict = true
 files = ["./troncos", "./tests",]
 namespace_packages = true
 show_error_codes = true
+ignore_missing_imports = true
+follow_imports = "normal"
+strict = true
 
 [[tool.mypy.overrides]]
 module = [

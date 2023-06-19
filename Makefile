@@ -55,26 +55,6 @@ fix-black: .venv ; $(info $(M) running black...) @ ## Run black fixer
 test: .venv ; $(info $(M) running tests...) @ ## Run tests
 	$Q $(POETRY) run pytest --cov-report $(TEST_COV_REP) --cov $(PACKAGE) --codeblocks -v
 
-BENCH_ARGS?=--benchmark-only
-BENCH_CMP?=0001
-
-.PHONY: benchmark
-benchmark: .venv ; $(info $(M) running benchmarks...) @ ## Run and save benchmark
-	$Q $(POETRY) run pytest ${BENCH_ARGS} --benchmark-autosave
-
-.PHONY: benchmark-cmp
-benchmark-cmp: .venv ; $(info $(M) running benchmark and comparing to ${BENCH_CMP}...) @ ## Run a benchmark and compare it to a previous one
-	$Q $(POETRY) run pytest ${BENCH_ARGS} --benchmark-compare=${BENCH_CMP}
-
-PROF_DIR:=.prof
-PROF_FILE:=${PROF_DIR}/$(shell date +%H%M%S).prof
-
-.PHONY: profile
-profile: .venv ; $(info $(M) running profiling...) @ ## Create profile with benchmarks and visualize with snakeviz
-	$Q mkdir -p ${PROF_DIR}
-	$Q $(POETRY) run python -m cProfile -o ${PROF_FILE} -m pytest ${BENCH_ARGS}
-	$Q $(POETRY) run snakeviz ${PROF_FILE}
-
 .PHONY: release
 release: lint test ; $(info $(M) running tests...) @ ## Release to PYPI
 	$Q $(POETRY) publish --build --username=__token__ --password=$(PYPI_TOKEN)
