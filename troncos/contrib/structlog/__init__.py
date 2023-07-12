@@ -28,9 +28,11 @@ shared_processors: list[structlog.types.Processor] = [
 ]
 
 if SentryProcessor is not None:
-    loc_format_exc_info = shared_processors.index(structlog.processors.format_exc_info)
+    format_exc_info_index = shared_processors.index(
+        structlog.processors.format_exc_info
+    )
     shared_processors.insert(
-        loc_format_exc_info,
+        format_exc_info_index,
         SentryProcessor(level=logging.INFO, event_level=logging.ERROR),
     )
 
