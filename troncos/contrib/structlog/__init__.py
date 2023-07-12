@@ -11,7 +11,7 @@ from troncos.contrib.structlog.processors import (
 try:
     from structlog_sentry import SentryProcessor
 except ImportError:
-    SentryProcessor = None
+    SentryProcessor = None  # type: ignore
 
 shared_processors: list[structlog.types.Processor] = [
     # Add the name of the logger to event dict.
