@@ -27,22 +27,24 @@ def test_processors_with_sentry() -> None:
     """
     from troncos.contrib.structlog import shared_processors
 
-    loc_logger_name = shared_processors.index(structlog.stdlib.add_logger_name)
-    loc_log_level = shared_processors.index(structlog.stdlib.add_log_level)
+    logger_name_index = shared_processors.index(structlog.stdlib.add_logger_name)
+    log_level_index = shared_processors.index(structlog.stdlib.add_log_level)
     sentry_processor = [
         proc for proc in shared_processors if "structlog_sentry" in repr(proc)
     ][0]
-    loc_sentry_processor = shared_processors.index(sentry_processor)
-    loc_format_exc_info = shared_processors.index(structlog.processors.format_exc_info)
+    sentry_processor_index = shared_processors.index(sentry_processor)
+    format_exc_info_index = shared_processors.index(
+        structlog.processors.format_exc_info
+    )
 
     assert (
-        loc_logger_name < loc_sentry_processor
+        logger_name_index < sentry_processor_index
     ), "Logger name must come before Sentry processor"
     assert (
-        loc_log_level < loc_sentry_processor
+        log_level_index < sentry_processor_index
     ), "Log level must come before Sentry processor"
     assert (
-        loc_sentry_processor < loc_format_exc_info
+        sentry_processor_index < format_exc_info_index
     ), "Format exc info must come after Sentry processor"
 
 
