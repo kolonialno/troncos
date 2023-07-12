@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Optional
+from typing import Any
 from unittest.mock import DEFAULT, patch
 
 import structlog
