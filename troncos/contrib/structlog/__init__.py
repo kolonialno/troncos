@@ -1,5 +1,6 @@
 import logging
 import logging.config
+from typing import Any, Iterable, Optional
 
 import structlog
 
@@ -38,7 +39,12 @@ if SentryProcessor is not None:
 
 
 def configure_structlog(
-    *, configure_logging: bool = True, format: str = "text", level: str = "INFO"
+    *,
+    configure_logging: bool = True,
+    format: str = "text",
+    level: str = "INFO",
+    extra_processors: Optional[Iterable[structlog.typing.Processor]] = None,
+    extra_loggers: Optional[dict[str, dict[str, Any]]] = None,
 ) -> None:
     """
     Helper method to configure Structlog.
@@ -48,7 +54,23 @@ def configure_structlog(
 
     configure_logging=True lets you use structlog to render logs from
     logging.getLogger, this is used to get an unified log output.
+
+    If `extra_processors` is set, these will be inserted to the list of processors
+    just before `format_exc_info`.
+
+    If `extra_loggers` is set, it will be unpacked into the `loggers` directive of
+    the dictconfig dict. The `handler` value for these loggers must be `"default"`
     """
+
+    extra_loggers = extra_loggers or {}
+    extra_processors = extra_processors or []
+
+    if extra_processors:
+        _format_exc_info_index = shared_processors.index(
+            structlog.processors.format_exc_info
+        )
+        for index, proc in enumerate(extra_processors):
+            shared_processors.insert(_format_exc_info_index + index, proc)
 
     processor: structlog.types.Processor
 
@@ -85,6 +107,7 @@ def configure_structlog(
                     "level": level,
                     "propagate": True,
                 },
+                **extra_loggers,
             },
         }
 
