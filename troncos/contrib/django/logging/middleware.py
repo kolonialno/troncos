@@ -4,7 +4,7 @@ from typing import Any
 from asgiref.sync import iscoroutinefunction
 from django.http import HttpRequest, HttpResponse
 from django.utils.decorators import sync_and_async_middleware
-from ipware import IpWare
+from ipware.ipware import IpWare
 
 try:
     from structlog import get_logger
