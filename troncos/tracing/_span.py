@@ -70,7 +70,7 @@ def _span_status_and_attributes(
     dd_span: DDSpan, ignore_attrs: set[str]
 ) -> tuple[Status, list[Event], dict[str, Any]]:
     # Collect all "attributes" from the dd span
-    dd_span_attr: dict[str, Any] = {
+    dd_span_attr: dict[str | bytes, Any] = {
         **dd_span._meta,
         **dd_span._metrics,
         "resource": dd_span.resource,
@@ -82,6 +82,8 @@ def _span_status_and_attributes(
 
     # Map set OTEL attributes based on DD attributes
     for k, v in dd_span_attr.items():
+        if isinstance(k, bytes):
+            continue
         if k.startswith("_dd"):
             continue
         otel_err_attr = _dd_span_err_attr_mapping.get(k)

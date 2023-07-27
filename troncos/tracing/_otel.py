@@ -20,7 +20,7 @@ try:
         OTLPSpanExporter as GRPCSpanExporter,
     )
 except ImportError:
-    GRPCSpanExporter = None  # type: ignore
+    GRPCSpanExporter = None
 
 
 logger = get_logger()
