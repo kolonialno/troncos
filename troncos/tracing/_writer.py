@@ -9,7 +9,7 @@ from ._otel import get_otel_span_processors
 from ._span import default_ignore_attrs, translate_span
 
 
-class OTELWriter(TraceWriter):  # type: ignore
+class OTELWriter(TraceWriter):
     def __init__(
         self,
         service_name: str,
