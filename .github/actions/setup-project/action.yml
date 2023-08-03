@@ -6,19 +6,19 @@ runs:
     # Poetry depends on OS, Python version and Poetry version.
     - name: Cache Poetry
       id: cache-poetry
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: "${{ env.POETRY_HOME }}"
         key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}"
     # Poetry cache depends on OS, Python version and Poetry version.
     - name: Cache Poetry cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: "~/.cache/pypoetry"
         key: "poetry-cache-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ env.POETRY_VERSION }}"
     # virtualenv cache should depends on OS, Python version and `poetry.lock`.
     - name: Cache Packages
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: "${{ github.workspace }}/.venv"
         key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}"
