@@ -208,7 +208,6 @@ def trace_class(
                 isinstance(value, FunctionType)
                 or isinstance(value, classmethod)
                 or isinstance(value, staticmethod)
-                or isinstance(value, property)
                 or asyncio.iscoroutinefunction(value)
             ):
                 continue
