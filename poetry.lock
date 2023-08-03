@@ -1141,43 +1141,42 @@ files = [
 
 [[package]]
 name = "opentelemetry-api"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Python API"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_api-1.18.0-py3-none-any.whl", hash = "sha256:d05bcc94ec239fd76fd90d784c5e3ad081a8a1ac2ffc8a2c83a49ace052d1492"},
-    {file = "opentelemetry_api-1.18.0.tar.gz", hash = "sha256:2bbf29739fcef268c419e3bf1735566c2e7f81026c14bcc78b62a0b97f8ecf2f"},
+    {file = "opentelemetry_api-1.19.0-py3-none-any.whl", hash = "sha256:dcd2a0ad34b691964947e1d50f9e8c415c32827a1d87f0459a72deb9afdf5597"},
+    {file = "opentelemetry_api-1.19.0.tar.gz", hash = "sha256:db374fb5bea00f3c7aa290f5d94cea50b659e6ea9343384c5f6c2bb5d5e8db65"},
 ]
 
 [package.dependencies]
 deprecated = ">=1.2.6"
-importlib-metadata = ">=6.0.0,<6.1.0"
-setuptools = ">=16.0"
+importlib-metadata = ">=6.0,<7.0"
 
 [[package]]
 name = "opentelemetry-exporter-otlp-proto-common"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Protobuf encoding"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_exporter_otlp_proto_common-1.18.0-py3-none-any.whl", hash = "sha256:276073ccc8c6e6570fe05ca8ca0de77d662bc89bc614ec8bfbc855112f7e25e3"},
-    {file = "opentelemetry_exporter_otlp_proto_common-1.18.0.tar.gz", hash = "sha256:4d9883d6929aabe75e485950bbe8b149a14d95e50b1570426832daa6913b0871"},
+    {file = "opentelemetry_exporter_otlp_proto_common-1.19.0-py3-none-any.whl", hash = "sha256:792d5496ecfebaf4f56b2c434c5e2823f88ffaeb5dcd272ea423b249fd52bded"},
+    {file = "opentelemetry_exporter_otlp_proto_common-1.19.0.tar.gz", hash = "sha256:c13d02a31dec161f8910d96db6b58309af17d92b827c64284bf85eec3f2d7297"},
 ]
 
 [package.dependencies]
-opentelemetry-proto = "1.18.0"
+opentelemetry-proto = "1.19.0"
 
 [[package]]
 name = "opentelemetry-exporter-otlp-proto-grpc"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Collector Protobuf over gRPC Exporter"
 optional = true
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_exporter_otlp_proto_grpc-1.18.0-py3-none-any.whl", hash = "sha256:c773bc9df2c9d6464f0d5936963399b2fc440f0616c1277f29512d540ad7e0a2"},
-    {file = "opentelemetry_exporter_otlp_proto_grpc-1.18.0.tar.gz", hash = "sha256:8eddfde4267da876871e62f1b58369986bdb7e47e43032c498f1ea807d7191c4"},
+    {file = "opentelemetry_exporter_otlp_proto_grpc-1.19.0-py3-none-any.whl", hash = "sha256:ae2a6484d12ba4d0f1096c4565193c1c27a951a9d2b10a9a84da3e1f866e84d6"},
+    {file = "opentelemetry_exporter_otlp_proto_grpc-1.19.0.tar.gz", hash = "sha256:e69261b4da8cbaa42d9b5f1cff4fcebbf8a3c02f85d69a8aea698312084f4180"},
 ]
 
 [package.dependencies]
@@ -1186,22 +1185,22 @@ deprecated = ">=1.2.6"
 googleapis-common-protos = ">=1.52,<2.0"
 grpcio = ">=1.0.0,<2.0.0"
 opentelemetry-api = ">=1.15,<2.0"
-opentelemetry-exporter-otlp-proto-common = "1.18.0"
-opentelemetry-proto = "1.18.0"
-opentelemetry-sdk = ">=1.18.0,<1.19.0"
+opentelemetry-exporter-otlp-proto-common = "1.19.0"
+opentelemetry-proto = "1.19.0"
+opentelemetry-sdk = ">=1.19.0,<1.20.0"
 
 [package.extras]
 test = ["pytest-grpc"]
 
 [[package]]
 name = "opentelemetry-exporter-otlp-proto-http"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Collector Protobuf over HTTP Exporter"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_exporter_otlp_proto_http-1.18.0-py3-none-any.whl", hash = "sha256:c22110705473f1c61bd4d74ded3b8bd3fac66ffbe7d9ba376267d8539919ed90"},
-    {file = "opentelemetry_exporter_otlp_proto_http-1.18.0.tar.gz", hash = "sha256:d9a2118558decf9e9a2d6573ad9d33876f3a44d7dc43f10d38a900d5a6f867d6"},
+    {file = "opentelemetry_exporter_otlp_proto_http-1.19.0-py3-none-any.whl", hash = "sha256:4e050ca57819519a3cb8a6b17feac0d3b4b115796674b6a26295036ae941e11a"},
+    {file = "opentelemetry_exporter_otlp_proto_http-1.19.0.tar.gz", hash = "sha256:7c8d2c1268cef4d9c1b13a1399f510e3c3dbb88c52f54597d487a128a23b681e"},
 ]
 
 [package.dependencies]
@@ -1209,9 +1208,9 @@ backoff = {version = ">=1.10.0,<3.0.0", markers = "python_version >= \"3.7\""}
 deprecated = ">=1.2.6"
 googleapis-common-protos = ">=1.52,<2.0"
 opentelemetry-api = ">=1.15,<2.0"
-opentelemetry-exporter-otlp-proto-common = "1.18.0"
-opentelemetry-proto = "1.18.0"
-opentelemetry-sdk = ">=1.18.0,<1.19.0"
+opentelemetry-exporter-otlp-proto-common = "1.19.0"
+opentelemetry-proto = "1.19.0"
+opentelemetry-sdk = ">=1.19.0,<1.20.0"
 requests = ">=2.7,<3.0"
 
 [package.extras]
@@ -1219,13 +1218,13 @@ test = ["responses (==0.22.0)"]
 
 [[package]]
 name = "opentelemetry-proto"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Python Proto"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_proto-1.18.0-py3-none-any.whl", hash = "sha256:34d1c49283f0246a58761d9322d5a79702a09afda0bb181bb6378ed26862e446"},
-    {file = "opentelemetry_proto-1.18.0.tar.gz", hash = "sha256:4f38d01049c3926b9fd09833574bfb5e172d84c8ca85e2ab7f4b5a198d75aeef"},
+    {file = "opentelemetry_proto-1.19.0-py3-none-any.whl", hash = "sha256:d06391cb5fa0fab111b42d3adf5f22683748745bd8f59ed4acfd93cfd252b960"},
+    {file = "opentelemetry_proto-1.19.0.tar.gz", hash = "sha256:be53205622d85ecd37ebbf764aed907d87620a45eae638860cb5a778bf900c04"},
 ]
 
 [package.dependencies]
@@ -1233,30 +1232,29 @@ protobuf = ">=3.19,<5.0"
 
 [[package]]
 name = "opentelemetry-sdk"
-version = "1.18.0"
+version = "1.19.0"
 description = "OpenTelemetry Python SDK"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_sdk-1.18.0-py3-none-any.whl", hash = "sha256:a097cc1e0db6ff33b4d250a9350dc17975d24a22aa667fca2866e60c51306723"},
-    {file = "opentelemetry_sdk-1.18.0.tar.gz", hash = "sha256:cd3230930a2ab288b1df149d261e9cd2bd48dee54ad18465a777831cb6779e90"},
+    {file = "opentelemetry_sdk-1.19.0-py3-none-any.whl", hash = "sha256:bb67ad676b1bc671766a40d7fc9d9563854c186fa11f0dc8fa2284e004bd4263"},
+    {file = "opentelemetry_sdk-1.19.0.tar.gz", hash = "sha256:765928956262c7a7766eaba27127b543fb40ef710499cad075f261f52163a87f"},
 ]
 
 [package.dependencies]
-opentelemetry-api = "1.18.0"
-opentelemetry-semantic-conventions = "0.39b0"
-setuptools = ">=16.0"
+opentelemetry-api = "1.19.0"
+opentelemetry-semantic-conventions = "0.40b0"
 typing-extensions = ">=3.7.4"
 
 [[package]]
 name = "opentelemetry-semantic-conventions"
-version = "0.39b0"
+version = "0.40b0"
 description = "OpenTelemetry Semantic Conventions"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "opentelemetry_semantic_conventions-0.39b0-py3-none-any.whl", hash = "sha256:0dd7a9dc0dfde2335f643705bba8f7c44182c797bc208b7601f0b8e8211cfd5c"},
-    {file = "opentelemetry_semantic_conventions-0.39b0.tar.gz", hash = "sha256:06a9f198574e0dab6ebc072b59d89092cf9f115638a8a02157586769b6b7a69a"},
+    {file = "opentelemetry_semantic_conventions-0.40b0-py3-none-any.whl", hash = "sha256:7ebbaf86755a0948902e68637e3ae516c50222c30455e55af154ad3ffe283839"},
+    {file = "opentelemetry_semantic_conventions-0.40b0.tar.gz", hash = "sha256:5a7a491873b15ab7c4907bbfd8737645cc87ca55a0a326c1755d1b928d8a0fae"},
 ]
 
 [[package]]
@@ -1720,22 +1718,6 @@ starlite = ["starlite (>=1.48)"]
 tornado = ["tornado (>=5)"]
 
 [[package]]
-name = "setuptools"
-version = "68.0.0"
-description = "Easily download, build, install, upgrade, and uninstall Python packages"
-optional = false
-python-versions = ">=3.7"
-files = [
-    {file = "setuptools-68.0.0-py3-none-any.whl", hash = "sha256:11e52c67415a381d10d6b462ced9cfb97066179f0e871399e006c4ab101fc85f"},
-    {file = "setuptools-68.0.0.tar.gz", hash = "sha256:baf1fdb41c6da4cd2eae722e135500da913332ab3f2f5c7d33af9b492acb5235"},
-]
-
-[package.extras]
-docs = ["furo", "jaraco.packaging (>=9)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-hoverxref (<2)", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (==0.8.3)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
-testing = ["build[virtualenv]", "filelock (>=3.4.0)", "flake8-2020", "ini2toml[lite] (>=0.9)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pip (>=19.1)", "pip-run (>=8.8)", "pytest (>=6)", "pytest-black (>=0.3.7)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=1.3)", "pytest-mypy (>=0.9.1)", "pytest-perf", "pytest-ruff", "pytest-timeout", "pytest-xdist", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
-testing-integration = ["build[virtualenv]", "filelock (>=3.4.0)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "pytest", "pytest-enabler", "pytest-xdist", "tomli", "virtualenv (>=13.0.0)", "wheel"]
-
-[[package]]
 name = "six"
 version = "1.16.0"
 description = "Python 2 and 3 compatibility utilities"
@@ -2104,4 +2086,4 @@ sentry = ["structlog-sentry"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "0404eef890aeceed4431c9660368688fb38cb81eca881ec4e9e6a240c6529fc3"
+content-hash = "09a045e20e47697a050eda1b419e9b7e8afd5e14867ed5405ffedc8996f1d246"
