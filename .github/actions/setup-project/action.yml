@@ -23,7 +23,7 @@ runs:
         path: "${{ github.workspace }}/.venv"
         key: "poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}"
     - name: Set up Python ${{ env.PYTHON_VERSION }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ env.PYTHON_VERSION }}
     - name: Install Poetry
