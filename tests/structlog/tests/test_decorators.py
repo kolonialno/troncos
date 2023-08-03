@@ -7,6 +7,9 @@ from troncos.tracing.decorators import trace_class
 class A:
     dummy_classvar = 1
 
+    def _dummy_underscore(self) -> None:
+        pass
+
     def dummy_method(self) -> None:
         pass
 
@@ -58,6 +61,7 @@ def test_trace_class_is_traced(class_attr: Any) -> None:
 @pytest.mark.parametrize(
     "class_attr",
     [
+        A._dummy_underscore,
         A.dummy_property,
         A.adummy_property,
     ],
