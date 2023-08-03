@@ -1,5 +1,7 @@
 from typing import Any
+
 import pytest
+
 from troncos.tracing.decorators import trace_class
 
 
