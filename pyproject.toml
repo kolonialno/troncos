@@ -44,7 +44,7 @@ django-environ = "^0.10.0"
 pytest-benchmark = "^4.0.0"
 snakeviz = "^2.2.0"
 django = "^4.2.4"
-starlette = ">=0.27.0,<0.28.0" # FastAPI constrain
+starlette = ">=0.31.0,<0.31.1" # FastAPI constrain
 structlog = "^23.1.0"
 celery = "^5.3.1"
 ipython = "^8.14.0"
