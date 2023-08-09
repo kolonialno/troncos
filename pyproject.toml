@@ -48,6 +48,7 @@ starlette = ">=0.27.0,<0.28.0" # FastAPI constrain
 structlog = "^23.1.0"
 celery = "^5.3.1"
 ipython = "^8.14.0"
+pytest-httpserver = "^1.0.8"
 
 
 [tool.black]
