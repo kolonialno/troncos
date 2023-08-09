@@ -205,10 +205,7 @@ def trace_class(
             if key.startswith("_"):
                 continue
             if not (
-                isinstance(value, FunctionType)
-                or isinstance(value, classmethod)
-                or isinstance(value, staticmethod)
-                or asyncio.iscoroutinefunction(value)
+                isinstance(value, FunctionType) or asyncio.iscoroutinefunction(value)
             ):
                 continue
 

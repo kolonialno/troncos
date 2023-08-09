@@ -49,11 +49,7 @@ class A:
     "class_attr",
     [
         A.dummy_method,
-        A.adummy_staticmethod,
-        A.dummy_classmethod,
         A.adummy_method,
-        A.adummy_staticmethod,
-        A.adummy_classmethod,
     ],
 )
 def test_trace_class_is_traced(class_attr: Any) -> None:
@@ -66,6 +62,10 @@ def test_trace_class_is_traced(class_attr: Any) -> None:
         A._dummy_underscore,
         A.dummy_property,
         A.adummy_property,
+        A.adummy_staticmethod,
+        A.adummy_classmethod,
+        A.adummy_staticmethod,
+        A.dummy_classmethod,
     ],
 )
 def test_trace_class_is_not_traced(class_attr: Any) -> None:
