@@ -4,10 +4,11 @@ on:
   release:
     types: [published]
 
+permissions:
+  id-token: write
+  contents: read
+
 env:
-  PYTHON_VERSION: "3.11"
-  POETRY_VERSION: "1.4.2"
-  POETRY_HOME: "/home/runner/.poetry"
   PYPI_TOKEN: "${{ secrets.PYPI_TOKEN }}"
 
 jobs:
@@ -17,6 +18,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup project
-      uses: ./.github/actions/setup-project
+
+    - name: Read .tool-versions
+      uses: marocchino/tool-versions-action@v1
+      id: versions
+
+    - name: Setup Python ${{ steps.versions.outputs.python }}
+      uses: ./.github/actions/setup-python
+      with:
+        python-version: ${{ steps.versions.outputs.python }}
+        poetry-version: ${{ steps.versions.outputs.poetry }}
+
     - run: make release

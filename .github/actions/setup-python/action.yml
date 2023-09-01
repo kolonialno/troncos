@@ -1,0 +1,55 @@
+name: "Setup project"
+description: "Install dependencies and other project setup"
+inputs:
+  python-version:
+    description: |
+      Python version
+    required: true
+  poetry-version:
+    description: |
+      Poetry version
+    required: true
+  poetry-home:
+    description: |
+      Poetry home path
+    required: false
+    default: "/home/runner/.poetry"
+runs:
+  using: "composite"
+  steps:
+    # Poetry depends on OS, Python version and Poetry version.
+    - name: Cache Poetry
+      id: cache-poetry
+      uses: actions/cache@v3
+      with:
+        path: "${{ inputs.poetry-home }}"
+        key: "poetry-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}"
+
+    # Poetry cache depends on OS, Python version and Poetry version.
+    - name: Cache Poetry cache
+      uses: actions/cache@v3
+      with:
+        path: "~/.cache/pypoetry"
+        key: "poetry-cache-${{ runner.os }}-${{ inputs.python-version }}-${{ inputs.poetry-version }}"
+
+    # virtualenv cache should depends on OS, Python version and `poetry.lock`.
+    - name: Cache Packages
+      uses: actions/cache@v3
+      with:
+        path: "${{ github.workspace }}/.venv"
+        key: "poetry-${{ runner.os }}-${{ inputs.python-version }}-${{ hashFiles('**/poetry.lock') }}"
+
+    - name: Set up Python ${{ inputs.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install Poetry
+      if: steps.cache-poetry.outputs.cache-hit != 'true'
+      shell: bash
+      run: |
+        curl -sSL "https://install.python-poetry.org" | python - --version ${{ inputs.poetry-version }}
+
+    - name: "Add Poetry to PATH"
+      shell: bash
+      run: echo "${{ inputs.poetry-home }}/bin" >> $GITHUB_PATH
