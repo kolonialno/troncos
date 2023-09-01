@@ -1,7 +1,9 @@
 {
-  $schema: "https://docs.renovatebot.com/renovate-schema.json",
+  $schema: 'https://docs.renovatebot.com/renovate-schema.json',
   extends: [
-    "github>kolonialno/renovate-config",
-    "github>kolonialno/renovate-config:groupPatch",
-  ],
+    'github>kolonialno/renovate-config',
+    'github>kolonialno/renovate-config:groupDevDeps',
+    'github>kolonialno/renovate-config:groupPatch',
+    'github>kolonialno/renovate-config:library'
+  ]
 }
