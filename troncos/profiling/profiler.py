@@ -1,14 +1,14 @@
 from typing import Any
 
 from ddtrace.profiling import exporter
-from ddtrace.profiling.exporter import pprof  # type: ignore[attr-defined]
+from ddtrace.profiling.exporter import pprof
 from ddtrace.profiling.profiler import (
     Profiler as DDProfiler,
     _ProfilerInstance as DDProfilerInstance,
 )
 
 
-class _PprofExporter(pprof.PprofExporter):  # type: ignore[misc]
+class _PprofExporter(pprof.PprofExporter):
     pprof = ""
 
     @staticmethod
@@ -33,7 +33,7 @@ class _PprofExporter(pprof.PprofExporter):  # type: ignore[misc]
             events, start_time_ns, end_time_ns
         )
 
-        self.pprof = pprof_profile.SerializeToString()
+        self.pprof = pprof_profile.SerializeToString()  # type: ignore[assignment]
 
 
 class _ProfilerInstance(DDProfilerInstance):
