@@ -59,8 +59,18 @@ test: .venv ; $(info $(M) running tests...) @ ## Run tests
 release: lint test ; $(info $(M) running tests...) @ ## Release to PYPI
 	$Q $(POETRY) publish --build --username=__token__ --password=$(PYPI_TOKEN)
 
+.PHONY: copy_docs
+copy_docs: .venv ; $(info $(M) copy docs...) @
+	$Q mkdir -p docs && cp README.md docs/
+
+.PHONY: docs
+docs: .venv ; $(info $(M) generating docs...) @
+	$Q ./.venv/bin/mkdocs serve --verbose
+
 .PHONY: help
 help: ## Show this help
 	$(eval HELP_COL_WIDTH:=13)
 	$Q echo "Makefile targets:"
 	$Q grep -E '[^\s]+:.*?## .*$$' ${MAKEFILE_LIST} | grep -v grep | envsubst | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-${HELP_COL_WIDTH}s\033[0m %s\n", $$1, $$2}'
+
+
