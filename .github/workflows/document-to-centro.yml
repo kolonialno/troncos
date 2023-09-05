@@ -1,0 +1,21 @@
+---
+name: '[docs] Upload docs to Centro'
+
+on:
+  push:
+    paths:
+    - .github/workflows/document-to-centro.yml
+    - docs/**
+    - mkdocs.yml
+
+jobs:
+  docs:
+    name: Publish docs to Centro
+    permissions:
+      id-token: write
+      contents: read
+    uses: kolonialno/centro/.github/workflows/publish-docs.yml@main
+    with:
+      name: troncos
+      checkout: true
+      pre-run-cmd: mkdir -p docs && cp -r README.md docs/

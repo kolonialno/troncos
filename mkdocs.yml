@@ -1,0 +1,16 @@
+---
+site_name: Troncos
+repo_url: https://github.com/kolonialno/troncos
+edit_uri: edit/main/docs/
+docs_dir: docs
+plugins:
+- techdocs-core
+markdown_extensions:
+- attr_list
+- md_in_html
+- pymdownx.superfences
+- pymdownx.tabbed:
+    alternate_style: true
+- pymdownx.emoji:
+    emoji_index: !!python/name:materialx.emoji.twemoji
+    emoji_generator: !!python/name:materialx.emoji.to_svg
