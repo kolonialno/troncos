@@ -1977,13 +1977,13 @@ histogram = ["pygal", "pygaljs"]
 
 [[package]]
 name = "pytest-codeblocks"
-version = "0.16.2"
+version = "0.17.0"
 description = "Test code blocks in your READMEs"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "pytest_codeblocks-0.16.2-py3-none-any.whl", hash = "sha256:488726753a34583b5263a1518ae57d87543b8384e5e46c652e2779d9bd0e40bf"},
-    {file = "pytest_codeblocks-0.16.2.tar.gz", hash = "sha256:fd4c1c913a49df4c8f107728418e7ffb454be0f2676ea6e972eb77ae03c6c373"},
+    {file = "pytest_codeblocks-0.17.0-py3-none-any.whl", hash = "sha256:b2aed8e66c3ce65435630783b391e7c7ae46f80b8220d3fa1bb7c689b36e78ad"},
+    {file = "pytest_codeblocks-0.17.0.tar.gz", hash = "sha256:446e1babd182f54b4f113d567737a22f5405cade144c08a0085b2985247943d5"},
 ]
 
 [package.dependencies]
@@ -2733,4 +2733,4 @@ sentry = ["structlog-sentry"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "61a22d1fd86b898b99978e2dc8853d558c772ad5f2874c635537edb4b68bf13d"
+content-hash = "42950fff6a154196c9b0ba3ef7d0b7340daf90166372be76de344050b8449a16"
