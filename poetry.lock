@@ -2037,14 +2037,17 @@ six = ">=1.5"
 
 [[package]]
 name = "python-ipware"
-version = "0.9.0"
+version = "1.0.3"
 description = "A Python package to retrieve user's IP address"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "python-ipware-0.9.0.tar.gz", hash = "sha256:ee84cd16c2cf862faae197ad5f8fae6c75e4b1f40bb13357944a5d63ddc2a373"},
-    {file = "python_ipware-0.9.0-py2.py3-none-any.whl", hash = "sha256:01b9fa589521c29d7573f69fc4855c6b95687f0029601b78fffef1eb17f1de27"},
+    {file = "python-ipware-1.0.3.tar.gz", hash = "sha256:76a2a6a00e823e696e5c94465fead2bbbb7de30b87895f7d02a89801a771d45a"},
+    {file = "python_ipware-1.0.3-py3-none-any.whl", hash = "sha256:8a9bdbdf4e260aaf0f3e401bdfcf7708c74f856e7667b8ebc55387e39c5caae4"},
 ]
+
+[package.extras]
+dev = ["coverage[toml]", "coveralls (>=3.3,<4.0)", "ruff", "twine"]
 
 [[package]]
 name = "python-slugify"
@@ -2733,4 +2736,4 @@ sentry = ["structlog-sentry"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "42950fff6a154196c9b0ba3ef7d0b7340daf90166372be76de344050b8449a16"
+content-hash = "db81a735cf01d86803bd78a0322405eab8e2fbfdba92752220e326b3dd62bdb0"
