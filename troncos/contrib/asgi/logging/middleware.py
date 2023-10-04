@@ -1,5 +1,5 @@
 import time
-from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping
+from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, cast
 
 import ddtrace
 from ipware.ipware import IpWare
@@ -111,7 +111,7 @@ class AsgiLoggingMiddleware:
         headers = Headers(scope=scope)
         headers.add_client(scope["client"])
 
-        client_ip, _ = ipware.get_client_ip(dict(headers))
+        client_ip, _ = ipware.get_client_ip(cast(dict[str, str], headers))
 
         method = scope.get("method")
         path = scope.get("path")
