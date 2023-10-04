@@ -2,7 +2,7 @@ import time
 from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping
 
 import ddtrace
-from ipware import IpWare
+from ipware.ipware import IpWare
 
 try:
     from structlog import get_logger
@@ -111,7 +111,7 @@ class AsgiLoggingMiddleware:
         headers = Headers(scope=scope)
         headers.add_client(scope["client"])
 
-        client_ip, _ = ipware.get_client_ip(headers)
+        client_ip, _ = ipware.get_client_ip(dict(headers))
 
         method = scope.get("method")
         path = scope.get("path")
