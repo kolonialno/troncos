@@ -45,6 +45,7 @@ def configure_structlog(
     level: str = "INFO",
     extra_processors: Optional[Iterable[structlog.typing.Processor]] = None,
     extra_loggers: Optional[dict[str, dict[str, Any]]] = None,
+    disable_existing_loggers: bool = True,
 ) -> None:
     """
     Helper method to configure Structlog.
@@ -60,6 +61,9 @@ def configure_structlog(
 
     If `extra_loggers` is set, it will be unpacked into the `loggers` directive of
     the dictconfig dict. The `handler` value for these loggers must be `"default"`
+
+    The `disable_existing_loggers` lets you control the `disable_existing_loggers`
+    flag to the standard library logger config.
     """
 
     extra_loggers = extra_loggers or {}
@@ -86,7 +90,7 @@ def configure_structlog(
     if configure_logging:
         config = {
             "version": 1,
-            "disable_existing_loggers": True,
+            "disable_existing_loggers": disable_existing_loggers,
             "formatters": {
                 "default": {
                     "()": structlog.stdlib.ProcessorFormatter,
