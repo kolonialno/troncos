@@ -1,8 +1,11 @@
 {
   $schema: 'https://docs.renovatebot.com/renovate-schema.json',
-  extends: [
-    'github>kolonialno/renovate-config:groupDevDeps',
-    'github>kolonialno/renovate-config:groupPatch',
-    'github>kolonialno/renovate-config:library'
-  ]
+  "dependencyDashboard": true,
+  "semanticCommits": "enabled",
+  "labels": [
+    "dependencies"
+  ],
+  "timezone": "Europe/Oslo",
+  "rangeStrategy": "update-lockfile",
+  "prConcurrentLimit": 10,
 }
