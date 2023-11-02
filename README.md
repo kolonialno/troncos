@@ -215,6 +215,7 @@ Start the profiler by importing the profiler module early in your application. T
 typically done in `settings.py` of you want to profile a Django application, or in `__init__.py`
 in the root project package.
 
+<!--pytest.mark.skip-->
 ```python
 import troncos.profiling.auto
 ```
