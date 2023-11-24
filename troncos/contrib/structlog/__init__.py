@@ -41,7 +41,7 @@ if SentryProcessor is not None:
 def configure_structlog(
     *,
     configure_logging: bool = True,
-    format: str = "text",
+    format: str | structlog.types.Processor = "text",
     level: str = "INFO",
     extra_processors: Optional[Iterable[structlog.typing.Processor]] = None,
     extra_loggers: Optional[dict[str, dict[str, Any]]] = None,
@@ -78,14 +78,17 @@ def configure_structlog(
 
     processor: structlog.types.Processor
 
-    if format == "text":
-        processor = structlog.dev.ConsoleRenderer(colors=True)
-    elif format == "json":
-        processor = structlog.processors.JSONRenderer()
-    elif format == "logfmt":
-        processor = LogfmtRenderer()
+    if isinstance(format, str):
+        if format == "text":
+            processor = structlog.dev.ConsoleRenderer(colors=True)
+        elif format == "json":
+            processor = structlog.processors.JSONRenderer()
+        elif format == "logfmt":
+            processor = LogfmtRenderer()
+        else:
+            raise RuntimeError(f"Invalid log format {format}")
     else:
-        raise RuntimeError(f"Invalid log format {format}")
+        processor = format
 
     if configure_logging:
         config = {
