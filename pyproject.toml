@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "troncos"
-version = "4.2.1"
+version = "4.2.2"
 description = "Collection of Python logging, tracing and profiling tools"
 authors = [
-    "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
-    "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
-    "Eirik Martiniussen Sylliaas <eirik.sylliaas@oda.com>",
+  "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
+  "Karl Fredrik Haugland <karlfredrik.haugland@oda.com>",
+  "Eirik Martiniussen Sylliaas <eirik.sylliaas@oda.com>",
 ]
 license = "MIT"
 readme = "README.md"
@@ -19,8 +19,8 @@ python = ">=3.10,<4.0"
 ddtrace = ">=2,<3"
 opentelemetry-sdk = ">=1.19,<2"
 opentelemetry-exporter-otlp-proto-http = ">=1.19,<2"
-opentelemetry-exporter-otlp-proto-grpc = {version = ">=1.19,<2", optional = true}
-structlog-sentry = {version = ">=2.0.0,<3", optional = true}
+opentelemetry-exporter-otlp-proto-grpc = { version = ">=1.19,<2", optional = true }
+structlog-sentry = { version = ">=2.0.0,<3", optional = true }
 python-ipware = ">=1,<2"
 pyroscope-io = ">=0.8.0,<1"
 
@@ -64,7 +64,7 @@ combine_as_imports = true
 
 [tool.mypy]
 python_version = "3.11"
-files = ["./troncos", "./tests",]
+files = ["./troncos", "./tests"]
 namespace_packages = true
 show_error_codes = true
 ignore_missing_imports = true
@@ -72,10 +72,7 @@ follow_imports = "normal"
 strict = true
 
 [[tool.mypy.overrides]]
-module = [
-    "opentelemetry.sdk.*",
-    "opentelemetry.context.*",
-]
+module = ["opentelemetry.sdk.*", "opentelemetry.context.*"]
 implicit_reexport = true
 
 [tool.pytest.ini_options]
