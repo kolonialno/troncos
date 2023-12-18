@@ -95,6 +95,13 @@ DD_TRACE_PROPAGATION_STYLE_EXTRACT="tracecontext"
 DD_TRACE_PROPAGATION_STYLE_INJECT="tracecontext"
 ```
 
+#### Debugging during development
+
+By setting the environment variable `OTEL_TRACE_DEBUG=True` you will enable traces
+to be printed to `stdout` via the ConsoleSpanExporter as well as through http/grpc.
+Also specifying `OTEL_TRACE_DEBUG_FILE=/some/file/path` will output traces to the
+specified file path instead of the console/stdout.
+
 ### Using the GRPC span exporter
 
 Using the GRPC span exporter gives you significant performance gains.
