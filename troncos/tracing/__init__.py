@@ -2,10 +2,10 @@ from typing import Any
 
 import ddtrace
 
-from ._enums import Exporter
+from ._enums import Exporter, ExporterType
 from ._writer import OTELWriter
 
-__all__ = ["Exporter"]
+__all__ = ["Exporter", "ExporterType"]
 
 
 def configure_tracer(

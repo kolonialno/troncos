@@ -13,7 +13,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from structlog import get_logger
 
-from ._enums import Exporter
+from ._enums import Exporter, ExporterType
 
 try:
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
@@ -41,16 +41,16 @@ def get_otel_span_processors(
     span_exporter: SpanExporter
 
     # Exporter
-    if exporter == Exporter.HTTP:
-        span_exporter = HTTPSpanExporter(endpoint=endpoint)
-    elif exporter == Exporter.GRPC:
+    if exporter.exporter_type == ExporterType.HTTP:
+        span_exporter = HTTPSpanExporter(endpoint=endpoint, headers=exporter.headers)
+    elif exporter.exporter_type == ExporterType.GRPC:
         if GRPCSpanExporter is None:
             raise RuntimeError(
                 "opentelemetry-exporter-otlp-proto-grpc needs to be installed "
                 "to use the GRPC exporter."
             )
 
-        span_exporter = GRPCSpanExporter(endpoint=endpoint)
+        span_exporter = GRPCSpanExporter(endpoint=endpoint, headers=exporter.headers)
     else:
         raise RuntimeError("Unsupported span exporter.")
 

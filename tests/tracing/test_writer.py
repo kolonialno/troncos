@@ -4,7 +4,7 @@ from typing import Any, Generator
 from ddtrace import Tracer
 from pytest_httpserver import HTTPServer
 
-from troncos.tracing._enums import Exporter
+from troncos.tracing._enums import Exporter, ExporterType
 from troncos.tracing._writer import OTELWriter
 
 
@@ -73,3 +73,28 @@ def test_exceptions(httpserver: HTTPServer) -> None:
     data = tracer_assert(httpserver)
     assert b"service.name\x12\x10\n\x0etest_exception" in data
     assert b"exception.type\x12\x19\n\x17builtins.AssertionError" in data
+
+
+def test_headers(httpserver: HTTPServer) -> None:
+    httpserver.expect_oneshot_request("/v1/trace").respond_with_data("OK")
+
+    tracer = Tracer()
+    tracer.configure(
+        writer=OTELWriter(
+            service_name="test_headers",
+            service_attributes={},
+            endpoint=httpserver.url_for("/v1/trace"),
+            exporter=Exporter(
+                exporter_type=ExporterType.HTTP, headers={"test-header": "works"}
+            ),
+        )
+    )
+
+    with tracer.trace("test"):
+        pass
+
+    tracer.flush()  # type: ignore[no-untyped-call]
+
+    assert len(httpserver.log), "We should have gotten 1 request"
+    req, _ = httpserver.log[0]
+    assert req.headers.get("test-header") == "works"
