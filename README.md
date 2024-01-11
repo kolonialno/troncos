@@ -21,7 +21,6 @@
 </p>
 
 <!-- TOC -->
-
 - [Etymology](#etymology)
 - [Installation](#installation)
 - [Tracing](#tracing)
@@ -133,6 +132,22 @@ configure_tracer(
     service_name='SERVICE_NAME',
     endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}",
     exporter=Exporter.GRPC
+)
+```
+
+### Setting headers for the exporter
+
+```python
+from troncos.tracing import configure_tracer, Exporter, ExporterType
+
+TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
+TRACE_PORT = "4317"
+
+configure_tracer(
+    enabled=False, # Set to True when TRACE_HOST is configured.
+    service_name='SERVICE_NAME',
+    endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}",
+    exporter=Exporter(ExporterType.GRPC, headers={"my", "header"}),
 )
 ```
 
