@@ -103,8 +103,8 @@ class AsgiLoggingMiddleware:
     async def __call__(
         self,
         scope: dict[str, Any],
-        receive: Callable[[Any], Any],
-        send: Callable[[dict[str, Any]], Awaitable[Any]],
+        receive: Callable[[], Any],
+        send: Callable[[MutableMapping[str, Any]], Awaitable[None]],
     ) -> Any:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
@@ -122,7 +122,7 @@ class AsgiLoggingMiddleware:
         status = [0]
         start_time = time.perf_counter()
 
-        async def wrapped_send(message: dict[str, Any]) -> None:
+        async def wrapped_send(message: MutableMapping[str, Any]) -> None:
             if "status" in message:
                 status[0] = message.get("status", 0)
             await send(message)
