@@ -13,12 +13,12 @@ class OTELWriter(TraceWriter):
     def __init__(
         self,
         service_name: str,
-        service_attributes: dict[str, Any] | None,
+        resource_attributes: dict[str, Any] | None,
         endpoint: str,
         exporter: Exporter,
     ) -> None:
         self.service_name = service_name
-        self.service_attributes = service_attributes
+        self.resource_attributes = resource_attributes
         self.endpoint = endpoint
         self.exporter = exporter
 
@@ -26,7 +26,7 @@ class OTELWriter(TraceWriter):
             endpoint=endpoint, exporter=exporter
         )
         self.otel_default_resource = Resource.create(
-            {"service.name": service_name, **(service_attributes or {})}
+            {"service.name": service_name, **(resource_attributes or {})}
         )
         self.otel_ignore_attrs = (
             set(self.otel_default_resource.attributes.keys()) | default_ignore_attrs()
@@ -35,7 +35,7 @@ class OTELWriter(TraceWriter):
     def recreate(self) -> "OTELWriter":
         return self.__class__(
             self.service_name,
-            self.service_attributes,
+            self.resource_attributes,
             self.endpoint,
             exporter=self.exporter,
         )

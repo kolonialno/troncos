@@ -45,6 +45,15 @@ Troncos is designed to take advantage of `ddtrace` made by DataDog.
 
 The ddtrace docs can be found [here](https://ddtrace.readthedocs.io/en/stable/).
 
+[Best practices for traces](https://grafana.com/docs/tempo/latest/operations/best-practices/#naming-conventions-for-span-and-resource-attributes) is a good guide to get started.
+
+#### Span vs resource attributes
+
+- A `span attribute` is a key/value pair that provides context for its span.
+- A `resource attribute` is a key/value pair that describes the context of how the span was collected.
+
+For more information, read the [Attribute and Resource](https://opentelemetry.io/docs/specs/otel/overview/) sections in the OpenTelemetry specification.
+
 ### Enabling the tracer
 
 Configure ddtrace as usual and run `configure_tracer` to send spans to Tempo.
@@ -62,9 +71,10 @@ from troncos.tracing import configure_tracer
 
 # Configure tracer as described in the ddtrace docs.
 ddtrace.config.django["service_name"] = 'SERVICE_NAME'
+# These are added as span attributes
 ddtrace.tracer.set_tags(
     tags={
-        "fulfillment_center": 'osl2',
+        "key": "value",
     }
 )
 
@@ -78,6 +88,14 @@ configure_tracer(
     enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
     endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}/v1/traces",
+    resource_attributes={
+        "app": "app",
+        "component": "component",
+        "role": "role",
+        "tenant": "tenant",
+        "owner": "owner",
+        "version": "version",
+    }
 )
 ```
 
