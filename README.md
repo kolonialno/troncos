@@ -311,7 +311,7 @@ annotations:
 ## Logging
 
 Troncos is not designed to take control over your logger. But, we do include logging
-related tools to make instrumenting your code easer.
+related tools to make instrumenting your code easier.
 
 ### Configure Structlog
 
@@ -330,12 +330,12 @@ configure_structlog(format="json", level="INFO")
 ### Adding tracing context to your log
 
 Troncos has a Structlog processor that can be used to add the `span_id` and `trace_id`
-properties to your log. More infomation can be found in the [Tracing](#tracing)
+properties to your log. More information can be found in the [Tracing](#tracing)
 section in this document. This is used by the `configure_structlog` helper method
 by default.
 
 ### Request logging middleware
 
 Finding the relevant traces in Tempo and Grafana can be difficult. The request logging
-middleware exist to make it easier to connect HTTP requests to traces. More infomation
+middleware exist to make it easier to connect HTTP requests to traces. More information
 can be found in the [Tracing](#tracing) section in this document.
