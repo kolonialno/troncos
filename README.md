@@ -64,7 +64,11 @@ from troncos.tracing import configure_tracer
 ddtrace.config.django["service_name"] = 'SERVICE_NAME'
 ddtrace.tracer.set_tags(
     tags={
-        "fulfillment_center": 'osl2',
+        "app": "alma",
+        "component": "celery",
+        "role": "default",
+        "owner": "logistics",
+        "tenant": "osl2",
     }
 )
 
