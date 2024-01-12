@@ -23,16 +23,18 @@ class Headers(Mapping[str, str]):
     ) -> None:
         self._list: list[tuple[bytes, bytes]] = list(scope["headers"])
 
-    def add_client(self, client: tuple[str, int]) -> None:
+    def add_client(self, client: tuple[str, int] | None) -> None:
         """
         The client IP is not stored in the ASGI headers by default.
         Add the client ip to make sure we use it as a fallback if no
         proxy headers are set.
         """
+        host = client[0] if client else "<no-host>"
+        port = client[1] if client else 0
         self._list.append(
             (
                 "REMOTE_ADDR".encode("latin-1"),
-                f"{client[0]}:{client[1]}".encode("latin-1"),
+                f"{host}:{port}".encode("latin-1"),
             )
         )
 
@@ -109,7 +111,7 @@ class AsgiLoggingMiddleware:
         ipware = IpWare()
 
         headers = Headers(scope=scope)
-        headers.add_client(scope["client"])
+        headers.add_client(scope.get("client"))
 
         client_ip, _ = ipware.get_client_ip(cast(dict[str, str], headers))
 
