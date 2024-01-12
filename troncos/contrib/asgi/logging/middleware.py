@@ -3,6 +3,7 @@ from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, 
 
 import ddtrace
 from ipware.ipware import IpWare
+from starlette.types import ASGIApp
 
 try:
     from structlog import get_logger
@@ -89,7 +90,7 @@ class AsgiLoggingMiddleware:
 
     def __init__(
         self,
-        app: Any,
+        app: ASGIApp,
         logger_name: str | None = None,
     ) -> None:
         self._app = app
