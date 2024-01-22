@@ -1,0 +1,33 @@
+---
+name: "[release] Please"
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - ci/test-release-please**
+
+permissions:
+  id-token: write
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/release-please-action@v4
+        id: release
+        with:
+          # When you use the repository's GITHUB_TOKEN to perform tasks, events such as 'on.release'
+          # use in the Upload artifacts workflow wont be triggered.
+          # This prevents you from accidentally creating recursive workflow runs.
+          # We needed to use either a PAT og a GitHub App.
+          # https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow
+          token: ${{ secrets.TIENDABOT_ACCESS_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
