@@ -46,6 +46,7 @@ def configure_structlog(
     extra_processors: Optional[Iterable[structlog.typing.Processor]] = None,
     extra_loggers: Optional[dict[str, dict[str, Any]]] = None,
     disable_existing_loggers: bool = True,
+    include_metainfo: bool = True,
 ) -> None:
     """
     Helper method to configure Structlog.
@@ -64,6 +65,9 @@ def configure_structlog(
 
     The `disable_existing_loggers` lets you control the `disable_existing_loggers`
     flag to the standard library logger config.
+
+    The `include_metainfo` lets you control it the logline
+    contains FILENAME, FUNC_NAME and LINENO.
     """
 
     extra_loggers = extra_loggers or {}
@@ -120,20 +124,7 @@ def configure_structlog(
 
         logging.config.dictConfig(config)
 
-    structlog_processors: list[structlog.types.Processor] = [
-        # Merge contextvars into the event dict.
-        structlog.contextvars.merge_contextvars,
-        # If log level is too low, abort pipeline and throw away log entry.
-        structlog.stdlib.filter_by_level,
-        # Add shared processors to the processor chain.
-        *shared_processors,
-        # Perform %-style formatting.
-        structlog.stdlib.PositionalArgumentsFormatter(),
-        # If the "stack_info" key in the event dict is true, remove it and
-        # render the current stack trace in the "stack" key.
-        structlog.processors.StackInfoRenderer(),
-        # If some value is in bytes, decode it to a unicode str.
-        structlog.processors.UnicodeDecoder(),
+    _meta_processors: list[structlog.types.Processor] = [
         # Add callsite parameters.
         structlog.processors.CallsiteParameterAdder(
             {
@@ -141,8 +132,29 @@ def configure_structlog(
                 structlog.processors.CallsiteParameter.FUNC_NAME,
                 structlog.processors.CallsiteParameter.LINENO,
             }
-        ),
+        )
     ]
+
+    structlog_processors: list[structlog.types.Processor] = (
+        [
+            # Merge contextvars into the event dict.
+            structlog.contextvars.merge_contextvars,
+            # If log level is too low, abort pipeline and throw away log entry.
+            structlog.stdlib.filter_by_level,
+            # Add shared processors to the processor chain.
+            *shared_processors,
+            # Perform %-style formatting.
+            structlog.stdlib.PositionalArgumentsFormatter(),
+            # If the "stack_info" key in the event dict is true, remove it and
+            # render the current stack trace in the "stack" key.
+            structlog.processors.StackInfoRenderer(),
+            # If some value is in bytes, decode it to a unicode str.
+            structlog.processors.UnicodeDecoder(),
+        ]
+        + _meta_processors
+        if include_metainfo
+        else []
+    )  # type: ignore
 
     if configure_logging:
         # Prepare event dict for `ProcessorFormatter`.
