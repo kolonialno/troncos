@@ -3,6 +3,7 @@ from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, 
 
 import ddtrace
 from ipware.ipware import IpWare
+from starlette.types import ASGIApp
 
 try:
     from structlog import get_logger
@@ -23,16 +24,18 @@ class Headers(Mapping[str, str]):
     ) -> None:
         self._list: list[tuple[bytes, bytes]] = list(scope["headers"])
 
-    def add_client(self, client: tuple[str, int]) -> None:
+    def add_client(self, client: tuple[str, int] | None) -> None:
         """
         The client IP is not stored in the ASGI headers by default.
         Add the client ip to make sure we use it as a fallback if no
         proxy headers are set.
         """
+        host = client[0] if client else "<no-host>"
+        port = client[1] if client else 0
         self._list.append(
             (
                 "REMOTE_ADDR".encode("latin-1"),
-                f"{client[0]}:{client[1]}".encode("latin-1"),
+                f"{host}:{port}".encode("latin-1"),
             )
         )
 
@@ -89,7 +92,7 @@ class AsgiLoggingMiddleware:
 
     def __init__(
         self,
-        app: Any,
+        app: ASGIApp,
         logger_name: str | None = None,
     ) -> None:
         self._app = app
@@ -100,8 +103,8 @@ class AsgiLoggingMiddleware:
     async def __call__(
         self,
         scope: dict[str, Any],
-        receive: Callable[[Any], Any],
-        send: Callable[[dict[str, Any]], Awaitable[Any]],
+        receive: Callable[[], Any],
+        send: Callable[[MutableMapping[str, Any]], Awaitable[None]],
     ) -> Any:
         if scope["type"] != "http":
             return await self._app(scope, receive, send)
@@ -109,7 +112,7 @@ class AsgiLoggingMiddleware:
         ipware = IpWare()
 
         headers = Headers(scope=scope)
-        headers.add_client(scope["client"])
+        headers.add_client(scope.get("client"))
 
         client_ip, _ = ipware.get_client_ip(cast(dict[str, str], headers))
 
@@ -119,7 +122,7 @@ class AsgiLoggingMiddleware:
         status = [0]
         start_time = time.perf_counter()
 
-        async def wrapped_send(message: dict[str, Any]) -> None:
+        async def wrapped_send(message: MutableMapping[str, Any]) -> None:
             if "status" in message:
                 status[0] = message.get("status", 0)
             await send(message)
