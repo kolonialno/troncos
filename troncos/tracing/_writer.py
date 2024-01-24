@@ -4,7 +4,7 @@ from ddtrace.internal.writer.writer import TraceWriter
 from ddtrace.span import Span
 from opentelemetry.sdk.resources import Resource
 
-from ._enums import Exporter
+from ._exporter import Exporter
 from ._otel import get_otel_span_processors
 from ._span import default_ignore_attrs, translate_span
 
@@ -13,18 +13,14 @@ class OTELWriter(TraceWriter):
     def __init__(
         self,
         service_name: str,
-        resource_attributes: dict[str, Any] | None,
-        endpoint: str,
         exporter: Exporter,
+        resource_attributes: dict[str, Any] | None,
     ) -> None:
         self.service_name = service_name
         self.resource_attributes = resource_attributes
-        self.endpoint = endpoint
         self.exporter = exporter
 
-        self.otel_span_processors = get_otel_span_processors(
-            endpoint=endpoint, exporter=exporter
-        )
+        self.otel_span_processors = get_otel_span_processors(exporter=exporter)
         self.otel_default_resource = Resource.create(
             {"service.name": service_name, **(resource_attributes or {})}
         )
@@ -35,9 +31,8 @@ class OTELWriter(TraceWriter):
     def recreate(self) -> "OTELWriter":
         return self.__class__(
             self.service_name,
+            self.exporter,
             self.resource_attributes,
-            self.endpoint,
-            exporter=self.exporter,
         )
 
     def write(self, spans: list[Span] | None = None) -> None:
