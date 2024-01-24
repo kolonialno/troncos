@@ -12,7 +12,7 @@ from troncos.tracing._writer import OTELWriter
 def tracer_test(
     httpserver: HTTPServer,
     service_name: str,
-    service_attributes: dict[str, Any] | None = None,
+    resource_attributes: dict[str, Any] | None = None,
 ) -> Generator[Tracer, Any, Any]:
     httpserver.expect_oneshot_request("/v1/trace").respond_with_data("OK")
 
@@ -20,7 +20,7 @@ def tracer_test(
     tracer.configure(
         writer=OTELWriter(
             service_name=service_name,
-            service_attributes=service_attributes,
+            resource_attributes=resource_attributes,
             endpoint=httpserver.url_for("/v1/trace"),
             exporter=Exporter.HTTP,
         )
@@ -51,14 +51,14 @@ def test_attributes(httpserver: HTTPServer) -> None:
     with tracer_test(
         httpserver,
         "test_attributes",
-        service_attributes={"service_attribute": "working"},
+        resource_attributes={"resource_attribute": "working"},
     ) as tracer:
         with tracer.trace("test") as span:
             span.set_tag("span_attribute", "also_working")
 
     data = tracer_assert(httpserver)
     assert b"service.name\x12\x11\n\x0ftest_attributes" in data
-    assert b"service_attribute\x12\t\n\x07working" in data
+    assert b"resource_attribute\x12\t\n\x07working" in data
     assert b"span_attribute\x12\x0e\n\x0calso_working" in data
 
 
@@ -82,7 +82,7 @@ def test_headers(httpserver: HTTPServer) -> None:
     tracer.configure(
         writer=OTELWriter(
             service_name="test_headers",
-            service_attributes={},
+            resource_attributes={},
             endpoint=httpserver.url_for("/v1/trace"),
             exporter=Exporter(
                 exporter_type=ExporterType.HTTP, headers={"test-header": "works"}
