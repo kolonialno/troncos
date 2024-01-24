@@ -51,4 +51,4 @@ class Profiler(DDProfiler):
         self._profiler = _ProfilerInstance(*args, **kwargs)
 
     def get_profile(self) -> str:
-        return self._profiler.exporter.pprof  # type: ignore[no-any-return]
+        return self._profiler.exporter.pprof  # type: ignore
