@@ -97,8 +97,7 @@ def trace_function(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> Callable[P, R]:
-    ...
+) -> Callable[P, R]: ...
 
 
 @overload
@@ -110,8 +109,7 @@ def trace_function(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> Callable[[Callable[P, R]], Callable[P, R]]:
-    ...
+) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
 def trace_function(
@@ -153,8 +151,7 @@ def trace_class(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> Callable[[Type[TClass]], Type[TClass]]:
-    ...
+) -> Callable[[Type[TClass]], Type[TClass]]: ...
 
 
 @overload
@@ -165,8 +162,7 @@ def trace_class(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str, str] | None = None,
-) -> Type[TClass]:
-    ...
+) -> Type[TClass]: ...
 
 
 def trace_class(

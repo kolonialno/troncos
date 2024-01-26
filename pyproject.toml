@@ -55,7 +55,6 @@ mkdocs-techdocs-core = "^1.2.3"
 target-version = ['py311']
 line-length = 88
 include = '\.pyi?$'
-safe = true
 
 [tool.isort]
 profile = "black"
