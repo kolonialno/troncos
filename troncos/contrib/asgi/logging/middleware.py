@@ -2,7 +2,7 @@ import time
 from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, cast
 
 import ddtrace
-from ipware.ipware import IpWare
+from python_ipware.python_ipware import IpWare
 from starlette.types import ASGIApp
 
 try:
