@@ -3,7 +3,6 @@ from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, 
 
 import ddtrace
 from python_ipware.python_ipware import IpWare
-from starlette.types import ASGIApp
 
 try:
     from structlog import get_logger
@@ -11,6 +10,14 @@ except ImportError:
     raise RuntimeError(
         "Structlog must be installed to use the asgi logging middleware."
     )
+
+Scope = MutableMapping[str, Any]
+Message = MutableMapping[str, Any]
+
+Receive = Callable[[], Awaitable[Message]]
+Send = Callable[[Message], Awaitable[None]]
+
+ASGIApp = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 
 class Headers(Mapping[str, str]):
