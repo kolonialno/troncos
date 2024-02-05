@@ -15,7 +15,7 @@ We use [release-please](https://github.com/googleapis/release-please) to automat
 Manually create a release PR from main branch
 
 ```bash
-release-please release-pr \
+npx release-please release-pr \
 --token=$(gh auth token) \
 --repo-url=kolonialno/troncos
 --dry-run
