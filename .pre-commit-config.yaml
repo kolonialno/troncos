@@ -16,3 +16,27 @@ repos:
   - id: markdownlint
     args:
     - '--config=.markdownlint.yaml'
+
+- repo: local
+  hooks:
+  - id: isort
+    name: black
+    entry: .venv/bin/isort
+    language: system
+    types: [python]
+  - id: black
+    name: black
+    entry: .venv/bin/black
+    language: system
+    types: [python]
+  - id: flake8
+    name: black
+    entry: .venv/bin/flake8
+    language: system
+    types: [python]
+  - id: mypy
+    name: mypy
+    entry: .venv/bin/mypy
+    language: system
+    types: [python]
+    require_serial: true
