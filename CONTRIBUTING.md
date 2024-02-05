@@ -1,3 +1,4 @@
+<!--pytest-codeblocks:skipfile-->
 # CONTRIBUTING
 
 ## Set-up
