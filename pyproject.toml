@@ -88,6 +88,9 @@ empty_parameter_set_mark = "xfail"
 log_cli_level = "INFO"
 log_level = "INFO"
 filterwarnings = ["ignore::DeprecationWarning"]
+addopts = [
+  "--ignore=perf"
+]
 
 [build-system]
 requires = ["poetry-core>=1.1.0a6"]
