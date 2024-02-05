@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "8ed4b839a6c7808f551baea9284eb7e36be7ef58",
+  "include-v-in-tag": false,
+  "separate-pull-requests": true,
+  "prerelease": true,
+  "packages": {
+    ".": {
+      "component": "troncos",
+      "bump-minor-pre-major": true,
+      "include-component-in-tag": false,
+      "release-type": "python"
+    }
+  }
+}
