@@ -4,7 +4,7 @@ from typing import Any, Generator
 from ddtrace import Tracer
 from pytest_httpserver import HTTPServer
 
-from troncos.tracing._enums import Exporter, ExporterType
+from troncos.tracing._exporter import Exporter, ExporterType
 from troncos.tracing._writer import OTELWriter
 
 
@@ -20,9 +20,13 @@ def tracer_test(
     tracer.configure(
         writer=OTELWriter(
             service_name=service_name,
+            exporter=Exporter(
+                host=httpserver.host,
+                port=f"{httpserver.port}",
+                path="/v1/trace",
+                exporter_type=ExporterType.HTTP,
+            ),
             resource_attributes=resource_attributes,
-            endpoint=httpserver.url_for("/v1/trace"),
-            exporter=Exporter.HTTP,
         )
     )
 
@@ -82,11 +86,14 @@ def test_headers(httpserver: HTTPServer) -> None:
     tracer.configure(
         writer=OTELWriter(
             service_name="test_headers",
-            resource_attributes={},
-            endpoint=httpserver.url_for("/v1/trace"),
             exporter=Exporter(
-                exporter_type=ExporterType.HTTP, headers={"test-header": "works"}
+                host=httpserver.host,
+                port=f"{httpserver.port}",
+                path="/v1/trace",
+                exporter_type=ExporterType.HTTP,
+                headers={"test-header": "works"},
             ),
+            resource_attributes={},
         )
     )
 

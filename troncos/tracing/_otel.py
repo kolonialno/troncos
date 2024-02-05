@@ -13,7 +13,7 @@ from opentelemetry.sdk.trace.export import (
 )
 from structlog import get_logger
 
-from ._enums import Exporter, ExporterType
+from ._exporter import Exporter, ExporterType
 
 try:
     from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import (
@@ -30,9 +30,7 @@ def _bool_from_string(s: str) -> bool:
     return s.lower() in ["1", "true", "yes"]
 
 
-def get_otel_span_processors(
-    *, endpoint: str, exporter: Exporter
-) -> list[SpanProcessor]:
+def get_otel_span_processors(*, exporter: Exporter) -> list[SpanProcessor]:
     """
     Build a list of span processors to use to process otel spans.
     """
@@ -42,7 +40,9 @@ def get_otel_span_processors(
 
     # Exporter
     if exporter.exporter_type == ExporterType.HTTP:
-        span_exporter = HTTPSpanExporter(endpoint=endpoint, headers=exporter.headers)
+        span_exporter = HTTPSpanExporter(
+            endpoint=exporter.endpoint, headers=exporter.headers
+        )
     elif exporter.exporter_type == ExporterType.GRPC:
         if GRPCSpanExporter is None:
             raise RuntimeError(
@@ -50,7 +50,9 @@ def get_otel_span_processors(
                 "to use the GRPC exporter."
             )
 
-        span_exporter = GRPCSpanExporter(endpoint=endpoint, headers=exporter.headers)
+        span_exporter = GRPCSpanExporter(
+            endpoint=exporter.endpoint, headers=exporter.headers
+        )
     else:
         raise RuntimeError("Unsupported span exporter.")
 

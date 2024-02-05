@@ -67,7 +67,7 @@ when the Grafana agent is used to collect spans using HTTP.
 ```python
 import ddtrace
 
-from troncos.tracing import configure_tracer
+from troncos.tracing import configure_tracer, Exporter
 
 # Configure tracer as described in the ddtrace docs.
 ddtrace.config.django["service_name"] = 'SERVICE_NAME'
@@ -82,12 +82,12 @@ ddtrace.tracer.set_tags(
 ddtrace.patch_all()
 
 # Configure the ddtrace tracer to send traces to Tempo.
-TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
-TRACE_PORT = "4318"
 configure_tracer(
     enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
-    endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}/v1/traces",
+    exporter=Exporter(
+        host = "127.0.0.1",  # Usually obtained from env variables.
+    ),
     resource_attributes={
         "app": "app",
         "component": "component",
@@ -125,7 +125,7 @@ Using the GRPC span exporter gives you significant performance gains.
 If you are running a critical service with high load in production,
 we recommend using GRPC.
 
-`TRACE_PORT` is usually 4317 when the Grafana agent is used to collect
+The port is usually `4317` when the Grafana agent is used to collect
 spans using GRPC.
 
 ```console
@@ -142,30 +142,30 @@ troncos = {version="?", extras = ["grpc"]}
 ```python
 from troncos.tracing import configure_tracer, Exporter
 
-TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
-TRACE_PORT = "4317"
 
 configure_tracer(
     enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
-    endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}",
-    exporter=Exporter.GRPC
+    exporter=Exporter(
+        host = "127.0.0.1", # Usually obtained from env variables.
+        port = "4317",
+    ),
 )
 ```
 
 ### Setting headers for the exporter
 
 ```python
-from troncos.tracing import configure_tracer, Exporter, ExporterType
+from troncos.tracing import configure_tracer, Exporter
 
-TRACE_HOST = "127.0.0.1" # Usually obtained from env variables.
-TRACE_PORT = "4317"
 
 configure_tracer(
     enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
-    endpoint=f"http://{TRACE_HOST}:{TRACE_PORT}",
-    exporter=Exporter(ExporterType.GRPC, headers={"my", "header"}),
+    exporter=Exporter(
+        host = "127.0.0.1", # Usually obtained from env variables.
+        headers={"my": "header"},
+    ),
 )
 ```
 
