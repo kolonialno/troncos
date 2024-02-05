@@ -23,6 +23,13 @@ jobs:
       - uses: google-github-actions/release-please-action@v4
         id: release
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # When you use the repository's GITHUB_TOKEN to perform tasks, events such as 'on.release'
+          # use in the Upload artifacts workflow wont be triggered.
+          # This prevents you from accidentally creating recursive workflow runs.
+          # We needed to use either a PAT og a GitHub App.
+          # https://docs.github.com/en/actions/using-workflows/triggering-a-workflow#triggering-a-workflow-from-a-workflow
+          # TIENDABOT_ACCESS_TOKEN is a Personal Access Token (PAT) for the tiendabot user in kolonialno github org.
+          # This is a ugly hack but works for now.
+          token: ${{ secrets.TIENDABOT_ACCESS_TOKEN }}
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
