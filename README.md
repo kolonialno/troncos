@@ -12,11 +12,11 @@
         <img src="https://github.com/kolonialno/troncos/actions/workflows/ci.yml/badge.svg" alt="CI status">
     </a>
     <a href="https://pypi.python.org/pypi/troncos">
-        <img src="https://img.shields.io/pypi/v/troncos.svg">
+        <img src="https://img.shields.io/pypi/v/troncos.svg" alt="Troncos version">
     </a>
-    <img src="https://img.shields.io/pypi/pyversions/troncos">
+    <img src="https://img.shields.io/pypi/pyversions/troncos" alt="Supported Python version">
     <a href="https://github.com/kolonialno/troncos/blob/master/LICENSE">
-        <img src="https://img.shields.io/github/license/kolonialno/troncos.svg">
+        <img src="https://img.shields.io/github/license/kolonialno/troncos.svg" alt="licenece">
     </a>
 </p>
 
@@ -36,7 +36,7 @@
 
 ```console
 # With pip
-$ pip install troncos
+pip install troncos
 ```
 
 ## Tracing
@@ -47,7 +47,7 @@ The ddtrace docs can be found [here](https://ddtrace.readthedocs.io/en/stable/).
 
 [Best practices for traces](https://grafana.com/docs/tempo/latest/operations/best-practices/#naming-conventions-for-span-and-resource-attributes) is a good guide to get started.
 
-#### Span vs resource attributes
+### Span vs resource attributes
 
 - A `span attribute` is a key/value pair that provides context for its span.
 - A `resource attribute` is a key/value pair that describes the context of how the span was collected.
@@ -103,7 +103,7 @@ ddtrace also uses env variables to configure the service name, environment and v
 
 Add the following environment variables to your application.
 
-```
+```console
 DD_ENV="{{ environment }}"
 DD_SERVICE="{{ app }}"
 DD_VERSION="{{ version }}"
@@ -313,7 +313,7 @@ app.mount("/debug/pprof", profiling_asgi_app)
 You can verify that your setup works with the [pprof](https://github.com/google/pprof) cli:
 
 ```console
-$ pprof -http :6060 "http://localhost:8080/debug/pprof"
+pprof -http :6060 "http://localhost:8080/debug/pprof"
 ```
 
 #### Enable scraping

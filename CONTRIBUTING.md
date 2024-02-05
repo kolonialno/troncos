@@ -3,7 +3,7 @@
 
 ## Set-up
 
-```shell
+```console
 pre-commit install
 poetry install
 ```

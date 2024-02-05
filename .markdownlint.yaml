@@ -1,0 +1,66 @@
+---
+# https://github.com/DavidAnson/markdownlint/blob/main/doc/Rules.md
+default: true
+
+# Heading levels should only increment by on level at a time
+MD001: true
+
+# Consider starting bulleted lists at the beginning of the line
+MD006: true
+
+# Unordered list indentation
+MD007: true
+
+# Trailing spaces
+MD009: false
+
+# Multiple consecutive blank lines
+MD012: true
+
+# Line length
+MD013: false
+
+# Heading should be surrounded by blank lines
+MD022: true
+
+# Multiple headings with the same content
+MD024: true
+
+# Multiple top level headings in the same document
+MD025: true
+
+# Trailing punctuation in heading
+MD026: true
+
+# Fenced code blocks should be surrounded by blank lines
+MD031: true
+
+# Lists should be surrounded by blank lines
+MD032: true
+
+# Inline html
+MD033: false
+
+# Bare URL used
+MD034: true
+
+# Spaces inside emphasis markers
+MD037: true
+
+# Spaces inside code span elements
+MD038: true
+
+# Fenced code blocks should have a language specified
+MD040: true
+
+# First line in file should be a top level heading
+MD041: false
+
+# Required heading structure
+MD043: true
+
+# Code block style
+MD046: false
+
+# Files should end with a single newline
+MD047: true

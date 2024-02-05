@@ -9,3 +9,10 @@ repos:
     additional_dependencies: ["@commitlint/config-conventional"]
     args:
     - "--config=commitlint.config.js"
+
+- repo: https://github.com/igorshubovych/markdownlint-cli
+  rev: 'v0.38.0'
+  hooks:
+  - id: markdownlint
+    args:
+    - '--config=.markdownlint.yaml'
