@@ -970,13 +970,13 @@ files = [
 
 [[package]]
 name = "ipython"
-version = "8.21.0"
+version = "8.24.0"
 description = "IPython: Productive Interactive Computing"
 optional = false
 python-versions = ">=3.10"
 files = [
-    {file = "ipython-8.21.0-py3-none-any.whl", hash = "sha256:1050a3ab8473488d7eee163796b02e511d0735cf43a04ba2a8348bd0f2eaf8a5"},
-    {file = "ipython-8.21.0.tar.gz", hash = "sha256:48fbc236fbe0e138b88773fa0437751f14c3645fb483f1d4c5dee58b37e5ce73"},
+    {file = "ipython-8.24.0-py3-none-any.whl", hash = "sha256:d7bf2f6c4314984e3e02393213bab8703cf163ede39672ce5918c51fe253a2a3"},
+    {file = "ipython-8.24.0.tar.gz", hash = "sha256:010db3f8a728a578bb641fdd06c063b9fb8e96a9464c63aec6310fbcb5e80501"},
 ]
 
 [package.dependencies]
@@ -985,24 +985,26 @@ decorator = "*"
 exceptiongroup = {version = "*", markers = "python_version < \"3.11\""}
 jedi = ">=0.16"
 matplotlib-inline = "*"
-pexpect = {version = ">4.3", markers = "sys_platform != \"win32\""}
+pexpect = {version = ">4.3", markers = "sys_platform != \"win32\" and sys_platform != \"emscripten\""}
 prompt-toolkit = ">=3.0.41,<3.1.0"
 pygments = ">=2.4.0"
 stack-data = "*"
-traitlets = ">=5"
+traitlets = ">=5.13.0"
+typing-extensions = {version = ">=4.6", markers = "python_version < \"3.12\""}
 
 [package.extras]
-all = ["black", "curio", "docrepr", "exceptiongroup", "ipykernel", "ipyparallel", "ipywidgets", "matplotlib", "matplotlib (!=3.2.0)", "nbconvert", "nbformat", "notebook", "numpy (>=1.23)", "pandas", "pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "qtconsole", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "trio", "typing-extensions"]
+all = ["ipython[black,doc,kernel,matplotlib,nbconvert,nbformat,notebook,parallel,qtconsole]", "ipython[test,test-extra]"]
 black = ["black"]
-doc = ["docrepr", "exceptiongroup", "ipykernel", "matplotlib", "pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "stack-data", "testpath", "typing-extensions"]
+doc = ["docrepr", "exceptiongroup", "ipykernel", "ipython[test]", "matplotlib", "setuptools (>=18.5)", "sphinx (>=1.3)", "sphinx-rtd-theme", "sphinxcontrib-jquery", "stack-data", "typing-extensions"]
 kernel = ["ipykernel"]
+matplotlib = ["matplotlib"]
 nbconvert = ["nbconvert"]
 nbformat = ["nbformat"]
 notebook = ["ipywidgets", "notebook"]
 parallel = ["ipyparallel"]
 qtconsole = ["qtconsole"]
-test = ["pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "testpath"]
-test-extra = ["curio", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "pickleshare", "pytest (<8)", "pytest-asyncio (<0.22)", "testpath", "trio"]
+test = ["pickleshare", "pytest", "pytest-asyncio (<0.22)", "testpath"]
+test-extra = ["curio", "ipython[test]", "matplotlib (!=3.2.0)", "nbformat", "numpy (>=1.23)", "pandas", "trio"]
 
 [[package]]
 name = "isort"
@@ -2481,18 +2483,18 @@ files = [
 
 [[package]]
 name = "traitlets"
-version = "5.9.0"
+version = "5.14.3"
 description = "Traitlets Python configuration system"
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "traitlets-5.9.0-py3-none-any.whl", hash = "sha256:9e6ec080259b9a5940c797d58b613b5e31441c2257b87c2e795c5228ae80d2d8"},
-    {file = "traitlets-5.9.0.tar.gz", hash = "sha256:f6cde21a9c68cf756af02035f72d5a723bf607e862e7be33ece505abf4a3bad9"},
+    {file = "traitlets-5.14.3-py3-none-any.whl", hash = "sha256:b74e89e397b1ed28cc831db7aea759ba6640cb3de13090ca145426688ff1ac4f"},
+    {file = "traitlets-5.14.3.tar.gz", hash = "sha256:9ed0579d3502c94b4b3732ac120375cda96f923114522847de4b3bb98b96b6b7"},
 ]
 
 [package.extras]
 docs = ["myst-parser", "pydata-sphinx-theme", "sphinx"]
-test = ["argcomplete (>=2.0)", "pre-commit", "pytest", "pytest-mock"]
+test = ["argcomplete (>=3.0.3)", "mypy (>=1.7.0)", "pre-commit", "pytest (>=7.0,<8.2)", "pytest-mock", "pytest-mypy-testing"]
 
 [[package]]
 name = "types-requests"
