@@ -2296,13 +2296,13 @@ cli = ["click (>=5.0)"]
 
 [[package]]
 name = "python-ipware"
-version = "2.0.1"
+version = "3.0.0"
 description = "A Python package to retrieve user's IP address"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "python-ipware-2.0.1.tar.gz", hash = "sha256:9ba4805152ebb85ad5b53797185cd1ce6231e1db60155834f326c8cd61e8af34"},
-    {file = "python_ipware-2.0.1-py3-none-any.whl", hash = "sha256:1992920ef553165dfa35e6ea5a90762f64f3b943cc22ee6b4ec02e2c86d31178"},
+    {file = "python_ipware-3.0.0-py3-none-any.whl", hash = "sha256:fc936e6e7ec9fcc107f9315df40658f468ac72f739482a707181742882e36b60"},
+    {file = "python_ipware-3.0.0.tar.gz", hash = "sha256:9117b1c4dddcb5d5ca49e6a9617de2fc66aec2ef35394563ac4eecabdf58c062"},
 ]
 
 [package.extras]
@@ -3373,4 +3373,4 @@ sentry = ["structlog-sentry"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.10,<4.0"
-content-hash = "5b82d239712d57eec62e56bf7dc9a20f9c16fa83d65b7a5ee4a2c4c8fdc85d9e"
+content-hash = "fc73b7ff8e6eb8363eab8659aea5af73466bf91f3bf07979b16f8b91166c14fc"

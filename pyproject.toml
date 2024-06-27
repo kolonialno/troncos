@@ -21,7 +21,7 @@ opentelemetry-exporter-otlp-proto-http = ">=1.19,<2"
 opentelemetry-sdk = ">=1.19,<2"
 pyroscope-io = ">=0.8.0,<1"
 python = ">=3.10,<4.0"
-python-ipware = ">=2,<3"
+python-ipware = ">=2,<4"
 structlog-sentry = { version = ">=2.0.0,<3", optional = true }
 
 [tool.poetry.extras]
