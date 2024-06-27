@@ -8,10 +8,10 @@ from python_ipware.python_ipware import IpWare
 
 try:
     from structlog import get_logger
-except ImportError:
+except ImportError as exc:
     raise RuntimeError(
         "Structlog must be installed to use the asgi logging middleware."
-    )
+    ) from exc
 
 
 @sync_and_async_middleware

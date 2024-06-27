@@ -1,3 +1,4 @@
+import os
 from enum import Enum
 
 
@@ -11,13 +12,21 @@ class Exporter:
         self,
         *,
         scheme: str = "http",
-        host: str = "localhost",
-        port: str = "4318",
+        host: str | None = None,
+        port: str | None = None,
         path: str | None = None,
         exporter_type: ExporterType | None = None,
         headers: dict[str, str] | None = None,
     ) -> None:
         self.headers = headers
+
+        if host is None:
+            host = os.environ.get("OTEL_TRACE_HOST", "localhost")
+        if port is None:
+            port = os.environ.get("OTEL_TRACE_PORT", "4318")
+
+        assert host is not None
+        assert port is not None
 
         if not path:
             if port == "4317":

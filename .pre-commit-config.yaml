@@ -1,42 +1,42 @@
 ---
 default_install_hook_types: [pre-commit, commit-msg]
 repos:
-- repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
-  rev: "v9.11.0"
-  hooks:
-  - id: commitlint
-    stages: [commit-msg]
-    additional_dependencies: ["@commitlint/config-conventional"]
-    args:
-    - "--config=commitlint.config.js"
+  - repo: https://github.com/alessandrojcm/commitlint-pre-commit-hook
+    rev: "v9.11.0"
+    hooks:
+      - id: commitlint
+        stages: [commit-msg]
+        additional_dependencies: ["@commitlint/config-conventional"]
+        args:
+          - "--config=commitlint.config.js"
 
-- repo: https://github.com/igorshubovych/markdownlint-cli
-  rev: 'v0.38.0'
-  hooks:
-  - id: markdownlint
-    args:
-    - '--config=.markdownlint.yaml'
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: "v0.38.0"
+    hooks:
+      - id: markdownlint
+        args:
+          - "--config=.markdownlint.yaml"
 
-- repo: local
-  hooks:
-  - id: isort
-    name: black
-    entry: .venv/bin/isort
-    language: system
-    types: [python]
-  - id: black
-    name: black
-    entry: .venv/bin/black
-    language: system
-    types: [python]
-  - id: flake8
-    name: black
-    entry: .venv/bin/flake8
-    language: system
-    types: [python]
-  - id: mypy
-    name: mypy
-    entry: .venv/bin/mypy
-    language: system
-    types: [python]
-    require_serial: true
+  - repo: local
+    hooks:
+      - id: isort
+        name: isort
+        entry: .venv/bin/isort
+        language: system
+        types: [python]
+      - id: black
+        name: black
+        entry: .venv/bin/black
+        language: system
+        types: [python]
+      - id: ruff
+        name: ruff
+        entry: .venv/bin/ruff
+        language: system
+        types: [python]
+      - id: mypy
+        name: mypy
+        entry: .venv/bin/mypy
+        language: system
+        types: [python]
+        require_serial: true

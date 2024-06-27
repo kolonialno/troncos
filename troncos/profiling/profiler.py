@@ -27,7 +27,7 @@ class _PprofExporter(pprof.PprofExporter):
                     loc = f"{file}:{frame[1]}:{frame[2]}"
                     e2.frames[i] = (frame[0], frame[1], loc, frame[3])
 
-    def export(self, events, start_time_ns, end_time_ns):  # type: ignore[no-untyped-def] # noqa: E501
+    def export(self, events, start_time_ns, end_time_ns):  # type: ignore[no-untyped-def]
         self._map_frames(events)  # type: ignore[no-untyped-call]
         pprof_profile, _ = super(_PprofExporter, self).export(
             events, start_time_ns, end_time_ns
