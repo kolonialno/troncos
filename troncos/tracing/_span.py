@@ -1,7 +1,6 @@
 from typing import Any
 
-from ddtrace import constants, ext
-from ddtrace.span import Span as DDSpan
+from ddtrace import Span as DDSpan, constants, ext
 from opentelemetry.attributes import BoundedAttributes  # type: ignore
 from opentelemetry.sdk.resources import SERVICE_NAME, Resource
 from opentelemetry.sdk.trace import (

@@ -1,7 +1,7 @@
 from typing import Any
 
+from ddtrace import Span
 from ddtrace.internal.writer.writer import TraceWriter
-from ddtrace.span import Span
 from opentelemetry.sdk.resources import Resource
 
 from ._exporter import Exporter
