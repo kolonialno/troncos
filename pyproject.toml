@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "troncos"
-version = "4.4.2"
+version = "5.0.0"
 description = "Collection of Python logging, tracing and profiling tools"
 authors = [
   "Guðmundur Björn Birkisson <gudmundur.birkisson@oda.com>",
