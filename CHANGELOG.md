@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.1.0](https://github.com/kolonialno/troncos/compare/5.0.0...5.1.0) (2024-06-27)
+
+
+### Features
+
+* Use ruff for linting ([#340](https://github.com/kolonialno/troncos/issues/340)) ([25f4a56](https://github.com/kolonialno/troncos/commit/25f4a56dbda759b6c93efec8f80e483fee80b8c8))
+
 ## [5.0.0](https://github.com/kolonialno/troncos/compare/4.4.2...5.0.0) (2024-06-27)
 
 
