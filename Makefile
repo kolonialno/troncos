@@ -16,7 +16,7 @@ $(POETRY): ; $(info $(M) checking POETRY...)
 	@touch $@
 
 .PHONY: lint
-lint: .venv lint-isort lint-black lint-flake8 lint-mypy ## Run all linters
+lint: .venv lint-isort lint-black lint-ruff-check lint-ruff-format lint-mypy ## Run all linters
 
 .PHONY: lint-isort
 lint-isort: .venv ; $(info $(M) running isort...) @ ## Run isort linter
@@ -28,18 +28,21 @@ lint-black: .venv ; $(info $(M) running black...) @ ## Run black linter
 	$Q $(POETRY) run black --check $(PACKAGE)
 	$Q $(POETRY) run black --check $(TESTS)
 
-.PHONY: lint-flake8
-lint-flake8: .venv ; $(info $(M) running flake8...) @ ## Run flake8 linter
-	$Q $(POETRY) run flake8 $(PACKAGE)
-	$Q $(POETRY) run flake8 $(TESTS)
-
 .PHONY: lint-mypy
 lint-mypy: .venv ; $(info $(M) running mypy...) @ ## Run mypy linter
 	$Q $(POETRY) run mypy $(PACKAGE)
 	$Q $(POETRY) run mypy $(TESTS)
 
+.PHONY: lint-ruff-check
+lint-ruff-check: .venv | $(BASE) ; $(info $(M) running ruff check…) @ ## Run ruff check linter
+	$Q $(POETRY) run ruff check $(PACKAGE)
+
+.PHONY: lint-ruff-format
+lint-ruff-format: .venv | $(BASE) ; $(info $(M) running ruff format…) @ ## Run ruff format linter
+	$Q $(POETRY) run ruff format $(PACKAGE) --check
+
 .PHONY: fix
-fix: .venv fix-isort fix-black ## Run all fixers
+fix: .venv fix-isort fix-black fix-ruff-check fix-ruff-format ## Run all fixers
 
 .PHONY: fix-isort
 fix-isort: .venv ; $(info $(M) running isort...) @ ## Run isort fixer
@@ -50,6 +53,14 @@ fix-isort: .venv ; $(info $(M) running isort...) @ ## Run isort fixer
 fix-black: .venv ; $(info $(M) running black...) @ ## Run black fixer
 	$Q $(POETRY) run black $(PACKAGE)
 	$Q $(POETRY) run black $(TESTS)
+
+.PHONY: fix-ruff-check
+fix-ruff-check: .venv | $(BASE) ; $(info $(M) running ruff check…) @ ## Run ruff check fixer
+	$Q $(POETRY) run ruff check $(PACKAGE) --fix
+
+.PHONY: fix-ruff-format
+fix-ruff-format: .venv | $(BASE) ; $(info $(M) running ruff format…) @ ## Run ruff format fixer
+	$Q $(POETRY) run ruff format $(PACKAGE)
 
 .PHONY: test
 test: .venv ; $(info $(M) running tests...) @ ## Run tests

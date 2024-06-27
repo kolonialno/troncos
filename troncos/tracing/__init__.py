@@ -1,4 +1,3 @@
-import os
 from typing import Any
 
 import ddtrace
@@ -13,13 +12,13 @@ def configure_tracer(
     *,
     enabled: bool,
     service_name: str,
-    exporter: Exporter = Exporter(
-        host=os.environ.get("OTEL_TRACE_HOST", "localhost"),
-        port=os.environ.get("OTEL_TRACE_PORT", "4318"),
-    ),
+    exporter: Exporter | None = None,
     resource_attributes: dict[str, Any] | None = None,
 ) -> None:
     """Configure ddtrace to write traces to the otel tracing backend."""
+
+    if exporter is None:
+        exporter = Exporter()
 
     # Initialize our custom writer used to handle ddtrace spans.
     writer = OTELWriter(

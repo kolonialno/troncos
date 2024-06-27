@@ -6,10 +6,10 @@ from python_ipware.python_ipware import IpWare
 
 try:
     from structlog import get_logger
-except ImportError:
+except ImportError as exc:
     raise RuntimeError(
         "Structlog must be installed to use the asgi logging middleware."
-    )
+    ) from exc
 
 Scope = MutableMapping[str, Any]
 Message = MutableMapping[str, Any]
@@ -75,7 +75,7 @@ class Headers(Mapping[str, str]):
 
     def __contains__(self, key: Any) -> bool:
         get_header_key = key.lower().encode("latin-1")
-        for header_key, header_value in self._list:
+        for header_key, _ in self._list:
             if header_key == get_header_key:
                 return True
         return False

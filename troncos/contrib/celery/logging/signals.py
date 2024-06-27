@@ -5,8 +5,10 @@ from celery import signals
 
 try:
     from structlog import get_logger
-except ImportError:
-    raise RuntimeError("Structlog must be installed to use the celery logging signals.")
+except ImportError as exc:
+    raise RuntimeError(
+        "Structlog must be installed to use the celery logging signals."
+    ) from exc
 
 logger = get_logger("troncos.celery.task")
 
