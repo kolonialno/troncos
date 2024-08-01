@@ -9,6 +9,6 @@ metadata:
     backstage.io/techdocs-ref: dir:.
 spec:
   type: library
-  owner: cloud-platform
+  owner: infra-org-engineering
   lifecycle: production
   system: application-platform
