@@ -2222,13 +2222,13 @@ testing = ["fields", "hunter", "process-tests", "pytest-xdist", "six", "virtuale
 
 [[package]]
 name = "pytest-httpserver"
-version = "1.0.10"
+version = "1.1.0"
 description = "pytest-httpserver is a httpserver for pytest"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "pytest_httpserver-1.0.10-py3-none-any.whl", hash = "sha256:d40e0cc3d61ed6e4d80f52a796926d557a7db62b17e43b3e258a78a3c34becb9"},
-    {file = "pytest_httpserver-1.0.10.tar.gz", hash = "sha256:77b9fbc2eb0a129cfbbacc8fe57e8cafe071d506489f31fe31e62f1b332d9905"},
+    {file = "pytest_httpserver-1.1.0-py3-none-any.whl", hash = "sha256:7ef88be8ed3354b6784daa3daa75a422370327c634053cefb124903fa8d73a41"},
+    {file = "pytest_httpserver-1.1.0.tar.gz", hash = "sha256:6b1cb0199e2ed551b1b94d43f096863bbf6ae5bcd7c75c2c06845e5ce2dc8701"},
 ]
 
 [package.dependencies]
