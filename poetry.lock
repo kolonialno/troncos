@@ -2720,13 +2720,13 @@ typing = ["mypy (>=1.4)", "rich", "twisted"]
 
 [[package]]
 name = "structlog-sentry"
-version = "2.0.3"
+version = "2.1.0"
 description = "Sentry integration for structlog"
 optional = true
 python-versions = ">=3.7,<4.0"
 files = [
-    {file = "structlog_sentry-2.0.3-py3-none-any.whl", hash = "sha256:2c83585ab92c97111682f78edf65d3c9a0e2bfa9b2c68f2e59fcdfe1c725fd1b"},
-    {file = "structlog_sentry-2.0.3.tar.gz", hash = "sha256:894a48df2121f2797d0b6a28b158c3fee9be7447d41b7645db739696fd64be42"},
+    {file = "structlog_sentry-2.1.0-py3-none-any.whl", hash = "sha256:8f631fc4cf9890f8ea368f057861b62ceef30dd75726a85706869807926e22d0"},
+    {file = "structlog_sentry-2.1.0.tar.gz", hash = "sha256:ee4fb04a381f25570017dd26345ea15b6461cbf87ae0a315e20ddd822ad4256b"},
 ]
 
 [package.dependencies]
