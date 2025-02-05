@@ -48,7 +48,7 @@ requests = "^2.31.0"
 snakeviz = "^2.2.0"
 structlog = "^24.0.0"
 types-requests = "^2.28.11.14"
-ruff = "^0.8.0"
+ruff = "^0.4.10"
 
 
 [tool.black]
