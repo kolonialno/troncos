@@ -1,6 +1,6 @@
 from typing import Any
 
-import ddtrace
+from ddtrace.trace import tracer
 
 from ._exporter import Exporter, ExporterType
 from ._writer import OTELWriter
@@ -10,7 +10,6 @@ __all__ = ["Exporter", "ExporterType"]
 
 def configure_tracer(
     *,
-    enabled: bool,
     service_name: str,
     exporter: Exporter | None = None,
     resource_attributes: dict[str, Any] | None = None,
@@ -27,4 +26,4 @@ def configure_tracer(
         resource_attributes=resource_attributes,
     )
 
-    ddtrace.tracer.configure(writer=writer, enabled=enabled)
+    tracer.configure(writer=writer)

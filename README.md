@@ -83,7 +83,6 @@ ddtrace.patch_all()
 
 # Configure the ddtrace tracer to send traces to Tempo.
 configure_tracer(
-    enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
     exporter=Exporter(
         host = "127.0.0.1",  # Usually obtained from env variables.
@@ -144,7 +143,6 @@ from troncos.tracing import configure_tracer, Exporter
 
 
 configure_tracer(
-    enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
     exporter=Exporter(
         host = "127.0.0.1", # Usually obtained from env variables.
@@ -160,7 +158,6 @@ from troncos.tracing import configure_tracer, Exporter
 
 
 configure_tracer(
-    enabled=False, # Set to True when TRACE_HOST is configured.
     service_name='SERVICE_NAME',
     exporter=Exporter(
         host = "127.0.0.1", # Usually obtained from env variables.

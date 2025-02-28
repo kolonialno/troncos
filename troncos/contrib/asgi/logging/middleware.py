@@ -1,7 +1,9 @@
 import time
 from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, cast
 
-import ddtrace
+
+from ddtrace.trace import tracer
+
 from python_ipware.python_ipware import IpWare
 
 try:
@@ -147,7 +149,7 @@ class AsgiLoggingMiddleware:
         # To ensure that the trace information is always logged, we simply inject that
         # information in here, and by doing so we do not have to care about the
         # internals of the ASGI TraceMiddleware in ddtrace.
-        if dd_context := ddtrace.tracer.current_trace_context():
+        if dd_context := tracer.current_trace_context():
             extra["trace_id"] = f"{dd_context.trace_id:x}"
             extra["span_id"] = f"{dd_context.span_id:x}"
 
