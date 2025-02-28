@@ -29,23 +29,23 @@ def test_processors_with_sentry() -> None:
 
     logger_name_index = shared_processors.index(structlog.stdlib.add_logger_name)
     log_level_index = shared_processors.index(structlog.stdlib.add_log_level)
-    sentry_processor = [
+    sentry_processor = next(
         proc for proc in shared_processors if "structlog_sentry" in repr(proc)
-    ][0]
+    )
     sentry_processor_index = shared_processors.index(sentry_processor)
     format_exc_info_index = shared_processors.index(
         structlog.processors.format_exc_info
     )
 
-    assert (
-        logger_name_index < sentry_processor_index
-    ), "Logger name must come before Sentry processor"
-    assert (
-        log_level_index < sentry_processor_index
-    ), "Log level must come before Sentry processor"
-    assert (
-        sentry_processor_index < format_exc_info_index
-    ), "Format exc info must come after Sentry processor"
+    assert logger_name_index < sentry_processor_index, (
+        "Logger name must come before Sentry processor"
+    )
+    assert log_level_index < sentry_processor_index, (
+        "Log level must come before Sentry processor"
+    )
+    assert sentry_processor_index < format_exc_info_index, (
+        "Format exc info must come after Sentry processor"
+    )
 
 
 @patch("builtins.__import__", side_effect=import_without_structlog_sentry)
@@ -65,9 +65,9 @@ def test_processors_without_sentry(mocked: Any) -> None:
         for proc in shared_processors
         if "structlog_sentry" in repr(proc)
     ]
-    assert (
-        len(sentry_processors) == 0
-    ), "No Sentry processors should exist in shared processors when not installed"
+    assert len(sentry_processors) == 0, (
+        "No Sentry processors should exist in shared processors when not installed"
+    )
 
     # And make sure nothing in the actual initiation blows up when we don't have
     # structlog_sentry installed

@@ -5,9 +5,10 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from functools import wraps
 from types import FunctionType
-from typing import Awaitable, Callable, ParamSpec, Type, TypeVar, cast, overload
-
+from typing import Awaitable, Any, Callable, ParamSpec, Type, TypeVar, cast, overload
 import ddtrace
+from ddtrace.trace import tracer
+
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
 
@@ -24,7 +25,7 @@ def trace_block(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Generator[ddtrace.Span, None, None]:
     """
     Trace a code block using a with statement. Example:
@@ -33,13 +34,15 @@ def trace_block(
         time.sleep(1)
     """
 
-    with ddtrace.tracer.trace(
+    tags: dict[str | bytes, Any] = attributes or {}
+
+    with tracer.trace(
         name=name,
         resource=resource,
         service=service,
         span_type=span_type,
     ) as span:
-        span.set_tags(attributes)
+        span.set_tags(tags)
         yield span
 
 
@@ -49,7 +52,7 @@ def _trace_function(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Callable[P, R]:
     if hasattr(f, _TRACE_IGNORE_ATTR):
         return f
@@ -95,7 +98,7 @@ def trace_function(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Callable[P, R]: ...
 
 
@@ -107,7 +110,7 @@ def trace_function(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Callable[[Callable[P, R]], Callable[P, R]]: ...
 
 
@@ -118,7 +121,7 @@ def trace_function(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Callable[P, R] | Callable[[Callable[P, R]], Callable[P, R]]:
     """
     This decorator adds tracing to a function. Example:
@@ -149,7 +152,7 @@ def trace_class(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Callable[[Type[TClass]], Type[TClass]]: ...
 
 
@@ -160,7 +163,7 @@ def trace_class(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Type[TClass]: ...
 
 
@@ -170,7 +173,7 @@ def trace_class(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> Type[TClass] | Callable[[Type[TClass]], Type[TClass]]:
     """
     This decorator adds a tracing decorator to every method of the decorated class. If
@@ -230,7 +233,7 @@ def trace_module(
     resource: str | None = None,
     service: str | None = None,
     span_type: str | None = None,
-    attributes: dict[str, str] | None = None,
+    attributes: dict[str | bytes, Any] | None = None,
 ) -> None:
     """
     This function adds a tracing decorator to every function of the calling module. If

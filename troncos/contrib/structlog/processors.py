@@ -1,4 +1,5 @@
-from ddtrace import tracer
+from ddtrace.trace import tracer
+
 from structlog.processors import LogfmtRenderer as LogFmt
 from structlog.types import EventDict, WrappedLogger
 

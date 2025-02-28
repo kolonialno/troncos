@@ -1,5 +1,7 @@
 import pyroscope
-from ddtrace import config, tracer
+from ddtrace import config
+from ddtrace.trace import tracer
+
 from ddtrace.internal.hostname import get_hostname
 
 
@@ -30,7 +32,7 @@ def start_py_spy_profiler(
         profiler_tags.update(tags)
 
     pyroscope.configure(
-        app_name=app_name,
+        application_name=app_name,
         tags=profiler_tags,
         server_address=server_address,
         sample_rate=100,

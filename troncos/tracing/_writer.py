@@ -43,10 +43,9 @@ class OTELWriter(TraceWriter):
             span
             for span in spans
             # ddtrace use span.sampled == False to drop spans.
-            if span.sampled
-            # ddtrace uses sampling_priority > 0 to indicate that we
-            # want to ingest the span.
-            and (
+            if (
+                # ddtrace uses sampling_priority > 0 to indicate that we
+                # want to ingest the span.
                 span.context.sampling_priority is None
                 or span.context.sampling_priority > 0
             )

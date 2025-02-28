@@ -69,6 +69,6 @@ def test_trace_class_is_traced(class_attr: Any) -> None:
     ],
 )
 def test_trace_class_is_not_traced(class_attr: Any) -> None:
-    assert (
-        hasattr(class_attr, "__wrapped__") is False
-    ), f"Expected {class_attr} not to be traced"
+    assert hasattr(class_attr, "__wrapped__") is False, (
+        f"Expected {class_attr} not to be traced"
+    )
