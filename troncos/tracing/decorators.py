@@ -6,8 +6,8 @@ from contextlib import contextmanager
 from functools import wraps
 from types import FunctionType
 from typing import Awaitable, Any, Callable, ParamSpec, Type, TypeVar, cast, overload
-import ddtrace
-from ddtrace.trace import tracer
+
+from ddtrace.trace import tracer, Span
 
 
 _TRACE_IGNORE_ATTR = "_trace_ignore"
@@ -26,7 +26,7 @@ def trace_block(
     service: str | None = None,
     span_type: str | None = None,
     attributes: dict[str | bytes, Any] | None = None,
-) -> Generator[ddtrace.Span, None, None]:
+) -> Generator[Span, None, None]:
     """
     Trace a code block using a with statement. Example:
 

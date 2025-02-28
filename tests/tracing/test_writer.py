@@ -1,8 +1,7 @@
 from contextlib import contextmanager
 from typing import Any, Generator
 
-from ddtrace import Tracer
-from ddtrace.trace import tracer
+from ddtrace.trace import tracer, Tracer
 from pytest_httpserver import HTTPServer
 
 from troncos.tracing._exporter import Exporter, ExporterType
@@ -19,7 +18,7 @@ def tracer_test(
 
     assert tracer.current_span() is None
 
-    tracer.configure(
+    tracer._configure(
         writer=OTELWriter(
             service_name=service_name,
             exporter=Exporter(
@@ -90,7 +89,7 @@ def test_headers(httpserver: HTTPServer) -> None:
     httpserver.expect_request("/v1/trace").respond_with_data("OK")
     httpserver.expect_request("/v1/trace/custom-header").respond_with_data("OK")
 
-    tracer.configure(
+    tracer._configure(
         writer=OTELWriter(
             service_name="test_headers",
             exporter=Exporter(

@@ -1,6 +1,6 @@
 from typing import Any
 
-from ddtrace import Span
+from ddtrace.trace import Span
 from ddtrace.internal.writer.writer import TraceWriter
 from opentelemetry.sdk.resources import Resource
 
