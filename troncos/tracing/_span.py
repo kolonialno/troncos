@@ -137,7 +137,7 @@ def translate_span(
     dd_span: DDSpan, default_resource: Resource, ignore_attrs: set[str]
 ) -> ReadableSpan:
     """Transelate a ddtrace span to an OTEL span."""
-    assert dd_span.duration_ns, "Span not finished."
+    assert dd_span.duration_ns is not None, "Span not finished."
 
     status, events, attributes = _span_status_and_attributes(
         dd_span, ignore_attrs=ignore_attrs
