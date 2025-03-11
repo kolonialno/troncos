@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.2.1](https://github.com/kolonialno/troncos/compare/5.2.0...5.2.1) (2025-03-11)
+
+
+### Bug Fixes
+
+* translate_span: Make assert more specific ([#370](https://github.com/kolonialno/troncos/issues/370)) ([1145be0](https://github.com/kolonialno/troncos/commit/1145be0fd97433aca8db45262799981943deee44))
+
 ## [5.2.0](https://github.com/kolonialno/troncos/compare/5.1.0...5.2.0) (2025-02-28)
 
 
