@@ -12,10 +12,12 @@ from ._span import default_ignore_attrs, translate_span
 class OTELWriter(TraceWriter):
     def __init__(
         self,
+        enabled: bool,
         service_name: str,
         exporter: Exporter,
         resource_attributes: dict[str, Any] | None,
     ) -> None:
+        self.enabled = enabled
         self.service_name = service_name
         self.resource_attributes = resource_attributes
         self.exporter = exporter
@@ -30,12 +32,16 @@ class OTELWriter(TraceWriter):
 
     def recreate(self) -> "OTELWriter":
         return self.__class__(
+            self.enabled,
             self.service_name,
             self.exporter,
             self.resource_attributes,
         )
 
     def write(self, spans: list[Span] | None = None) -> None:
+        if not self.enabled:
+            return
+
         if not spans:
             return
 
@@ -68,6 +74,9 @@ class OTELWriter(TraceWriter):
                 span_processor.on_end(span)
 
     def stop(self, timeout: float | None = None) -> None:
+        if not self.enabled:
+            return
+
         for span_processor in self.otel_span_processors:
             span_processor.force_flush(
                 timeout_millis=int(timeout * 1000) if timeout else 30000
@@ -75,5 +84,8 @@ class OTELWriter(TraceWriter):
             span_processor.shutdown()
 
     def flush_queue(self) -> None:
+        if not self.enabled:
+            return
+
         for span_processor in self.otel_span_processors:
             span_processor.force_flush()

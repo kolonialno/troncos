@@ -66,20 +66,21 @@ when the Grafana agent is used to collect spans using HTTP.
 
 ```python
 import ddtrace
+from ddtrace.trace import tracer
 
 from troncos.tracing import configure_tracer, Exporter
 
 # Configure tracer as described in the ddtrace docs.
 ddtrace.config.django["service_name"] = 'SERVICE_NAME'
 # These are added as span attributes
-ddtrace.tracer.set_tags(
+tracer.set_tags(
     tags={
         "key": "value",
     }
 )
 
 # Patch third-party modules
-ddtrace.patch_all()
+ddtrace.patch(django=True)
 
 # Configure the ddtrace tracer to send traces to Tempo.
 configure_tracer(

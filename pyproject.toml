@@ -15,7 +15,7 @@ documentation = "https://github.com/kolonialno/troncos"
 keywords = ["logs", "traces", "opentelemetry"]
 
 [tool.poetry.dependencies]
-ddtrace = ">=2,<4"
+ddtrace = ">=3.4.0,<4"
 opentelemetry-exporter-otlp-proto-grpc = { version = ">=1.19,<2", optional = true }
 opentelemetry-exporter-otlp-proto-http = ">=1.19,<2"
 opentelemetry-sdk = ">=1.19,<2"
@@ -88,9 +88,10 @@ filterwarnings = [
 addopts = [
   "--ignore=perf"
 ]
+env = [
+    "DD_TRACE_ENABLED=True",
+]
 
-[tool.pytest_env]
-DD_TRACE_ENABLED = "True"
 
 [tool.ruff]
 line-length = 88
