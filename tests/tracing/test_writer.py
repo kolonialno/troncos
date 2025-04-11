@@ -18,18 +18,18 @@ def tracer_test(
 
     assert tracer.current_span() is None
 
-    tracer._configure(
-        writer=OTELWriter(
-            service_name=service_name,
-            exporter=Exporter(
-                host=httpserver.host,
-                port=f"{httpserver.port}",
-                path="/v1/trace",
-                exporter_type=ExporterType.HTTP,
-            ),
-            resource_attributes=resource_attributes,
-        )
+    tracer._writer = OTELWriter(
+        enabled=True,
+        service_name=service_name,
+        exporter=Exporter(
+            host=httpserver.host,
+            port=f"{httpserver.port}",
+            path="/v1/trace",
+            exporter_type=ExporterType.HTTP,
+        ),
+        resource_attributes=resource_attributes,
     )
+    tracer._recreate()  # type: ignore
 
     yield tracer
 
@@ -89,20 +89,19 @@ def test_headers(httpserver: HTTPServer) -> None:
     httpserver.expect_request("/v1/trace").respond_with_data("OK")
     httpserver.expect_request("/v1/trace/custom-header").respond_with_data("OK")
 
-    tracer._configure(
-        writer=OTELWriter(
-            service_name="test_headers",
-            exporter=Exporter(
-                host=httpserver.host,
-                port=f"{httpserver.port}",
-                path="/v1/trace/custom-header",
-                exporter_type=ExporterType.HTTP,
-                headers={"test-header": "works"},
-            ),
-            resource_attributes={},
-        )
+    tracer._writer = OTELWriter(
+        enabled=True,
+        service_name="test_headers",
+        exporter=Exporter(
+            host=httpserver.host,
+            port=f"{httpserver.port}",
+            path="/v1/trace/custom-header",
+            exporter_type=ExporterType.HTTP,
+            headers={"test-header": "works"},
+        ),
+        resource_attributes={},
     )
-
+    tracer._recreate()  # type: ignore
     assert tracer.current_span() is None
 
     with tracer.trace("test"):
@@ -119,3 +118,33 @@ def test_headers(httpserver: HTTPServer) -> None:
     req, _ = relevant_requests[0]
 
     assert req.headers.get("test-header") == "works"
+
+
+def test_writer_disabled(httpserver: HTTPServer) -> None:
+    httpserver.expect_request("/v1/trace").respond_with_data("OK")
+
+    assert tracer.current_span() is None
+
+    tracer._writer = OTELWriter(
+        enabled=True,
+        service_name="test",
+        exporter=Exporter(
+            host=httpserver.host,
+            port=f"{httpserver.port}",
+            path="/v1/trace",
+            exporter_type=ExporterType.HTTP,
+        ),
+        resource_attributes={},
+    )
+    tracer._recreate()  # type: ignore
+
+    with tracer.trace("test"):
+        pass
+
+    tracer.flush()  # type: ignore[no-untyped-call]
+
+    relevant_requests = [
+        entry for entry in httpserver.log if entry[0].path == "/v1/trace/custom-header"
+    ]
+
+    assert not relevant_requests, "We should have gotten 0 request"
