@@ -1,5 +1,16 @@
 # Changelog
 
+## [6.0.0](https://github.com/kolonialno/troncos/compare/5.2.1...6.0.0) (2025-04-11)
+
+
+### ⚠ BREAKING CHANGES
+
+* ddtrace continiously makes it harder for us to replace the trace agent writer ([#372](https://github.com/kolonialno/troncos/issues/372))
+
+### Features
+
+* ddtrace continiously makes it harder for us to replace the trace agent writer ([#372](https://github.com/kolonialno/troncos/issues/372)) ([5d44d09](https://github.com/kolonialno/troncos/commit/5d44d09a28a774691ee1024f8ecf85a492055f14))
+
 ## [5.2.1](https://github.com/kolonialno/troncos/compare/5.2.0...5.2.1) (2025-03-11)
 
 
