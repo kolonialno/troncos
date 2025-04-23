@@ -48,7 +48,7 @@ def configure_tracer(
     # Reconfigure ddtrace to use our new writer.
     try:
         tracer._writer.stop()
-    except ServiceStatusError:
+    except (AttributeError, ServiceStatusError):
         pass
 
     tracer._writer = writer
