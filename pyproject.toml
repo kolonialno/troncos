@@ -31,7 +31,7 @@ sentry = ["structlog-sentry"]
 [tool.poetry.group.dev.dependencies]
 celery = "^5.3.4"
 django = "^5.0.0"
-django-environ = "^0.11.0"
+django-environ = "^0.12.0"
 fastapi = ">=0.115,<0.116"
 ipython = "^8.14.0"
 mkdocs-techdocs-core = "^1.2.3"
