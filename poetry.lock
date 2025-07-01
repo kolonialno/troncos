@@ -1758,15 +1758,15 @@ extra = ["pygments (>=2.12)"]
 
 [[package]]
 name = "pyroscope-io"
-version = "0.8.10"
+version = "0.8.11"
 description = "Pyroscope Python integration"
 optional = false
 python-versions = "*"
 files = [
-    {file = "pyroscope_io-0.8.10-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:2a12f79f4f541eed23828ebe64c136cdc3dc53a7d67b2e02a095b1477b7dcbf8"},
-    {file = "pyroscope_io-0.8.10-py2.py3-none-macosx_11_0_x86_64.whl", hash = "sha256:0bed2530bf25191eacd254dc8ae5aabb4110c66e7dc20c1167848dd746a614d7"},
-    {file = "pyroscope_io-0.8.10-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:625409b3c36640eab71cd02c1b2608296c3d6079c54623282394742c148f04c8"},
-    {file = "pyroscope_io-0.8.10-py2.py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:1f86c39864fc0987a47dde7b4750d2e35b29751267092ebcef9818b29724a5d6"},
+    {file = "pyroscope_io-0.8.11-py2.py3-none-macosx_11_0_arm64.whl", hash = "sha256:644dbd81b162b6d678ef9989649bf936c62373fd7bba16fb6490272f453ff159"},
+    {file = "pyroscope_io-0.8.11-py2.py3-none-macosx_11_0_x86_64.whl", hash = "sha256:2df4cd4cbfb451c27cad20f905bf612ffc306a96820e316f7575c84433eadb24"},
+    {file = "pyroscope_io-0.8.11-py2.py3-none-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:50164c96cf5533ce795a114c6181c5d2aa162c9dae59277b6ac557820c411b7a"},
+    {file = "pyroscope_io-0.8.11-py2.py3-none-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a415072dd7e8964d66001fff2446d7426a505cfca1a89f3c912314537622a4cd"},
 ]
 
 [package.dependencies]
