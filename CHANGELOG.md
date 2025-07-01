@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.1](https://github.com/kolonialno/troncos/compare/6.1.0...6.1.1) (2025-07-01)
+
+
+### Bug Fixes
+
+* Dont flush on stop() ([#395](https://github.com/kolonialno/troncos/issues/395)) ([3be9eda](https://github.com/kolonialno/troncos/commit/3be9edab18a0db760f5eb3e937149bd525ea14a3))
+
 ## [6.1.0](https://github.com/kolonialno/troncos/compare/6.0.0...6.1.0) (2025-07-01)
 
 
