@@ -95,7 +95,8 @@ configure_tracer(
         "tenant": "tenant",
         "owner": "owner",
         "version": "version",
-    }
+    },
+    enabled=True,
 )
 ```
 
@@ -149,6 +150,7 @@ configure_tracer(
         host = "127.0.0.1", # Usually obtained from env variables.
         port = "4317",
     ),
+    enabled=True,
 )
 ```
 
@@ -164,6 +166,7 @@ configure_tracer(
         host = "127.0.0.1", # Usually obtained from env variables.
         headers={"my": "header"},
     ),
+    enabled=True,
 )
 ```
 

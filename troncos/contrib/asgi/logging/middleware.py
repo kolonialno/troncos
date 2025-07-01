@@ -93,6 +93,9 @@ class Headers(Mapping[str, str]):
             return False
         return sorted(self._list) == sorted(other._list)
 
+    def __hash__(self) -> int:
+        return hash(tuple(sorted(self._list)))
+
 
 class AsgiLoggingMiddleware:
     """

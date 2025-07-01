@@ -6,6 +6,7 @@ from pytest_httpserver import HTTPServer
 
 from troncos.tracing._exporter import Exporter, ExporterType
 from troncos.tracing._writer import OTELWriter
+from troncos.tracing import _replace_writer
 
 
 @contextmanager
@@ -18,7 +19,7 @@ def tracer_test(
 
     assert tracer.current_span() is None
 
-    tracer._writer = OTELWriter(
+    writer = OTELWriter(
         enabled=True,
         service_name=service_name,
         exporter=Exporter(
@@ -29,7 +30,8 @@ def tracer_test(
         ),
         resource_attributes=resource_attributes,
     )
-    tracer._recreate()  # type: ignore
+
+    _replace_writer(tracer, writer)
 
     yield tracer
 
@@ -89,7 +91,7 @@ def test_headers(httpserver: HTTPServer) -> None:
     httpserver.expect_request("/v1/trace").respond_with_data("OK")
     httpserver.expect_request("/v1/trace/custom-header").respond_with_data("OK")
 
-    tracer._writer = OTELWriter(
+    writer = OTELWriter(
         enabled=True,
         service_name="test_headers",
         exporter=Exporter(
@@ -101,7 +103,8 @@ def test_headers(httpserver: HTTPServer) -> None:
         ),
         resource_attributes={},
     )
-    tracer._recreate()  # type: ignore
+    _replace_writer(tracer, writer)
+
     assert tracer.current_span() is None
 
     with tracer.trace("test"):
@@ -125,7 +128,7 @@ def test_writer_disabled(httpserver: HTTPServer) -> None:
 
     assert tracer.current_span() is None
 
-    tracer._writer = OTELWriter(
+    writer = OTELWriter(
         enabled=True,
         service_name="test",
         exporter=Exporter(
@@ -136,7 +139,7 @@ def test_writer_disabled(httpserver: HTTPServer) -> None:
         ),
         resource_attributes={},
     )
-    tracer._recreate()  # type: ignore
+    _replace_writer(tracer, writer)
 
     with tracer.trace("test"):
         pass
