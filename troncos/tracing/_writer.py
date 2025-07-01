@@ -78,9 +78,6 @@ class OTELWriter(TraceWriter):
             return
 
         for span_processor in self.otel_span_processors:
-            span_processor.force_flush(
-                timeout_millis=int(timeout * 1000) if timeout else 30000
-            )
             span_processor.shutdown()
 
     def flush_queue(self) -> None:
