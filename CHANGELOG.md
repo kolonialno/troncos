@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.1.0](https://github.com/kolonialno/troncos/compare/6.0.0...6.1.0) (2025-07-01)
+
+
+### Features
+
+* Upgrade dependencies, pin ddtrace, and fix writer replacement ([#393](https://github.com/kolonialno/troncos/issues/393)) ([0ccd836](https://github.com/kolonialno/troncos/commit/0ccd836fe0713f4091972831a989b12e594eeb0d))
+
 ## [6.0.0](https://github.com/kolonialno/troncos/compare/5.2.1...6.0.0) (2025-04-11)
 
 
