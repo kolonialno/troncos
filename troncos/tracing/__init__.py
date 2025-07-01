@@ -1,6 +1,6 @@
 from typing import Any
 
-from ddtrace.trace import tracer
+from ddtrace.trace import tracer, Tracer
 from ddtrace.internal.service import ServiceStatusError
 from ._exporter import Exporter, ExporterType
 from ._writer import OTELWriter
@@ -29,6 +29,20 @@ def create_trace_writer(
     )
 
 
+def _replace_writer(_tracer: Tracer, writer: OTELWriter) -> None:
+    """Replace the writer used by the tracer."""
+    try:
+        _tracer._span_aggregator.writer.stop()
+    except ServiceStatusError:
+        pass
+
+    _tracer._span_aggregator.writer = writer
+    _tracer._recreate()  # type: ignore
+
+    # Make sure the new writer is used
+    assert isinstance(_tracer._span_aggregator.writer, OTELWriter)
+
+
 def configure_tracer(
     *,
     service_name: str,
@@ -45,11 +59,4 @@ def configure_tracer(
         enabled=enabled,
     )
 
-    # Reconfigure ddtrace to use our new writer.
-    try:
-        tracer._writer.stop()
-    except ServiceStatusError:
-        pass
-
-    tracer._writer = writer
-    tracer._recreate()  # type: ignore
+    _replace_writer(tracer, writer)
