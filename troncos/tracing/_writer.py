@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 
 from ddtrace.trace import Span
 from ddtrace.internal.writer.writer import TraceWriter
@@ -30,7 +30,7 @@ class OTELWriter(TraceWriter):
             set(self.otel_default_resource.attributes.keys()) | default_ignore_attrs()
         )
 
-    def recreate(self) -> "OTELWriter":
+    def recreate(self, appsec_enabled: Optional[bool] = None) -> "OTELWriter":
         return self.__class__(
             self.enabled,
             self.service_name,

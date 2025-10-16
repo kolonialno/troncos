@@ -37,7 +37,7 @@ def _replace_writer(_tracer: Tracer, writer: OTELWriter) -> None:
         pass
 
     _tracer._span_aggregator.writer = writer
-    _tracer._recreate()  # type: ignore
+    _tracer._recreate()
 
     # Make sure the new writer is used
     assert isinstance(_tracer._span_aggregator.writer, OTELWriter)

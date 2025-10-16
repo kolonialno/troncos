@@ -5,7 +5,7 @@
 
 <p align="center">
     <em>
-        Collection of Python logging, tracing and profiling tools
+        Collection of Python logging and tracing tools
     </em>
     <br>
     <a href="https://github.com/kolonialno/troncos/actions?workflow=CI">
@@ -24,7 +24,6 @@
 - [Etymology](#etymology)
 - [Installation](#installation)
 - [Tracing](#tracing)
-- [Profiling](#profiling)
 - [Logging](#logging)
 <!-- TOC -->
 
@@ -234,97 +233,6 @@ from troncos.contrib.celery.logging.signals import (
 )
 
 connect_troncos_logging_celery_signals()
-```
-
-## Profiling
-
-### Enabling the continuous py-spy profiler
-
-Start the profiler by running the `start_py_spy_profiler` method early in your application. This is
-typically done in `settings.py` of you want to profile a Django application, or in `__init__.py`
-in the root project package.
-
-```python
-from troncos.profiling import start_py_spy_profiler
-
-start_py_spy_profiler(server_address="http://127.0.0.1:4100")
-```
-
-### Enabling the ddtrace profiler
-
-Start the profiler by importing the profiler module early in your application. This is
-typically done in `settings.py` of you want to profile a Django application, or in `__init__.py`
-in the root project package.
-
-<!--pytest.mark.skip-->
-```python
-import troncos.profiling.auto
-```
-
-#### Setup profile endpoint
-
-Use one of the methods bellow based on your selected framework.
-
-##### Django
-
-Add the profile view to the url config.
-
-```python
-from django.urls import path
-
-from troncos.contrib.django.profiling.views import profiling_view
-
-urlpatterns = [
-    path("/debug/pprof", profiling_view, name="profiling"),
-]
-```
-
-##### Starlette
-
-Add the profile view to your router.
-
-```python
-from starlette.routing import Route
-
-from troncos.contrib.starlette.profiling.views import profiling_view
-
-routes = [
-    Route("/debug/pprof", profiling_view),
-]
-```
-
-##### ASGI
-
-Mount the generic ASGI profiling application. There is no generic way to do this,
-please check the relevant ASGI framework documentation.
-
-```python
-from troncos.contrib.asgi.profiling.app import profiling_asgi_app
-
-# FastAPI example
-from fastapi import FastAPI
-
-app = FastAPI()
-
-app.mount("/debug/pprof", profiling_asgi_app)
-```
-
-#### Verify setup
-
-You can verify that your setup works with the [pprof](https://github.com/google/pprof) cli:
-
-```console
-pprof -http :6060 "http://localhost:8080/debug/pprof"
-```
-
-#### Enable scraping
-
-When you deploy your application, be sure to use the custom oda annotation for scraping:
-
-```yaml
-annotations:
-  phlare.oda.com/port: "8080"
-  phlare.oda.com/scrape: "true"
 ```
 
 ## Logging
