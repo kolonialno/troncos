@@ -1,5 +1,16 @@
 # Changelog
 
+## [7.0.0](https://github.com/kolonialno/troncos/compare/6.1.1...7.0.0) (2025-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* Bump ddtrace and remove profiling support ([#408](https://github.com/kolonialno/troncos/issues/408))
+
+### Features
+
+* Bump ddtrace and remove profiling support ([#408](https://github.com/kolonialno/troncos/issues/408)) ([5869d7f](https://github.com/kolonialno/troncos/commit/5869d7fcd121b0cbf5701f7b53f731734559693e))
+
 ## [6.1.1](https://github.com/kolonialno/troncos/compare/6.1.0...6.1.1) (2025-07-01)
 
 
