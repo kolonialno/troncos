@@ -3,7 +3,7 @@ kind: Component
 metadata:
   name: troncos
   description:
-    🪵 Troncos - Collection of logging, tracing and profiling tools.
+    🪵 Troncos - Collection of logging and tracing tools.
   annotations:
     github.com/project-slug: kolonialno/troncos
     backstage.io/techdocs-ref: dir:.
