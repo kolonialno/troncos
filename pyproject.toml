@@ -32,7 +32,7 @@ sentry = ["structlog-sentry"]
 celery = "^5.3.4"
 django = "^5.2.3"
 django-environ = "^0.12.0"
-fastapi = ">=0.115,<0.116"
+fastapi = ">=0.120,<0.121"
 ipython = "^9.3.0"
 mkdocs-techdocs-core = "^1.5.4"
 mypy = "^1.16.1"
