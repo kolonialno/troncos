@@ -1,5 +1,21 @@
 # Changelog
 
+## [8.0.0](https://github.com/kolonialno/troncos/compare/7.0.0...8.0.0) (2025-12-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* Upgrade to ddtrace 4.0 ([#422](https://github.com/kolonialno/troncos/issues/422))
+
+### Features
+
+* Upgrade to ddtrace 4.0 ([#422](https://github.com/kolonialno/troncos/issues/422)) ([6da2821](https://github.com/kolonialno/troncos/commit/6da2821532a8463b452f1c1699c77e0c7757191a))
+
+
+### Bug Fixes
+
+* Remove unused pyroscope-io dependency ([#420](https://github.com/kolonialno/troncos/issues/420)) ([b915b1c](https://github.com/kolonialno/troncos/commit/b915b1c1066d8257dfe58e5e09f89926804163eb))
+
 ## [7.0.0](https://github.com/kolonialno/troncos/compare/6.1.1...7.0.0) (2025-10-16)
 
 
