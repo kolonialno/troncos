@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.1](https://github.com/kolonialno/troncos/compare/8.0.0...8.0.1) (2026-01-07)
+
+
+### Bug Fixes
+
+* Upgrade dependencies ([#434](https://github.com/kolonialno/troncos/issues/434)) ([649e78d](https://github.com/kolonialno/troncos/commit/649e78d0917db29406ad43f2b3e37a61fbdd6692))
+
 ## [8.0.0](https://github.com/kolonialno/troncos/compare/7.0.0...8.0.0) (2025-12-12)
 
 
