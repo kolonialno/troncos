@@ -48,7 +48,7 @@ types-requests = "^2.32.4.20260107"
 ruff = "^0.14.10"
 pytest-env = "^1.2.0"
 pydantic = "^2.12.5"
-cffi = "^1.17.1"
+cffi = "^2.0.0"
 grpcio = "^1.76.0"
 
 
