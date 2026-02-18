@@ -55,13 +55,10 @@ For more information, read the [Attribute and Resource](https://opentelemetry.io
 
 ### Enabling the tracer
 
-Configure ddtrace as usual and run `configure_tracer` to send spans to Tempo.
+ Run `configure_tracer` to send spans to Tempo and configure ddtrace as usual.
 
-This is typically done in `settings.py` of you want to profile a Django application,
-or in `__init__.py` in the root project package.
-
-`TRACE_HOST` is usually the host IP of the K8s pod, `TRACE_PORT` is usually 4318
-when the Grafana agent is used to collect spans using HTTP.
+`TRACE_HOST` is usually the hostname of a trace collector, `TRACE_PORT` is usually 4318
+when Grafana Alloy is used to collect spans using HTTP.
 
 ```python
 import ddtrace
@@ -69,34 +66,74 @@ from ddtrace.trace import tracer
 
 from troncos.tracing import configure_tracer, Exporter
 
-# Configure tracer as described in the ddtrace docs.
-ddtrace.config.django["service_name"] = 'SERVICE_NAME'
-# These are added as span attributes
-tracer.set_tags(
-    tags={
-        "key": "value",
-    }
-)
+def setup_tracing():
+    # Configure the ddtrace tracer to send traces to Tempo.
+    configure_tracer(
+        service_name='SERVICE_NAME',
+        exporter=Exporter(
+            # Usually obtained from env variables.
+            host = "otel-collector.monitoring.svc.cluster.local",
+        ),
+        resource_attributes={
+            "app": "app",
+            "component": "component",
+            "role": "role",
+            "tenant": "tenant",
+            "owner": "owner",
+            "version": "version",
+        },
+        enabled=True,
+    )
 
-# Patch third-party modules
-ddtrace.patch(django=True)
+    # Configure tracer as described in the ddtrace docs.
+    ddtrace.config.django["service_name"] = 'SERVICE_NAME'
+    # These are added as span attributes
+    tracer.set_tags(
+        tags={
+            "key": "value",
+        }
+    )
 
-# Configure the ddtrace tracer to send traces to Tempo.
-configure_tracer(
-    service_name='SERVICE_NAME',
-    exporter=Exporter(
-        host = "127.0.0.1",  # Usually obtained from env variables.
-    ),
-    resource_attributes={
-        "app": "app",
-        "component": "component",
-        "role": "role",
-        "tenant": "tenant",
-        "owner": "owner",
-        "version": "version",
-    },
-    enabled=True,
-)
+    # Patch third-party modules
+    ddtrace.patch(django=True)
+```
+
+Enabling tracing must be done after any subprocesses have started, or
+it may cause deadlocks between processes. Dropping the code into
+e.g. settings.py might be problematic.
+
+Examples include in Celery signals, gunicon fork events, and so on.
+
+```python
+from typing import Any
+
+from celery import signals
+
+# gunicorn:
+def post_fork(server: Any, worker: Any) -> None:
+    setup_tracing()
+
+# celery master process
+@signals.worker_ready.connect  # type: ignore
+def worker_ready(**kwargs: Any) -> None:
+    setup_tracing()
+
+# celery worker process
+@signals.worker_process_init.connect  # type: ignore
+def worker_process_init_handler(**kwargs: Any) -> None:
+    setup_tracing()
+
+# celery beat
+@signals.beat_init.connect  # type: ignore
+def beat_init_handler(**kwargs: Any) -> None:
+    setup_tracing()
+
+# manage.py
+def main() -> None:
+    setup_tracing()
+
+    # ...
+    execute_from_command_line(sys.argv)
 ```
 
 ddtrace also uses env variables to configure the service name, environment and version etc.
