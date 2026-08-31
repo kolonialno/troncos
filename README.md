@@ -166,14 +166,14 @@ The port is usually `4317` when the Grafana agent is used to collect
 spans using GRPC.
 
 ```console
-poetry add troncos -E grpc
+uv add "troncos[grpc]"
 ```
 
 or
 
 ```toml
-[tool.poetry.dependencies]
-troncos = {version="?", extras = ["grpc"]}
+[project]
+dependencies = ["troncos[grpc]"]
 ```
 
 ```python
@@ -223,8 +223,8 @@ resource attributes, span name, parent/child linkage, span kind, numeric span
 tags, and exception events. Run it after any dependency upgrade:
 
 ```console
-make test
-# or, without the build system:
+mise run test
+# or, without the task runner:
 pytest tests/tracing/test_e2e.py -v
 ```
 
@@ -271,17 +271,17 @@ Timing all five arms takes about 1.2 seconds.
 Print the current numbers:
 
 ```console
-make perf
-# or, without the build system:
+mise run perf
+# or, without the task runner:
 pytest tests/tracing/test_perf.py -v -s
 ```
 
-Record and compare absolute benchmarks (skipped during `make test`):
+Record and compare absolute benchmarks (skipped during `mise run test`):
 
 ```console
-make benchmark
-make benchmark-cmp BENCH_CMP=0001
-# or, without the build system:
+mise run benchmark
+BENCH_CMP=0001 mise run benchmark-cmp
+# or, without the task runner:
 pytest tests --benchmark-enable --benchmark-only --benchmark-autosave
 pytest tests --benchmark-enable --benchmark-only --benchmark-compare=0001 \
   --benchmark-compare-fail=mean:25%
@@ -291,11 +291,11 @@ Choose which implementations to measure, and loosen the gates, with environment
 variables:
 
 ```console
-TRONCOS_PERF_ARMS=opentelemetry-http,troncos-http make perf
-TRONCOS_PERF_ARMS=opentelemetry-grpc,troncos-grpc make perf
-TRONCOS_PERF_MAX_DDTRACE_RATIO=15 make perf
-TRONCOS_PERF_MAX_OPENTELEMETRY_HTTP_RATIO=3 make perf
-TRONCOS_PERF_MAX_OPENTELEMETRY_GRPC_RATIO=3 make perf
+TRONCOS_PERF_ARMS=opentelemetry-http,troncos-http mise run perf
+TRONCOS_PERF_ARMS=opentelemetry-grpc,troncos-grpc mise run perf
+TRONCOS_PERF_MAX_DDTRACE_RATIO=15 mise run perf
+TRONCOS_PERF_MAX_OPENTELEMETRY_HTTP_RATIO=3 mise run perf
+TRONCOS_PERF_MAX_OPENTELEMETRY_GRPC_RATIO=3 mise run perf
 ```
 
 If a gate flakes on a contended runner, raise its limit rather than removing
@@ -372,7 +372,7 @@ related tools to make instrumenting your code easier.
 
 Troncos contains a helper method that lets you configure Structlog.
 
-First, run `poetry add structlog` to install structlog in your project.
+First, run `uv add structlog` to install structlog in your project.
 
 You can now replace your existing logger config with
 

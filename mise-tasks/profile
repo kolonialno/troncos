@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+#MISE description="Profile the benchmarks and open snakeviz"
+#
+# Override the pytest selection with BENCH_ARGS.
+set -euo pipefail
+
+prof_dir=".prof"
+prof_file="${prof_dir}/$(date +%H%M%S).prof"
+bench_args="${BENCH_ARGS:---benchmark-enable --benchmark-only}"
+
+mkdir -p "${prof_dir}"
+# shellcheck disable=SC2086
+uv run --all-extras python -m cProfile -o "${prof_file}" -m pytest tests ${bench_args}
+uv run --all-extras snakeviz "${prof_file}"

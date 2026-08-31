@@ -9,7 +9,7 @@ the gate that needs them skips.
 The ratio tests always run and are the regression gate: ratios between arms stay
 meaningful on a shared CI runner where absolute timings do not. The
 pytest-benchmark tests record absolute timings and are opt-in via
-`make benchmark`.
+`mise run benchmark`.
 
 Each arm is timed over GATE_ROUNDS rounds and summarised twice. The reported
 number is the mean with its relative spread, because that is the number worth
@@ -21,8 +21,8 @@ follows those rounds and the median does not, which makes the median the more
 reproducible basis for a gate: over 12 trials the run-to-run standard deviation
 of the ratio was 0.036 on medians against 0.045 on means.
 
-    TRONCOS_PERF_ARMS=opentelemetry-http,troncos-http make perf
-    TRONCOS_PERF_MAX_DDTRACE_RATIO=6 make perf
+    TRONCOS_PERF_ARMS=opentelemetry-http,troncos-http mise run perf
+    TRONCOS_PERF_MAX_DDTRACE_RATIO=6 mise run perf
 """
 
 import os
