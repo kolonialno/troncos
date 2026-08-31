@@ -210,6 +210,97 @@ configure_tracer(
 
 Manual instrumentation of your code is described in the [ddtrace docs](https://ddtrace.readthedocs.io/en/stable/basic_usage.html#manual-instrumentation).
 
+### Verifying tracing after a dependency upgrade
+
+Troncos bridges `ddtrace` to OpenTelemetry, which means it depends on internals
+of both libraries. A `ddtrace` or `opentelemetry` bump can therefore break trace
+export without breaking any import.
+
+`tests/tracing/test_e2e.py` exists to catch that. It drives only the public API
+(`configure_tracer`, `Exporter`, the decorators), exports to a local collector,
+and decodes the OTLP protobuf that arrives, asserting on each translated field:
+resource attributes, span name, parent/child linkage, span kind, numeric span
+tags, and exception events. Run it after any dependency upgrade:
+
+```console
+make test
+# or, without the build system:
+pytest tests/tracing/test_e2e.py -v
+```
+
+> **Note**: troncos exports **traces** only; it has no OTLP metrics pipeline.
+> The "metrics" it handles are ddtrace's numeric span tags (`Span.set_metric`),
+> which become typed OTLP span attributes.
+
+### Performance regression tests
+
+`tests/tracing/test_perf.py` measures the same span workload through several
+interchangeable implementations, so their cost can be compared directly:
+
+| Arm | What it measures |
+| --- | --- |
+| `ddtrace` | ddtrace instrumentation exporting msgpack through its own `AgentWriter` |
+| `opentelemetry-http` | the OpenTelemetry SDK over OTLP/HTTP, no ddtrace involved |
+| `troncos-http` | ddtrace instrumentation plus troncos' translation and OTLP/HTTP export |
+| `opentelemetry-grpc` | the OpenTelemetry SDK over OTLP/gRPC |
+| `troncos-grpc` | troncos over OTLP/gRPC, the transport the Grafana agent receives on at 4317 |
+
+The suffix is the OTLP transport, so `troncos-http` and `troncos-grpc` are the
+same implementation over 4318 and 4317. `ddtrace` has no suffix because it
+speaks the Datadog agent protocol rather than OTLP, so it has no transport to
+choose.
+
+Every arm exports to a local endpoint, so the comparison is between encoding
+and translation costs rather than between exporting and not exporting. Each
+gate compares troncos against the arm on the *same* transport, so the ratio
+measures translation cost rather than the difference between HTTP and gRPC.
+
+The `-grpc` arms need the optional `grpc` extra. Without it they drop out of the
+arm list and their gate skips, so the HTTP gates keep working.
+
+Three ratio assertions run as part of the normal test suite and fail if troncos
+becomes disproportionately expensive. Ratios are used rather than absolute
+timings because they stay meaningful on a shared CI runner.
+
+Each arm is timed over 25 rounds of 50 iterations, after 5 warmup rounds. The
+printed table reports the mean and its relative spread. The gates compare
+medians, because roughly 1 round in 60 runs long, usually alongside a
+generation-2 GC pass, and the mean follows that tail while the median does not.
+Timing all five arms takes about 1.2 seconds.
+
+Print the current numbers:
+
+```console
+make perf
+# or, without the build system:
+pytest tests/tracing/test_perf.py -v -s
+```
+
+Record and compare absolute benchmarks (skipped during `make test`):
+
+```console
+make benchmark
+make benchmark-cmp BENCH_CMP=0001
+# or, without the build system:
+pytest tests --benchmark-enable --benchmark-only --benchmark-autosave
+pytest tests --benchmark-enable --benchmark-only --benchmark-compare=0001 \
+  --benchmark-compare-fail=mean:25%
+```
+
+Choose which implementations to measure, and loosen the gates, with environment
+variables:
+
+```console
+TRONCOS_PERF_ARMS=opentelemetry-http,troncos-http make perf
+TRONCOS_PERF_ARMS=opentelemetry-grpc,troncos-grpc make perf
+TRONCOS_PERF_MAX_DDTRACE_RATIO=15 make perf
+TRONCOS_PERF_MAX_OPENTELEMETRY_HTTP_RATIO=3 make perf
+TRONCOS_PERF_MAX_OPENTELEMETRY_GRPC_RATIO=3 make perf
+```
+
+If a gate flakes on a contended runner, raise its limit rather than removing
+the check.
+
 ### Add tracing context to your log
 
 Adding the tracing context to your log makes it easier to find relevant traces in Grafana.

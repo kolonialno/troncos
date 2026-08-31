@@ -59,15 +59,14 @@ def _span_kind(dd_span: DDSpan) -> SpanKind:
     return _span_kind_map.get(dd_kind, SpanKind.INTERNAL)
 
 
+# Keys come from ddtrace rather than being hardcoded: ddtrace 4.x renamed
+# "error.msg" to "error.message", which silently dropped exception messages from
+# exported spans. The pre-4.x names stay mapped so a downgrade cannot bring the
+# same data loss back.
 _dd_span_err_attr_mapping = {
-    # Read the keys off ddtrace instead of hardcoding them: ddtrace renamed
-    # "error.msg" to "error.message" in 4.x, which silently dropped the
-    # exception message from exported spans.
     constants.ERROR_MSG: "exception.message",
     constants.ERROR_TYPE: "exception.type",
     constants.ERROR_STACK: "exception.stacktrace",
-    # Keys used by older ddtrace releases, kept so a downgrade does not
-    # reintroduce the same silent data loss.
     "error.msg": "exception.message",
     "error.type": "exception.type",
     "error.stack": "exception.stacktrace",
