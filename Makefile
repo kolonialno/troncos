@@ -45,6 +45,30 @@ fix-ruff-format: .venv | $(BASE) ; $(info $(M) running ruff format…) @ ## Run 
 test: .venv ; $(info $(M) running tests...) @ ## Run tests
 	$Q $(POETRY) run pytest --cov-report $(TEST_COV_REP) --cov $(PACKAGE) --codeblocks -v
 
+BENCH_ARGS ?= --benchmark-enable --benchmark-only
+BENCH_CMP  ?= 0001
+
+.PHONY: benchmark
+benchmark: .venv ; $(info $(M) running benchmarks...) @ ## Run and save benchmarks
+	$Q $(POETRY) run pytest $(TESTS) ${BENCH_ARGS} --benchmark-autosave
+
+.PHONY: benchmark-cmp
+benchmark-cmp: .venv ; $(info $(M) comparing benchmarks to ${BENCH_CMP}...) @ ## Run benchmarks and compare to a saved run
+	$Q $(POETRY) run pytest $(TESTS) ${BENCH_ARGS} --benchmark-compare=${BENCH_CMP} --benchmark-compare-fail=mean:25%
+
+.PHONY: perf
+perf: .venv ; $(info $(M) running performance gate...) @ ## Run the performance regression gate and print per-arm timings
+	$Q $(POETRY) run pytest $(TESTS)/tracing/test_perf.py -v -s
+
+PROF_DIR  := .prof
+PROF_FILE := ${PROF_DIR}/$(shell date +%H%M%S).prof
+
+.PHONY: profile
+profile: .venv ; $(info $(M) profiling benchmarks...) @ ## Profile the benchmarks and open snakeviz
+	$Q mkdir -p ${PROF_DIR}
+	$Q $(POETRY) run python -m cProfile -o ${PROF_FILE} -m pytest $(TESTS) ${BENCH_ARGS}
+	$Q $(POETRY) run snakeviz ${PROF_FILE}
+
 .PHONY: release
 release: lint test ; $(info $(M) running tests...) @ ## Release to PYPI
 	$Q $(POETRY) publish --build --username=__token__ --password=$(PYPI_TOKEN)
