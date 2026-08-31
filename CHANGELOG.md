@@ -1,5 +1,18 @@
 # Changelog
 
+## [8.0.2](https://github.com/kolonialno/troncos/compare/8.0.1...8.0.2) (2026-08-31)
+
+
+### Bug Fixes
+
+* **deps:** upgrade ddtrace to 4.14.0, fix internals usage ([#464](https://github.com/kolonialno/troncos/issues/464)) ([ae7ae35](https://github.com/kolonialno/troncos/commit/ae7ae358e83d45fcc64008c2290009e4527178f5))
+* export exception.message for ddtrace 4.x error tags ([#458](https://github.com/kolonialno/troncos/issues/458)) ([00f2b2c](https://github.com/kolonialno/troncos/commit/00f2b2c0ebac5bc7545107fd0efe45d40a9ad5c9))
+
+
+### Documentation
+
+* Add instructions for setting up traces after process forking ([#449](https://github.com/kolonialno/troncos/issues/449)) ([8b7deb3](https://github.com/kolonialno/troncos/commit/8b7deb33642e26664ac267edea1b54d3d9c61653))
+
 ## [8.0.1](https://github.com/kolonialno/troncos/compare/8.0.0...8.0.1) (2026-01-07)
 
 
