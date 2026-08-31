@@ -4,9 +4,9 @@ Black box on purpose: these tests touch only troncos' public API and ddtrace's
 public tracer, then assert on the decoded OTLP payload that reached a local
 collector. One configure_tracer plus tracer.trace() call exercises every
 third-party internal troncos depends on (Tracer._span_aggregator,
-Tracer._recreate, the TraceWriter interface, Span._meta/._metrics/._parent, and
-the OTel SDK internals behind ReadableSpan), so a dependency bump that moves any
-of them fails here.
+Tracer._recreate, the TraceWriter interface, Span.get_tags()/get_metrics()/
+._parent, and the OTel SDK internals behind ReadableSpan), so a dependency bump
+that moves any of them fails here.
 
 Troncos exports traces only; it has no OTLP metrics pipeline. The "metrics" it
 handles are ddtrace's numeric span tags, covered by
@@ -238,20 +238,25 @@ def test_string_tags_become_span_attributes(any_traces: TraceCollector) -> None:
 def test_numeric_metrics_become_numeric_attributes(any_traces: TraceCollector) -> None:
     """The only "metrics" surface troncos has.
 
-    Span.set_metric writes into Span._metrics, which troncos folds into span
-    attributes. Arriving as strings would break numeric queries in the backend.
+    Span.set_metric writes into ddtrace's numeric attribute store, which
+    troncos folds into span attributes. Arriving as strings would break
+    numeric queries in the backend.
+
+    Uses non-reserved key names: ddtrace stores some well-known semantic
+    keys (e.g. "http.status_code") as string tags regardless of which
+    setter is called, which would defeat this test.
     """
     any_traces.configure(service_name="checkout-api")
 
     with tracer.trace("op") as span:
-        span.set_metric("http.status_code", 200)
+        span.set_metric("queue.depth", 200)
         span.set_metric("db.rows_returned", 42)
         span.set_metric("cache.hit_ratio", 0.75)
 
     exported = span_named(any_traces.collect(), "op")
 
-    assert exported.attributes["http.status_code"] == 200
-    assert isinstance(exported.attributes["http.status_code"], int)
+    assert exported.attributes["queue.depth"] == 200
+    assert isinstance(exported.attributes["queue.depth"], int)
 
     assert exported.attributes["db.rows_returned"] == 42
     assert isinstance(exported.attributes["db.rows_returned"], int)

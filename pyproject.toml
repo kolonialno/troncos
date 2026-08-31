@@ -19,7 +19,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-  "ddtrace==4.7.2",
+  "ddtrace==4.14.0",
   "opentelemetry-exporter-otlp-proto-http>=1.19,<2",
   "opentelemetry-sdk>=1.19,<2",
   "python-ipware>=2,<4",
