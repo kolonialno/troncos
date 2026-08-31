@@ -5,7 +5,8 @@
 
 ```console
 pre-commit install
-poetry install
+mise install
+mise run install
 ```
 
 ## Release

@@ -1,0 +1,64 @@
+# Tooling and task runner for troncos.
+# Tools are installed with `mise install`; tasks run with `mise run <task>`
+# (list them with `mise tasks`). Dependencies are managed by uv.
+
+[tools]
+python = "3.13.5"
+uv = "0.12.1"
+
+[tasks.install]
+description = "Install all dependencies (including extras)"
+run = "uv sync --all-extras"
+
+[tasks.lint]
+description = "Run all linters"
+depends = ["lint:mypy", "lint:ruff-check", "lint:ruff-format"]
+
+[tasks."lint:mypy"]
+description = "Run the mypy type checker"
+run = "uv run --all-extras mypy troncos tests"
+
+[tasks."lint:ruff-check"]
+description = "Run the ruff linter"
+run = "uv run --all-extras ruff check troncos tests"
+
+[tasks."lint:ruff-format"]
+description = "Check formatting with ruff"
+run = "uv run --all-extras ruff format troncos tests --check"
+
+[tasks.fix]
+description = "Run all fixers"
+depends = ["fix:ruff-check", "fix:ruff-format"]
+
+[tasks."fix:ruff-check"]
+description = "Fix lint violations with ruff"
+run = "uv run --all-extras ruff check troncos tests --fix"
+
+[tasks."fix:ruff-format"]
+description = "Format code with ruff"
+run = "uv run --all-extras ruff format troncos tests"
+
+[tasks.test]
+description = "Run the test suite with coverage (override format via TEST_COV_REP)"
+run = "uv run --all-extras pytest --cov-report ${TEST_COV_REP:-html} --cov troncos --codeblocks -v"
+
+[tasks.perf]
+description = "Run the performance regression gate and print per-arm timings"
+run = "uv run --all-extras pytest tests/tracing/test_perf.py -v -s"
+
+[tasks.benchmark]
+description = "Run and save benchmarks (override args via BENCH_ARGS)"
+run = "uv run --all-extras pytest tests ${BENCH_ARGS:---benchmark-enable --benchmark-only} --benchmark-autosave"
+
+[tasks."benchmark-cmp"]
+description = "Run benchmarks and compare to a saved run (override via BENCH_CMP)"
+run = "uv run --all-extras pytest tests ${BENCH_ARGS:---benchmark-enable --benchmark-only} --benchmark-compare=${BENCH_CMP:-0001} --benchmark-compare-fail=mean:25%"
+
+[tasks."copy-docs"]
+description = "Stage docs for mkdocs"
+run = "mkdir -p docs && cp README.md docs/"
+
+[tasks.docs]
+description = "Serve the documentation locally"
+depends = ["copy-docs"]
+run = "uv run --all-extras mkdocs serve --verbose"

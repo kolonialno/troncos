@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Build and publish the package to PyPI"
+#MISE depends=["lint", "test"]
+#
+# Requires PYPI_TOKEN in the environment (a PyPI API token).
+set -euo pipefail
+
+uv build
+uv publish --token "${PYPI_TOKEN:?PYPI_TOKEN must be set to publish}"
