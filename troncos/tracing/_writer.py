@@ -30,7 +30,11 @@ class OTELWriter(TraceWriter):
             set(self.otel_default_resource.attributes.keys()) | default_ignore_attrs()
         )
 
-    def recreate(self, appsec_enabled: Optional[bool] = None) -> "OTELWriter":
+    def recreate(
+        self,
+        appsec_enabled: Optional[bool] = None,
+        llmobs_enabled: Optional[bool] = None,
+    ) -> "OTELWriter":
         return self.__class__(
             self.enabled,
             self.service_name,

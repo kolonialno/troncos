@@ -298,18 +298,18 @@ class _DDTraceArmBase:
 
 
 class DDTraceArm(_DDTraceArmBase):
-    """ddtrace instrumentation exporting through its own AgentWriter."""
+    """ddtrace instrumentation exporting through its own NativeWriter."""
 
     name = "ddtrace"
 
     def setup(self, collector: NullCollector) -> None:
-        from ddtrace.internal.writer import AgentWriter
+        from ddtrace.internal.writer.writer import NativeWriter
 
         # report_metrics=False because troncos' writer reports no statsd
         # metrics either; leaving it on would charge this arm for work the
         # other two never do.
         self._install_writer(
-            AgentWriter(intake_url=collector.agent_url, report_metrics=False)
+            NativeWriter(intake_url=collector.agent_url, report_metrics=False)
         )
 
 

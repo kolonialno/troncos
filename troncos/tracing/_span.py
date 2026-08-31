@@ -55,7 +55,7 @@ _span_kind_map = {
 
 
 def _span_kind(dd_span: DDSpan) -> SpanKind:
-    dd_kind = dd_span._meta.get(constants.SPAN_KIND, "none")
+    dd_kind = dd_span.get_tag(constants.SPAN_KIND) or "none"
     return _span_kind_map.get(dd_kind, SpanKind.INTERNAL)
 
 
@@ -78,8 +78,8 @@ def _span_status_and_attributes(
 ) -> tuple[Status, list[Event], dict[str, Any]]:
     # Collect all "attributes" from the dd span
     dd_span_attr: dict[str, Any] = {
-        **dd_span._meta,
-        **dd_span._metrics,
+        **dd_span.get_tags(),
+        **dd_span.get_metrics(),
         "resource": dd_span.resource,
     }
 
