@@ -4,7 +4,7 @@
 
 [tools]
 python = "3.13.5"
-uv = "0.12.7"
+uv = "0.12.10"
 
 [tasks.install]
 description = "Install all dependencies (including extras)"
