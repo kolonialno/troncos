@@ -3,7 +3,7 @@
 # (list them with `mise tasks`). Dependencies are managed by uv.
 
 [tools]
-python = "3.13.5"
+python = "3.14.7"
 uv = "0.12.7"
 
 [tasks.install]
