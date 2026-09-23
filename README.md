@@ -24,6 +24,7 @@
 - [Etymology](#etymology)
 - [Installation](#installation)
 - [Tracing](#tracing)
+- [Profiling](#profiling)
 - [Logging](#logging)
 <!-- TOC -->
 
@@ -362,6 +363,165 @@ from troncos.contrib.celery.logging.signals import (
 
 connect_troncos_logging_celery_signals()
 ```
+
+## Profiling
+
+Troncos ships a continuous profiler that pushes to [Grafana Pyroscope](https://grafana.com/docs/pyroscope/latest/),
+built on Grafana's own [`pyroscope-io`](https://github.com/grafana/pyroscope-python) SDK.
+Sampling is done by [py-spy](https://github.com/benfred/py-spy) in native threads that
+read the interpreter's memory directly. They never execute Python or take the GIL, so
+they do not show up in `threading.active_count()` and do not contend with your code.
+
+The SDK is a compiled wheel of several megabytes, so it is an extra:
+
+```console
+uv add "troncos[profiling]"
+```
+
+or
+
+```toml
+[project]
+dependencies = ["troncos[profiling]"]
+```
+
+### Enabling the profiler
+
+`PYROSCOPE_HOST` and `PYROSCOPE_PORT` are usually the hostname and port of Pyroscope
+itself, or of a Grafana Alloy instance relaying to it. The port is `4040` by default.
+
+```python
+from troncos.profiling import configure_profiler, Exporter
+
+
+def setup_profiling() -> None:
+    configure_profiler(
+        service_name='SERVICE_NAME',
+        exporter=Exporter(
+            # Usually obtained from env variables.
+            host="pyroscope.monitoring.svc.cluster.local",
+        ),
+        tags={
+            "role": "web",
+        },
+        enabled=True,
+    )
+```
+
+`service_name` is required, but it falls back to the ddtrace service name, so it
+can be omitted when `DD_SERVICE` is set or tracing is already configured. There is
+no default: Pyroscope groups profiles by this name, so troncos raises rather than
+invent one. Profiles are tagged with the service name, hostname,
+`ddtrace` env and version, and any tags already set on the tracer, which lets a
+profile be filtered by the same labels as its traces.
+
+Start the profiler after any subprocesses have forked. The SDK is
+[not fork safe](https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/python/)
+once its sampling threads are running. This is the same constraint tracing has, so
+the same hooks work:
+
+```python
+from typing import Any
+
+from celery import signals
+
+# gunicorn:
+def post_fork(server: Any, worker: Any) -> None:
+    setup_profiling()
+
+# celery master process
+@signals.worker_ready.connect  # type: ignore
+def worker_ready(**kwargs: Any) -> None:
+    setup_profiling()
+```
+
+Pass `enabled=False` to turn profiling off. Nothing is imported in that case, so a
+service that gates profiling on an env flag runs without the extra installed.
+
+### Authenticating against Grafana Cloud
+
+```python
+from troncos.profiling import configure_profiler, Exporter
+
+
+def setup_grafana_cloud_profiling() -> None:
+    configure_profiler(
+        service_name='SERVICE_NAME',
+        exporter=Exporter(
+            scheme="https",
+            host="profiles-prod-001.grafana.net",
+            port="443",
+            basic_auth_username="123456",
+            basic_auth_password="glc_token",
+        ),
+    )
+```
+
+### What is profiled
+
+By default the profiler samples wall clock time across every thread, not just
+on-CPU time in the thread holding the GIL. A request blocked on a database shows
+up, which is usually what you are looking for. Both are opposite to the SDK's
+own defaults, so set `oncpu=True` if you want CPU time only.
+
+Everything else the SDK takes is on `ProfilerOptions`. Field names match the
+arguments of `pyroscope.configure`, so Grafana's
+[SDK documentation](https://grafana.com/docs/pyroscope/latest/configure-client/language-sdks/python/)
+describes them directly.
+
+```python
+from troncos.profiling import configure_profiler, Exporter, ProfilerOptions, LineNo
+
+
+def setup_detailed_profiling() -> None:
+    configure_profiler(
+        service_name='SERVICE_NAME',
+        exporter=Exporter(host="pyroscope.monitoring.svc.cluster.local"),
+        options=ProfilerOptions(
+            sample_rate=200,          # Samples per second, default 100.
+            upload_interval=15,       # Seconds between uploads, default 10.
+            oncpu=True,               # On-CPU time only, rather than wall clock.
+            report_thread_name=True,  # Split the flamegraph by thread.
+            line_no=LineNo.FIRST,     # Attribute to the first line of a frame.
+            mem_enabled=True,         # Also collect heap profiles.
+        ),
+    )
+```
+
+The options are a frozen dataclass, so a typo is caught by your type checker
+rather than accepted and ignored. Values that Pyroscope would take and then do
+nothing with raise `ValueError` on construction:
+
+```python
+from troncos.profiling import ProfilerOptions
+
+try:
+    ProfilerOptions(sample_rate=0)
+except ValueError as error:
+    print(error)
+```
+
+Turning off both collectors is rejected on the same grounds. Profiling is
+switched off with `configure_profiler(enabled=False)`, which imports nothing, so
+a configuration that starts a profiler in order to collect nothing is a mistake.
+
+### Scraping is not supported
+
+Troncos pushes profiles. It does not serve a `/debug/pprof` endpoint for Pyroscope
+or Grafana Alloy to scrape, because Python has no maintained way to produce pprof
+bytes in process. Point Pyroscope at your service through push instead.
+
+### Coming from troncos v6
+
+Profiling was absent in v7. If you are upgrading from v6:
+
+- `start_py_spy_profiler(server_address=...)` becomes
+  `configure_profiler(exporter=Exporter(...))`.
+- Add the extra. `pyroscope-io` is no longer installed for everyone.
+- Pass credentials as `Exporter(basic_auth_username=..., basic_auth_password=...)`
+  or `Exporter(headers=...)`. The SDK dropped its `auth_token` argument.
+- The pprof endpoint, `troncos.profiling.auto` and the ASGI, Django and Starlette
+  profiling views have no replacement.
 
 ## Logging
 
