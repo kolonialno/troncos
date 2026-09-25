@@ -1748,11 +1748,11 @@ wheels = [
 
 [[package]]
 name = "python-ipware"
-version = "3.0.0"
+version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/9e/60/da4426c3e9aee56f08b24091a9e85a0414260f928f97afd0013dfbd0332f/python_ipware-3.0.0.tar.gz", hash = "sha256:9117b1c4dddcb5d5ca49e6a9617de2fc66aec2ef35394563ac4eecabdf58c062", size = 16609, upload-time = "2024-04-19T20:00:58.938Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/ed/fe/915bb21fdbbe623abc3a943d7e3581307fd21846e93f40b4d19c351953da/python_ipware-4.1.0.tar.gz", hash = "sha256:a2cb7dc0869713256b8c3edda7923490ecc8fc160cb911563c16ec7631dd572b", size = 39369, upload-time = "2026-09-22T20:50:00.989Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/bd/ccd7416fdb30f104ddf6cfd8ee9f699441c7d9880a26f9b3089438adee05/python_ipware-3.0.0-py3-none-any.whl", hash = "sha256:fc936e6e7ec9fcc107f9315df40658f468ac72f739482a707181742882e36b60", size = 10761, upload-time = "2024-04-19T20:00:57.171Z" },
+    { url = "https://files.pythonhosted.org/packages/69/01/668588e169bef89959ecb53142f84cdad5e8fde0ba931f28a7c39d02a909/python_ipware-4.1.0-py3-none-any.whl", hash = "sha256:fb5b3ad4b4c7d9f3b5b60adebd9585ac6a4a8abffa4fd91453b78d42ac1235f7", size = 27222, upload-time = "2026-09-22T20:49:59.744Z" },
 ]
 
 [[package]]
@@ -2106,7 +2106,7 @@ requires-dist = [
     { name = "opentelemetry-exporter-otlp-proto-grpc", marker = "extra == 'grpc'", specifier = ">=1.19,<2" },
     { name = "opentelemetry-exporter-otlp-proto-http", specifier = ">=1.19,<2" },
     { name = "opentelemetry-sdk", specifier = ">=1.19,<2" },
-    { name = "python-ipware", specifier = ">=2,<4" },
+    { name = "python-ipware", specifier = ">=4,<5" },
     { name = "structlog-sentry", marker = "extra == 'sentry'", specifier = ">=2.0.0,<3" },
 ]
 provides-extras = ["grpc", "sentry"]
