@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.0.3](https://github.com/kolonialno/troncos/compare/8.0.2...8.0.3) (2026-09-29)
+
+
+### Bug Fixes
+
+* **deps:** allow python-ipware v4 ([#477](https://github.com/kolonialno/troncos/issues/477)) ([2d49fe1](https://github.com/kolonialno/troncos/commit/2d49fe1fa1ed531a6f63f4f64d04bc38921fc669))
+
 ## [8.0.2](https://github.com/kolonialno/troncos/compare/8.0.1...8.0.2) (2026-08-31)
 
 
