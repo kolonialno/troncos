@@ -4,7 +4,7 @@ from typing import Any, Awaitable, Callable, Iterator, Mapping, MutableMapping, 
 
 from ddtrace.trace import tracer
 
-from python_ipware.python_ipware import IpWare
+from python_ipware import IpWare
 
 try:
     from structlog import get_logger
