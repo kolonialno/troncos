@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.0](https://github.com/kolonialno/troncos/compare/8.0.3...8.1.0) (2026-09-29)
+
+
+### Features
+
+* add profiling that pushes to Grafana Pyroscope ([#465](https://github.com/kolonialno/troncos/issues/465)) ([3e4f15f](https://github.com/kolonialno/troncos/commit/3e4f15f67b393e2abeba63d1a5ede0651acf1f04))
+
 ## [8.0.3](https://github.com/kolonialno/troncos/compare/8.0.2...8.0.3) (2026-09-29)
 
 
