@@ -1,6 +1,6 @@
 [project]
 name = "troncos"
-version = "8.0.3" # x-release-please-version
+version = "8.1.0" # x-release-please-version
 description = "Collection of Python logging, tracing and profiling tools"
 authors = [
   { name = "Guðmundur Björn Birkisson", email = "gudmundur.birkisson@oda.com" },
