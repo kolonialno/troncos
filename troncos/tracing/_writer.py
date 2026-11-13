@@ -1,6 +1,8 @@
+from collections.abc import Sequence
 from typing import Any, Optional
 
 from ddtrace.trace import Span
+from ddtrace.internal.native._native import SpanData
 from ddtrace.internal.writer.writer import TraceWriter
 from opentelemetry.sdk.resources import Resource
 
@@ -34,6 +36,8 @@ class OTELWriter(TraceWriter):
         self,
         appsec_enabled: Optional[bool] = None,
         llmobs_enabled: Optional[bool] = None,
+        compute_stats_enabled: Optional[bool] = None,
+        stats_opt_out: Optional[bool] = None,
     ) -> "OTELWriter":
         return self.__class__(
             self.enabled,
@@ -42,7 +46,7 @@ class OTELWriter(TraceWriter):
             self.resource_attributes,
         )
 
-    def write(self, spans: list[Span] | None = None) -> None:
+    def write(self, spans: Sequence[SpanData] | None = None) -> None:
         if not self.enabled:
             return
 
@@ -52,6 +56,7 @@ class OTELWriter(TraceWriter):
         filtered_spans = [
             span
             for span in spans
+            if isinstance(span, Span)
             # ddtrace use span.sampled == False to drop spans.
             if (
                 # ddtrace uses sampling_priority > 0 to indicate that we
