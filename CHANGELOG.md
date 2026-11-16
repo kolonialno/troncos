@@ -1,5 +1,12 @@
 # Changelog
 
+## [8.1.1](https://github.com/kolonialno/troncos/compare/8.1.0...8.1.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* release ddtrace 4.17 security update ([#504](https://github.com/kolonialno/troncos/issues/504)) ([fd030fc](https://github.com/kolonialno/troncos/commit/fd030fc5fce19a962ed505946d45b9dbfabf0b63))
+
 ## [8.1.0](https://github.com/kolonialno/troncos/compare/8.0.3...8.1.0) (2026-09-29)
 
 
